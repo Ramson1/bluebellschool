@@ -373,8 +373,6 @@ const IdCards = () => {
         {schoolSettings.contact.address && <div>{schoolSettings.contact.address}</div>}
         {schoolSettings.contact.phone && <div>Tel: {schoolSettings.contact.phone}</div>}
         {schoolSettings.contact.email && <div>Email: {schoolSettings.contact.email}</div>}
-        <div style={{ marginTop: "2mm" }}>Staff No: <b>{s.staff_no || "—"}</b></div>
-        <div>Role: <b>{s.designation || "—"}{s.department ? ` (${s.department})` : ""}</b></div>
         <div style={{ marginTop: "2mm", fontStyle: "italic", fontSize: "2mm" }}>
           If found, please return to the school office.
         </div>
