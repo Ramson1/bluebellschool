@@ -9,36 +9,36 @@ import { Container, Card, Button, Form, Spinner, Table, Badge, Row, Col, Modal }
 import { fetchAuthRoles, isDev } from "../utils/authUtils";
 import { logAction } from "../api/auditLog";
 
-// Auth tables (jmis_userauth, jmis_teacherauth, devauth, jmis_secretaryauth)
+// Auth tables (bluebell_userauth, bluebell_teacherauth, devauth, bluebell_secretaryauth)
 // are intentionally excluded from export/import/delete.
 const TABLES = [
-  "jmis_student",
-  "jmis_result",
-  "jmis_result_history",
-  "jmis_paymentsinfo",
-  "jmis_settings",
-  "jmis_classfees",
-  "jmis_class_specific_fees",
-  // NOTE: jmis_class_bal is NOT in this list — the table does not exist on this
+  "bluebell_student",
+  "bluebell_result",
+  "bluebell_result_history",
+  "bluebell_paymentsinfo",
+  "bluebell_settings",
+  "bluebell_classfees",
+  "bluebell_class_specific_fees",
+  // NOTE: bluebell_class_bal is NOT in this list — the table does not exist on this
   // deployment (the midterm result card queries it but fails soft to empty).
   // Re-add here if it is ever created.
-  "jmis_attendance",
-  "jmis_staff_attendance",
-  "jmis_staff",
-  "jmis_cbtQuestions",
-  "jmis_cbt_completion",
-  "jmis_cbt_essay",
-  "jmis_cbt_results",
+  "bluebell_attendance",
+  "bluebell_staff_attendance",
+  "bluebell_staff",
+  "bluebell_cbtQuestions",
+  "bluebell_cbt_completion",
+  "bluebell_cbt_essay",
+  "bluebell_cbt_results",
   // Teaching & learning surfaces (staff portal + admin mirrors)
-  "jmis_lesson_plans",
-  "jmis_notes",
-  "jmis_assignments",
-  "jmis_staff_assignments",
+  "bluebell_lesson_plans",
+  "bluebell_notes",
+  "bluebell_assignments",
+  "bluebell_staff_assignments",
   // Messaging, website enquiries and audit trail
-  "jmis_chat_conversations",
-  "jmis_chat_messages",
-  "jmis_enquiries",
-  "jmis_auditlogs",
+  "bluebell_chat_conversations",
+  "bluebell_chat_messages",
+  "bluebell_enquiries",
+  "bluebell_auditlogs",
 ];
 
 const PAGE = 1000;      // Supabase default single-request cap
@@ -134,7 +134,7 @@ const DataTools = () => {
         XLSX.utils.book_append_sheet(wb, ws, table.slice(0, 31));
       }
       setExportStatus("Writing file…");
-      XLSX.writeFile(wb, `jmis_full_export_${new Date().toISOString().slice(0, 10)}.xlsx`);
+      XLSX.writeFile(wb, `bluebell_full_export_${new Date().toISOString().slice(0, 10)}.xlsx`);
       toast.success("Full database export downloaded");
       logAction(supabase, { email, role, action: "data_export_all", targetTable: "ALL", details: { tables: TABLES.length } });
     } catch (e) {
@@ -371,7 +371,7 @@ const DataTools = () => {
             </Col>
           </Row>
           <p className="text-muted small mt-2 mb-0">
-            Authentication tables (jmis_userauth, jmis_teacherauth, devauth, jmis_secretaryauth) can never be deleted here.
+            Authentication tables (bluebell_userauth, bluebell_teacherauth, devauth, bluebell_secretaryauth) can never be deleted here.
           </p>
         </Card.Body>
       </Card>

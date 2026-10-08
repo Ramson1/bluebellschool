@@ -41,7 +41,7 @@ export const NavbarWeb = () => {
     const fetchStudents = async () => {
       try {
         const { data, error } = await supabase
-          .from('jmis_student')
+          .from('bluebell_student')
           .select('name')
           .order('name', { ascending: true });
 
@@ -55,7 +55,7 @@ export const NavbarWeb = () => {
     const fetchLockStatus = async () => {
       try {
         const { data, error } = await supabase
-          .from('jmis_settings')
+          .from('bluebell_settings')
           .select('resultLock');
           
         if (error) {
@@ -85,7 +85,7 @@ export const NavbarWeb = () => {
     const fetchSettingsTable = async () => {
       try {
         // Query the 'settings' table
-        const { data, error } = await supabase.from('jmis_settings').select('*');
+        const { data, error } = await supabase.from('bluebell_settings').select('*');
 
         // Handle errors if any occur
         if (error) {
@@ -133,7 +133,7 @@ export const NavbarWeb = () => {
     try {
       // Check if the studentName and PIN matches in the result table
       let { data: resultData, error: resultError } = await supabase
-        .from("jmis_result")
+        .from("bluebell_result")
         .select("*")
         .eq("studentName", studentName)
         .eq("token", pin)
@@ -143,7 +143,7 @@ export const NavbarWeb = () => {
         if (resultError.code === "PGRST116") {
           // F5: no live match – fall back to archived results from past sessions
           const { data: archivedData, error: archivedError } = await supabase
-            .from("jmis_result_history")
+            .from("bluebell_result_history")
             .select("*")
             .eq("studentName", studentName)
             .eq("token", pin)
@@ -164,10 +164,10 @@ export const NavbarWeb = () => {
         }
       }
       
-      // If result data exists, fetch the passport data from jmis_student table
+      // If result data exists, fetch the passport data from bluebell_student table
       // First try with name and token (exact match)
       let { data: studentData, error: studentError } = await supabase
-        .from("jmis_student")
+        .from("bluebell_student")
         .select("*")
         .eq("name", studentName)
         .eq("token", pin)
@@ -177,7 +177,7 @@ export const NavbarWeb = () => {
       if (studentError || !studentData) {
         console.log('No exact match found, trying case-insensitive search');
         const result = await supabase
-          .from("jmis_student")
+          .from("bluebell_student")
           .select("*")
           .ilike("name", studentName.trim())
           .eq("token", pin)
@@ -191,7 +191,7 @@ export const NavbarWeb = () => {
       if (studentError || !studentData) {
         console.log('No name/token match found, trying token only');
         const result = await supabase
-          .from("jmis_student")
+          .from("bluebell_student")
           .select("*")
           .eq("token", pin)
           .single();

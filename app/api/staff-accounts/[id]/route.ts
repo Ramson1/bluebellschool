@@ -24,7 +24,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const admin = serviceClient();
 
     const { data: staff, error: fetchErr } = await admin
-      .from('jmis_staff')
+      .from('bluebell_staff')
       .select('*')
       .eq('id', id)
       .maybeSingle();
@@ -47,7 +47,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         updates.date_of_appointment = /^\d{4}-\d{2}-\d{2}$/.test(raw) ? raw : null;
       }
       const { data: updated, error: updErr } = await admin
-        .from('jmis_staff')
+        .from('bluebell_staff')
         .update(updates)
         .eq('id', id)
         .select('*')
@@ -60,23 +60,23 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         try { await admin.auth.admin.updateUserById(staff.auth_user_id, { user_metadata: { full_name: updates.name } }); } catch { /* ignore */ }
       }
       // Role changes propagate to teacher access: Academic staff are kept on
-      // jmis_teacherauth (results/CBT pages); Non-Academic staff (minders,
+      // bluebell_teacherauth (results/CBT pages); Non-Academic staff (minders,
       // assistants, security, cleaners…) are removed from it.
       const targetEmail = String(updates.email || staff.email || '').toLowerCase();
       if (targetEmail && (updates.department || updates.email)) {
         const dept = String(updates.department || staff.department || 'Academic').toLowerCase();
         try {
           if (dept === 'non-academic') {
-            await admin.from('jmis_teacherauth').delete().eq('email', targetEmail);
+            await admin.from('bluebell_teacherauth').delete().eq('email', targetEmail);
           } else {
             const oldEmail = String(staff.email || '').toLowerCase();
-            const { data: ta } = await admin.from('jmis_teacherauth').select('email').eq('email', targetEmail).maybeSingle();
+            const { data: ta } = await admin.from('bluebell_teacherauth').select('email').eq('email', targetEmail).maybeSingle();
             if (!ta) {
               const { data: oldRow } = oldEmail && oldEmail !== targetEmail
-                ? await admin.from('jmis_teacherauth').select('email').eq('email', oldEmail).maybeSingle()
+                ? await admin.from('bluebell_teacherauth').select('email').eq('email', oldEmail).maybeSingle()
                 : { data: null };
-              if (oldRow) await admin.from('jmis_teacherauth').update({ email: targetEmail }).eq('email', oldEmail);
-              else await admin.from('jmis_teacherauth').insert({ email: targetEmail });
+              if (oldRow) await admin.from('bluebell_teacherauth').update({ email: targetEmail }).eq('email', oldEmail);
+              else await admin.from('bluebell_teacherauth').insert({ email: targetEmail });
             }
           }
         } catch { /* access list sync is best effort */ }
@@ -113,7 +113,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         return NextResponse.json({ error: 'Invalid status' }, { status: 400 });
       }
       const { data: updated, error: stErr } = await admin
-        .from('jmis_staff')
+        .from('bluebell_staff')
         .update({ status })
         .eq('id', id)
         .select('*')
@@ -136,7 +136,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 }
 
 // DELETE /api/staff-accounts/[id] — remove a staff member from the system:
-// deletes the jmis_staff row, their class/subject assignments, their teacher
+// deletes the bluebell_staff row, their class/subject assignments, their teacher
 // access entry and their portal login (Supabase auth user, signed out first).
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -153,7 +153,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     const admin = serviceClient();
 
     const { data: staff, error: fetchErr } = await admin
-      .from('jmis_staff')
+      .from('bluebell_staff')
       .select('*')
       .eq('id', id)
       .maybeSingle();
@@ -166,16 +166,16 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
       try { await admin.auth.admin.signOut(staff.auth_user_id); } catch { /* ignore */ }
     }
 
-    const { error: delErr } = await admin.from('jmis_staff').delete().eq('id', id);
+    const { error: delErr } = await admin.from('bluebell_staff').delete().eq('id', id);
     if (delErr) {
       return NextResponse.json({ error: 'Delete failed: ' + delErr.message }, { status: 500 });
     }
 
     // Related records — best effort so one leftover row never blocks the delete
-    try { await admin.from('jmis_staff_assignments').delete().eq('staff_id', id); } catch { /* ignore */ }
+    try { await admin.from('bluebell_staff_assignments').delete().eq('staff_id', id); } catch { /* ignore */ }
     const email = String(staff.email || '').toLowerCase();
     if (email) {
-      try { await admin.from('jmis_teacherauth').delete().eq('email', email); } catch { /* ignore */ }
+      try { await admin.from('bluebell_teacherauth').delete().eq('email', email); } catch { /* ignore */ }
     }
     if (staff.auth_user_id) {
       try { await admin.auth.admin.deleteUser(staff.auth_user_id); } catch { /* ignore */ }

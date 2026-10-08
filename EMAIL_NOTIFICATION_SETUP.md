@@ -14,7 +14,7 @@ The email notification system has been enhanced to work in **both development an
 
 **New Features:**
 - ✅ Support for multiple email recipients
-- ✅ Reads from `jmis_settings` table (adminEmail + additionalEmails columns)
+- ✅ Reads from `bluebell_settings` table (adminEmail + additionalEmails columns)
 - ✅ Better error handling and logging
 - ✅ Works with API routes (production-compatible)
 
@@ -51,11 +51,11 @@ Run this SQL in your Supabase SQL Editor to add support for multiple recipients:
 
 ```sql
 -- Add column for additional email recipients
-ALTER TABLE jmis_settings 
+ALTER TABLE bluebell_settings 
 ADD COLUMN IF NOT EXISTS additionalEmails TEXT;
 
 -- Add comment
-COMMENT ON COLUMN jmis_settings.additionalEmails IS 'Comma-separated list of additional email addresses to receive notifications';
+COMMENT ON COLUMN bluebell_settings.additionalEmails IS 'Comma-separated list of additional email addresses to receive notifications';
 ```
 
 ## ⚙️ Configuration Steps
@@ -66,14 +66,14 @@ After adding the `additionalEmails` column, update your settings:
 
 ```sql
 -- Update with multiple email addresses (comma-separated)
-UPDATE jmis_settings 
+UPDATE bluebell_settings 
 SET 
   adminEmail = 'principal@school.com',
   additionalEmails = 'registrar@school.com,ict@school.com,exams@school.com';
 ```
 
 Or use the Supabase Table Editor:
-1. Go to `jmis_settings` table
+1. Go to `bluebell_settings` table
 2. Edit the row
 3. In `adminEmail`: Enter primary email
 4. In `additionalEmails`: Enter comma-separated list (e.g., `email1@school.com,email2@school.com`)
@@ -138,7 +138,7 @@ Student Submits Exam
         ↓
 Calculate Score
         ↓
-Save to Database (jmis_result)
+Save to Database (bluebell_result)
         ↓
 Success? → Send Email Notification
         ↓
@@ -255,7 +255,7 @@ Check browser console for these logs:
 ### Issue: "No email recipients configured"
 
 **Solution:**
-1. Check `jmis_settings` table has `adminEmail` value
+1. Check `bluebell_settings` table has `adminEmail` value
 2. Run SQL migration to add `additionalEmails` column
 3. Add at least one email address
 
@@ -319,7 +319,7 @@ Save these IDs to track specific emails in Gmail logs.
 Before going live:
 
 - [ ] Run SQL migration to add `additionalEmails` column
-- [ ] Configure all email recipients in `jmis_settings`
+- [ ] Configure all email recipients in `bluebell_settings`
 - [ ] Set up Gmail App Password
 - [ ] Add environment variables to production hosting
 - [ ] Test email sending in staging environment

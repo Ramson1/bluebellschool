@@ -66,8 +66,8 @@ export default function NewStudent() {
         
         // Fetch all required data in parallel
         const [userData, teacherData, devData] = await Promise.all([
-          supabase.from('jmis_userauth').select('email'),
-          supabase.from('jmis_teacherauth').select('email'),
+          supabase.from('bluebell_userauth').select('email'),
+          supabase.from('bluebell_teacherauth').select('email'),
           supabase.from('devauth').select('email')
         ]);
         
@@ -167,7 +167,7 @@ export default function NewStudent() {
         user_id: user?.identities?.[0]?.identity_data?.full_name || user?.email || '',
       };
 
-      const { error } = await supabase.from("jmis_student").insert([studentData]);
+      const { error } = await supabase.from("bluebell_student").insert([studentData]);
 
       if (error) {
         toast.error("Error creating student: " + error.message);
@@ -179,7 +179,7 @@ export default function NewStudent() {
           email: getCurrentUserEmail(),
           role: getAuditRole(),
           action: "student_add",
-          targetTable: "jmis_student",
+          targetTable: "bluebell_student",
           details: { name, class: className, sex, parentcontact: parentContact },
         });
         
@@ -341,7 +341,7 @@ Parent Contact: ${parentContact}`;
           user_id: user?.identities?.[0]?.identity_data?.full_name || user?.email || '',
         };
         
-        const { error: insertError } = await supabase.from("jmis_student").insert([studentData]);
+        const { error: insertError } = await supabase.from("bluebell_student").insert([studentData]);
         
         if (insertError) {
           toast.error(`Error adding student ${student.name}: ${insertError.message}`);

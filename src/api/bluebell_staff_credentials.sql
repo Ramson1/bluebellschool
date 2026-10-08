@@ -8,12 +8,12 @@
 --   the plaintext has to be kept by us for the period the issued password is
 --   still the live one.
 --
---   It is deliberately NOT a column on jmis_staff. Verified against the live
+--   It is deliberately NOT a column on bluebell_staff. Verified against the live
 --   project (BLUEBELL_SUPABASE_REF_PLACEHOLDER) with the public anon key:
---       GET  /rest/v1/jmis_staff?select=id,name      -> 206, 30 rows
---       GET  /rest/v1/jmis_staff?select=email,phone  -> 206, rows returned
---       PATCH /rest/v1/jmis_staff?id=eq.<uuid>       -> 200 (statement allowed)
---   i.e. jmis_staff is readable AND writable by any browser holding the anon
+--       GET  /rest/v1/bluebell_staff?select=id,name      -> 206, 30 rows
+--       GET  /rest/v1/bluebell_staff?select=email,phone  -> 206, rows returned
+--       PATCH /rest/v1/bluebell_staff?id=eq.<uuid>       -> 200 (statement allowed)
+--   i.e. bluebell_staff is readable AND writable by any browser holding the anon
 --   key (the admin, staff and student portals all rely on this today). A
 --   password column there would be readable by every logged-in staff member,
 --   every student and anyone on the internet who lifted the anon key out of a
@@ -41,30 +41,30 @@
 --   since changed show as "changed by staff" with no value.
 --
 -- ROLLBACK
---   DROP TABLE IF EXISTS public.jmis_staff_credentials;
+--   DROP TABLE IF EXISTS public.bluebell_staff_credentials;
 -- ---------------------------------------------------------------------------
 
-CREATE TABLE IF NOT EXISTS public.jmis_staff_credentials (
+CREATE TABLE IF NOT EXISTS public.bluebell_staff_credentials (
   staff_id   uuid PRIMARY KEY,
   email      text,                    -- login email at issue time, for display
   password   text NOT NULL,           -- the password we issued
   set_at     timestamptz DEFAULT now(),
   set_by     text,                    -- admin/developer email that issued it
   CONSTRAINT fk_staff FOREIGN KEY (staff_id)
-    REFERENCES public.jmis_staff (id) ON DELETE CASCADE
+    REFERENCES public.bluebell_staff (id) ON DELETE CASCADE
 );
 
 -- Newest-issued first when the admin page lists them.
 CREATE INDEX IF NOT EXISTS idx_staff_credentials_set_at
-  ON public.jmis_staff_credentials (set_at DESC);
+  ON public.bluebell_staff_credentials (set_at DESC);
 
-ALTER TABLE public.jmis_staff_credentials ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.bluebell_staff_credentials ENABLE ROW LEVEL SECURITY;
 
 -- Deny every client role; only the service key (which ignores RLS) may read.
-REVOKE ALL ON public.jmis_staff_credentials FROM anon;
-REVOKE ALL ON public.jmis_staff_credentials FROM authenticated;
-REVOKE ALL ON public.jmis_staff_credentials FROM public;
+REVOKE ALL ON public.bluebell_staff_credentials FROM anon;
+REVOKE ALL ON public.bluebell_staff_credentials FROM authenticated;
+REVOKE ALL ON public.bluebell_staff_credentials FROM public;
 
 -- Sanity check after running: this must return an EMPTY result, never rows.
---   curl "$SUPABASE_URL/rest/v1/jmis_staff_credentials?select=*" \
+--   curl "$SUPABASE_URL/rest/v1/bluebell_staff_credentials?select=*" \
 --        -H "apikey: $ANON_KEY" -H "Authorization: Bearer $ANON_KEY"

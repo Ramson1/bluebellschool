@@ -1,7 +1,7 @@
 -- =====================================================================
 -- PLATFORM EXPANSION 5/5: Student portal support columns
 -- Copy and paste this ENTIRE script into the Supabase SQL Editor and RUN.
--- jmis_student holds live data — ALTER only, never drop.
+-- bluebell_student holds live data — ALTER only, never drop.
 --
 -- IMPORTANT: there is deliberately NO DB trigger guarding name/class/token
 -- edits, because the admin dashboard (FullStudent inline edit) updates those
@@ -12,22 +12,22 @@
 -- =====================================================================
 
 -- Portal login linkage + lifecycle
-ALTER TABLE jmis_student ADD COLUMN IF NOT EXISTS auth_user_id UUID;
-ALTER TABLE jmis_student ADD COLUMN IF NOT EXISTS portal_status TEXT DEFAULT 'active'; -- 'active'|'suspended'|'blocked'
+ALTER TABLE bluebell_student ADD COLUMN IF NOT EXISTS auth_user_id UUID;
+ALTER TABLE bluebell_student ADD COLUMN IF NOT EXISTS portal_status TEXT DEFAULT 'active'; -- 'active'|'suspended'|'blocked'
 
 -- Extra profile fields the student may fill in the portal
-ALTER TABLE jmis_student ADD COLUMN IF NOT EXISTS email TEXT;
-ALTER TABLE jmis_student ADD COLUMN IF NOT EXISTS address TEXT;
+ALTER TABLE bluebell_student ADD COLUMN IF NOT EXISTS email TEXT;
+ALTER TABLE bluebell_student ADD COLUMN IF NOT EXISTS address TEXT;
 -- first_login: drives the "change your password" prompt on the portal
-ALTER TABLE jmis_student ADD COLUMN IF NOT EXISTS first_login BOOLEAN DEFAULT TRUE;
+ALTER TABLE bluebell_student ADD COLUMN IF NOT EXISTS first_login BOOLEAN DEFAULT TRUE;
 
-CREATE INDEX IF NOT EXISTS idx_jmis_student_auth_user ON jmis_student(auth_user_id);
-CREATE INDEX IF NOT EXISTS idx_jmis_student_email ON jmis_student(lower(email));
-CREATE INDEX IF NOT EXISTS idx_jmis_student_token ON jmis_student(token);
+CREATE INDEX IF NOT EXISTS idx_bluebell_student_auth_user ON bluebell_student(auth_user_id);
+CREATE INDEX IF NOT EXISTS idx_bluebell_student_email ON bluebell_student(lower(email));
+CREATE INDEX IF NOT EXISTS idx_bluebell_student_token ON bluebell_student(token);
 
 -- ---------------------------------------------------------------------
 -- Verify
 -- ---------------------------------------------------------------------
 SELECT column_name FROM information_schema.columns
-WHERE table_name = 'jmis_student'
+WHERE table_name = 'bluebell_student'
 ORDER BY column_name;

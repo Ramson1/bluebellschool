@@ -7,12 +7,12 @@
 -- Safe to re-run.
 -- =====================================================================
 
-ALTER TABLE jmis_attendance ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'present'; -- 'present' | 'absent' | 'late'
-ALTER TABLE jmis_attendance ADD COLUMN IF NOT EXISTS recorded_by TEXT;              -- staff email for class-attendance entries
+ALTER TABLE bluebell_attendance ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'present'; -- 'present' | 'absent' | 'late'
+ALTER TABLE bluebell_attendance ADD COLUMN IF NOT EXISTS recorded_by TEXT;              -- staff email for class-attendance entries
 
 -- Verify
 SELECT column_name, data_type, column_default
 FROM information_schema.columns
-WHERE table_name = 'jmis_attendance'
+WHERE table_name = 'bluebell_attendance'
   AND column_name IN ('status', 'recorded_by')
 ORDER BY column_name;

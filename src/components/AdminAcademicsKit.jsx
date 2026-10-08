@@ -99,7 +99,7 @@ const fmtDate = (iso) => (iso ? new Date(iso).toLocaleDateString() : "—");
 
 /**
  * Config-driven admin management screen for a staff-portal academic table
- * (jmis_notes / jmis_assignments). Unlike the staff version it is NOT scoped
+ * (bluebell_notes / bluebell_assignments). Unlike the staff version it is NOT scoped
  * to the signed-in user's classes — admins see, filter, add, edit and delete
  * every record across the school.
  *
@@ -128,7 +128,7 @@ export function makeAdminAcademicsPage(config) {
 
     useEffect(() => {
       supabase.auth.getUser().then(({ data: { user } }) => setEmail(user?.email || "admin@school"));
-      supabase.from("jmis_settings").select("session").limit(1).then(({ data }) => {
+      supabase.from("bluebell_settings").select("session").limit(1).then(({ data }) => {
         if (data && data[0]?.session) setSession(data[0].session);
       });
       load();

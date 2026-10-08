@@ -8,18 +8,18 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
 // Mirrors DEV_EMAILS in src/utils/authUtils.js (server copy — keep in sync)
-const DEV_EMAILS = ['blackboxinfo01@gmail.com', 'rhemaexpertsolutions@gmail.com'];
+const DEV_EMAILS = ['blackboxinfo01@gmail.com'];
 
 // The ultimate super_admin — the only account allowed to disable/enable other
 // admin or super_admin accounts. Mirrors OWNER_EMAIL in authUtils.js.
 export const OWNER_EMAIL = 'blackboxinfo01@gmail.com';
 
-// Emails the owner has suspended (jmis_disabled_accounts). A missing table is
+// Emails the owner has suspended (bluebell_disabled_accounts). A missing table is
 // treated as empty so access is never accidentally blocked by a DDL that has
 // not run yet. Read via roleClient because RLS hides the rows from anon.
 async function fetchDisabledEmails(): Promise<Set<string>> {
   try {
-    const { data } = await roleClient().from('jmis_disabled_accounts').select('email');
+    const { data } = await roleClient().from('bluebell_disabled_accounts').select('email');
     return new Set((data || []).map((r: { email?: string }) => (r.email || '').toLowerCase()));
   } catch {
     return new Set();
@@ -42,8 +42,8 @@ export function serviceClient(): SupabaseClient {
   });
 }
 
-// Client for server-side ROLE/DISABLED-email reads. RLS hides jmis_userauth,
-// devauth and jmis_disabled_accounts rows from the anon role (an anon SELECT
+// Client for server-side ROLE/DISABLED-email reads. RLS hides bluebell_userauth,
+// devauth and bluebell_disabled_accounts rows from the anon role (an anon SELECT
 // returns [] even though rows exist), which made requireAdminCaller reject
 // every non-developer admin with 401. The service-role key sees the real rows
 // and this file only ever runs server-side, never in the browser bundle.
@@ -96,7 +96,7 @@ export async function requireAdminCaller(request: Request): Promise<CallerCheck 
 
   let isAdmin = false;
   if (!isDev) {
-    const { data } = await client.from('jmis_userauth').select('email');
+    const { data } = await client.from('bluebell_userauth').select('email');
     isAdmin = !!data?.some((r: { email?: string }) => (r.email || '').toLowerCase() === email);
     if (!isAdmin) {
       // devauth table may also hold additional developers (never fatal)

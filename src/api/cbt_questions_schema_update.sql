@@ -1,4 +1,4 @@
--- SQL script to add purpose field to jmis_cbtQuestions table
+-- SQL script to add purpose field to bluebell_cbtQuestions table
 -- First check if the table exists before making changes
 
 -- First, let's see what tables exist that match our pattern

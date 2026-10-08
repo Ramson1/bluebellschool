@@ -2,9 +2,9 @@
 -- Bluebell Parent <-> School chat (messaging)
 -- -----------------------------------------------------------------------------
 -- A shared chat surface used by three apps against this SAME Supabase project:
---   * Student portal  -> a parent/learner (identity = jmis_student.id)
---   * Staff portal     -> a teacher         (identity = jmis_staff.id)
---   * Admin dashboard  -> the school office (identity = jmis_userauth email)
+--   * Student portal  -> a parent/learner (identity = bluebell_student.id)
+--   * Staff portal     -> a teacher         (identity = bluebell_staff.id)
+--   * Admin dashboard  -> the school office (identity = bluebell_userauth email)
 --
 -- Every conversation is a two-party thread between ONE student/parent and ONE
 -- "school side" participant, which is either a specific class teacher
@@ -21,30 +21,30 @@
 -- threads are addressed by unguessable uuid conversation ids. If parent auth is
 -- introduced later, add RLS policies on these two tables.
 --
--- IDs are stored as TEXT because jmis_student.id / jmis_staff.id types are not
+-- IDs are stored as TEXT because bluebell_student.id / bluebell_staff.id types are not
 -- assumed. Table names are lower_case_with_underscores per platform convention.
 -- Run this once in the Supabase SQL Editor.
 -- =============================================================================
 
-DROP TABLE IF EXISTS public.jmis_chat_messages CASCADE;
-DROP TABLE IF EXISTS public.jmis_chat_conversations CASCADE;
+DROP TABLE IF EXISTS public.bluebell_chat_messages CASCADE;
+DROP TABLE IF EXISTS public.bluebell_chat_conversations CASCADE;
 
-CREATE TABLE public.jmis_chat_conversations (
+CREATE TABLE public.bluebell_chat_conversations (
   id                uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   pair_key          text NOT NULL UNIQUE,           -- deterministic <student>:<type>:<teacher> key
-  student_id        text NOT NULL,                  -- jmis_student.id (as text)
+  student_id        text NOT NULL,                  -- bluebell_student.id (as text)
   student_name      text NOT NULL DEFAULT '',       -- snapshot for display
   student_class     text NOT NULL DEFAULT '',       -- snapshot for display
   school_type       text NOT NULL CHECK (school_type IN ('teacher','admin')),
-  teacher_staff_id  text,                            -- jmis_staff.id when school_type='teacher'
+  teacher_staff_id  text,                            -- bluebell_staff.id when school_type='teacher'
   school_label      text NOT NULL DEFAULT 'School Admin/Office', -- teacher name / office label
   created_at        timestamptz NOT NULL DEFAULT now(),
   updated_at        timestamptz NOT NULL DEFAULT now()
 );
 
-CREATE TABLE public.jmis_chat_messages (
+CREATE TABLE public.bluebell_chat_messages (
   id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  conversation_id  uuid NOT NULL REFERENCES public.jmis_chat_conversations(id) ON DELETE CASCADE,
+  conversation_id  uuid NOT NULL REFERENCES public.bluebell_chat_conversations(id) ON DELETE CASCADE,
   sender_side      text NOT NULL CHECK (sender_side IN ('student','school')),
   sender_key       text NOT NULL DEFAULT '',        -- student:<id> | staff:<id> | admin:<email>
   sender_name      text NOT NULL DEFAULT '',
@@ -53,20 +53,20 @@ CREATE TABLE public.jmis_chat_messages (
   attachment_name  text,
   attachment_mime  text,
   attachment_size  bigint,
-  reply_to_id      uuid REFERENCES public.jmis_chat_messages(id) ON DELETE SET NULL,
+  reply_to_id      uuid REFERENCES public.bluebell_chat_messages(id) ON DELETE SET NULL,
   edited_at        timestamptz,
   deleted          boolean NOT NULL DEFAULT false,  -- soft delete -> "This message was deleted"
   created_at       timestamptz NOT NULL DEFAULT now()
 );
 
-CREATE INDEX IF NOT EXISTS jmis_chat_messages_conv_idx
-  ON public.jmis_chat_messages (conversation_id, created_at);
+CREATE INDEX IF NOT EXISTS bluebell_chat_messages_conv_idx
+  ON public.bluebell_chat_messages (conversation_id, created_at);
 
-CREATE INDEX IF NOT EXISTS jmis_chat_conversations_student_idx
-  ON public.jmis_chat_conversations (student_id, updated_at DESC);
+CREATE INDEX IF NOT EXISTS bluebell_chat_conversations_student_idx
+  ON public.bluebell_chat_conversations (student_id, updated_at DESC);
 
-CREATE INDEX IF NOT EXISTS jmis_chat_conversations_teacher_idx
-  ON public.jmis_chat_conversations (teacher_staff_id, updated_at DESC);
+CREATE INDEX IF NOT EXISTS bluebell_chat_conversations_teacher_idx
+  ON public.bluebell_chat_conversations (teacher_staff_id, updated_at DESC);
 
-CREATE INDEX IF NOT EXISTS jmis_chat_conversations_type_idx
-  ON public.jmis_chat_conversations (school_type, updated_at DESC);
+CREATE INDEX IF NOT EXISTS bluebell_chat_conversations_type_idx
+  ON public.bluebell_chat_conversations (school_type, updated_at DESC);

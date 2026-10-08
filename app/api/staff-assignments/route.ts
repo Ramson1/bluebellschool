@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { requireAdminCaller, serviceClient } from '@/src/utils/serverAdminAuth';
 
 // POST /api/staff-assignments — admin reconciles ONE staff member's class/subject
-// assignments (jmis_staff_assignments) against a desired set, using the
+// assignments (bluebell_staff_assignments) against a desired set, using the
 // service-role key so the write is not subject to the browser session's RLS role
 // (this mirrors how staff profile provisioning already bypasses RLS).
 //
@@ -59,7 +59,7 @@ export async function GET(request: Request) {
     }
     const admin = serviceClient();
     const { data, error } = await admin
-      .from('jmis_staff_assignments')
+      .from('bluebell_staff_assignments')
       .select('id, staff_id, class, subject, assignment_type, academic_session');
     if (error) {
       return NextResponse.json({ error: 'Failed to load assignments: ' + error.message }, { status: 500 });
@@ -91,7 +91,7 @@ export async function POST(request: Request) {
 
     // Verify the staff exists (service role bypasses RLS, so this is authoritative).
     const { data: staffRow, error: staffErr } = await admin
-      .from('jmis_staff')
+      .from('bluebell_staff')
       .select('id')
       .eq('id', staffId)
       .maybeSingle();
@@ -100,7 +100,7 @@ export async function POST(request: Request) {
     }
 
     const { data: storedData, error: readErr } = await admin
-      .from('jmis_staff_assignments')
+      .from('bluebell_staff_assignments')
       .select('id, class, subject, assignment_type, academic_session')
       .eq('staff_id', staffId);
     if (readErr) {
@@ -126,14 +126,14 @@ export async function POST(request: Request) {
         assignment_type: isForm ? 'class_teacher' : 'subject_teacher',
         academic_session: session || null,
       };
-      const { error } = await admin.from('jmis_staff_assignments').insert([payload]);
+      const { error } = await admin.from('bluebell_staff_assignments').insert([payload]);
       if (error) errors.push(`${isForm ? 'Form teacher' : d.subject} · ${payload.class}: ${error.message}`);
       else added++;
     }
 
     for (const r of stored) {
       if (desiredKeys.has(keyOf(r))) continue;
-      const { error } = await admin.from('jmis_staff_assignments').delete().eq('id', (r as any).id);
+      const { error } = await admin.from('bluebell_staff_assignments').delete().eq('id', (r as any).id);
       if (error) errors.push(`Remove ${(r as any).class}${(r as any).subject ? ` · ${(r as any).subject}` : ''}: ${error.message}`);
       else removed++;
     }

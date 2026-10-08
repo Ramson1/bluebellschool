@@ -331,11 +331,11 @@ Q1: Score: 8.5/10 (85%)
 ## Database Tables
 
 The system uses three separate tables:
-- `jmis_cbtQuestions` - Objective questions (multiple choice)
-- `jmis_cbtCompletion` - Completion questions (fill-in-the-blank)
-- `jmis_cbtEssay` - Essay questions (free text)
+- `bluebell_cbtQuestions` - Objective questions (multiple choice)
+- `bluebell_cbtCompletion` - Completion questions (fill-in-the-blank)
+- `bluebell_cbtEssay` - Essay questions (free text)
 
-Results are stored in `jmis_cbt_results` with a `sessionType` field to distinguish exam types.
+Results are stored in `bluebell_cbt_results` with a `sessionType` field to distinguish exam types.
 
 ---
 

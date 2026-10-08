@@ -53,10 +53,10 @@ export default function ClassPayment() {
         
         // Fetch all required data in parallel
         const [userData, teacherData, paymentsData, classFeesData] = await Promise.all([
-          supabase.from('jmis_userauth').select('email'),
-          supabase.from('jmis_teacherauth').select('email'),
-          supabase.from('jmis_paymentsinfo').select('*'),
-          supabase.from('jmis_classfees').select('*')
+          supabase.from('bluebell_userauth').select('email'),
+          supabase.from('bluebell_teacherauth').select('email'),
+          supabase.from('bluebell_paymentsinfo').select('*'),
+          supabase.from('bluebell_classfees').select('*')
         ]);
         
         // Handle user auth data

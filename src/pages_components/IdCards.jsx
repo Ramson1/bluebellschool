@@ -195,7 +195,7 @@ const IdCards = () => {
     if (!allowed) return;
     const loadSettings = async () => {
       const { data } = await supabase
-        .from("jmis_settings")
+        .from("bluebell_settings")
         .select("session, contactContent")
         .limit(1);
       const row = (data && data[0]) || {};
@@ -234,7 +234,7 @@ const IdCards = () => {
   const loadStaff = async () => {
     try {
       const { data, error } = await supabase
-        .from("jmis_staff")
+        .from("bluebell_staff")
         .select("id, name, staff_no, sex, designation, department, profile_pic")
         .neq("status", "blocked")
         .order("name");
@@ -252,7 +252,7 @@ const IdCards = () => {
     setLoadingMore(true);
     try {
       const { data, error } = await supabase
-        .from("jmis_student")
+        .from("bluebell_student")
         .select("id, name, class, sex, passport")
         .order("id")
         .range(p * PAGE_SIZE, p * PAGE_SIZE + PAGE_SIZE - 1);

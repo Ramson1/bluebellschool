@@ -50,7 +50,7 @@ const VIEWS = [
 ];
 
 // Admin view of every class/subject assignment across all academic staff
-// (jmis_staff_assignments). Three ways to work with the same data:
+// (bluebell_staff_assignments). Three ways to work with the same data:
 //   Teacher Matrix — stage a whole teaching map for one staff member
 //                    (form teacher = all subjects, or specific subjects only)
 //   School Grid    — read who owns each class/subject pair school-wide and
@@ -99,7 +99,7 @@ export default function StaffAssignments() {
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => setEmail(user?.email || "admin@school"));
-    supabase.from("jmis_settings").select("session").limit(1).then(({ data }) => {
+    supabase.from("bluebell_settings").select("session").limit(1).then(({ data }) => {
       if (data && data[0]?.session) {
         setSession(data[0].session);
         setMatrixSession(data[0].session);
@@ -113,8 +113,8 @@ export default function StaffAssignments() {
     setLoading(true);
     try {
       const [assignRes, staffRes] = await Promise.all([
-        supabase.from("jmis_staff_assignments").select("*").order("created_at", { ascending: false }).limit(2000),
-        supabase.from("jmis_staff").select("id, name, staff_no, designation").order("name", { ascending: true }),
+        supabase.from("bluebell_staff_assignments").select("*").order("created_at", { ascending: false }).limit(2000),
+        supabase.from("bluebell_staff").select("id, name, staff_no, designation").order("name", { ascending: true }),
       ]);
       if (assignRes.error) throw assignRes.error;
       const map = {};
@@ -164,7 +164,7 @@ export default function StaffAssignments() {
       assignment_type: form.assignment_type,
       academic_session: form.academic_session || null,
     };
-    const res = await supabase.from("jmis_staff_assignments").insert([payload]).select();
+    const res = await supabase.from("bluebell_staff_assignments").insert([payload]).select();
     setSaving(false);
     if (res.error) {
       toast.error(res.error.message?.includes("unique") ? "That staff member already has this assignment." : res.error.message);
@@ -172,7 +172,7 @@ export default function StaffAssignments() {
     }
     logAction(supabase, {
       email, role: "admin", action: "staff_assignment_add",
-      targetTable: "jmis_staff_assignments", recordId: res.data?.[0]?.id,
+      targetTable: "bluebell_staff_assignments", recordId: res.data?.[0]?.id,
       details: { staff: staffName(form.staff_id), class: payload.class, subject: payload.subject, type: form.assignment_type },
     });
     setShow(false);
@@ -183,12 +183,12 @@ export default function StaffAssignments() {
   const confirmDelete = async () => {
     const r = pendingDelete;
     if (!r) return;
-    const { error } = await supabase.from("jmis_staff_assignments").delete().eq("id", r.id);
+    const { error } = await supabase.from("bluebell_staff_assignments").delete().eq("id", r.id);
     setPendingDelete(null);
     if (error) { toast.error(error.message); return; }
     logAction(supabase, {
       email, role: "admin", action: "staff_assignment_delete",
-      targetTable: "jmis_staff_assignments", recordId: r.id,
+      targetTable: "bluebell_staff_assignments", recordId: r.id,
       details: { staff: staffName(r.staff_id), class: r.class, subject: r.subject, type: r.assignment_type },
     });
     setRows((rs) => rs.filter((x) => x.id !== r.id));
@@ -348,12 +348,12 @@ export default function StaffAssignments() {
           assignment_type: c.type,
           academic_session: matrixSession || null,
         };
-        const res = await supabase.from("jmis_staff_assignments").insert([payload]).select();
+        const res = await supabase.from("bluebell_staff_assignments").insert([payload]).select();
         if (res.error) {
           errs.push(`${c.type === "class_teacher" ? "Form teacher" : c.subject} · ${c.class}: ${res.error.message}`);
         } else added++;
       } else if (c.id) {
-        const { error } = await supabase.from("jmis_staff_assignments").delete().eq("id", c.id);
+        const { error } = await supabase.from("bluebell_staff_assignments").delete().eq("id", c.id);
         if (error) errs.push(`Remove ${c.class}${c.subject ? ` · ${c.subject}` : ""}: ${error.message}`);
         else removed++;
       }
@@ -361,13 +361,13 @@ export default function StaffAssignments() {
     // one form teacher per class: the previous holder loses only the
     // class_teacher row, their own subject rows stay untouched
     for (const t of transfers) {
-      const { error } = await supabase.from("jmis_staff_assignments").delete().eq("id", t.from.id);
+      const { error } = await supabase.from("bluebell_staff_assignments").delete().eq("id", t.from.id);
       if (error) errs.push(`Transfer from ${staffName(t.from.staff_id)} (${t.class}): ${error.message}`);
       else moved++;
     }
     logAction(supabase, {
       email, role: "admin", action: "staff_assignment_matrix_save",
-      targetTable: "jmis_staff_assignments",
+      targetTable: "bluebell_staff_assignments",
       details: {
         staff: staffName(matrixStaff), added, removed, transferred: moved,
         session: matrixSession || null,
@@ -449,7 +449,7 @@ export default function StaffAssignments() {
       assignment_type: cell.type,
       academic_session: session || null,
     };
-    const res = await supabase.from("jmis_staff_assignments").insert([payload]).select();
+    const res = await supabase.from("bluebell_staff_assignments").insert([payload]).select();
     if (res.error) {
       toast.error(res.error.message?.includes("unique") ? "That staff member already has this assignment." : res.error.message);
       setCellBusy(false);
@@ -457,17 +457,17 @@ export default function StaffAssignments() {
     }
     logAction(supabase, {
       email, role: "admin", action: "staff_assignment_add",
-      targetTable: "jmis_staff_assignments", recordId: res.data?.[0]?.id,
+      targetTable: "bluebell_staff_assignments", recordId: res.data?.[0]?.id,
       details: { staff: staffName(cellStaff), class: payload.class, subject: payload.subject, type: cell.type },
     });
     // form teacher is a single seat: hand it over from whoever held it
     if (cell.type === "class_teacher") {
       for (const prev of cellCurrent.filter((r) => r.staff_id !== cellStaff)) {
-        const { error } = await supabase.from("jmis_staff_assignments").delete().eq("id", prev.id);
+        const { error } = await supabase.from("bluebell_staff_assignments").delete().eq("id", prev.id);
         if (!error) {
           logAction(supabase, {
             email, role: "admin", action: "staff_assignment_delete",
-            targetTable: "jmis_staff_assignments", recordId: prev.id,
+            targetTable: "bluebell_staff_assignments", recordId: prev.id,
             details: { staff: staffName(prev.staff_id), class: prev.class, type: "class_teacher", note: "form teacher transferred" },
           });
         }
@@ -483,11 +483,11 @@ export default function StaffAssignments() {
   };
 
   const removeCellRow = async (r) => {
-    const { error } = await supabase.from("jmis_staff_assignments").delete().eq("id", r.id);
+    const { error } = await supabase.from("bluebell_staff_assignments").delete().eq("id", r.id);
     if (error) { toast.error(error.message); return; }
     logAction(supabase, {
       email, role: "admin", action: "staff_assignment_delete",
-      targetTable: "jmis_staff_assignments", recordId: r.id,
+      targetTable: "bluebell_staff_assignments", recordId: r.id,
       details: { staff: staffName(r.staff_id), class: r.class, subject: r.subject, type: r.assignment_type },
     });
     await load();

@@ -119,7 +119,7 @@ const AttendanceTaker = () => {
 
   const refreshStaff = useCallback(async () => {
     // Directory shows every staff member; the check-in dropdown filters to active client-side
-    const { data } = await supabase.from("jmis_staff").select("id, name, role, email, phone, status").order("name");
+    const { data } = await supabase.from("bluebell_staff").select("id, name, role, email, phone, status").order("name");
     setStaffList(data || []);
   }, []);
 
@@ -132,8 +132,8 @@ const AttendanceTaker = () => {
         setRoles(r);
 
         const [{ data: settingsData }, { data: studentsData }] = await Promise.all([
-          supabase.from("jmis_settings").select("session, term").limit(1),
-          supabase.from("jmis_student").select("id, name, class").order("name"),
+          supabase.from("bluebell_settings").select("session, term").limit(1),
+          supabase.from("bluebell_student").select("id, name, class").order("name"),
         ]);
         if (settingsData && settingsData[0]) {
           setSettings({ session: settingsData[0].session || "", term: settingsData[0].term || "" });
@@ -153,8 +153,8 @@ const AttendanceTaker = () => {
   const refreshToday = useCallback(async () => {
     const today = todayISO();
     const [{ data: att }, { data: staffAtt }] = await Promise.all([
-      supabase.from("jmis_attendance").select("*").eq("date", today).order("check_in_time", { ascending: false }),
-      supabase.from("jmis_staff_attendance").select("*").eq("date", today).order("check_in_time", { ascending: false }),
+      supabase.from("bluebell_attendance").select("*").eq("date", today).order("check_in_time", { ascending: false }),
+      supabase.from("bluebell_staff_attendance").select("*").eq("date", today).order("check_in_time", { ascending: false }),
     ]);
     setTodayList(att || []);
     setTodayStaff(staffAtt || []);
@@ -169,7 +169,7 @@ const AttendanceTaker = () => {
   const markStudentPresent = async ({ id, name, className }, method, opts = {}) => {
     const today = todayISO();
     const { data: existing } = await supabase
-      .from("jmis_attendance")
+      .from("bluebell_attendance")
       .select("id, check_out_time")
       .eq("student_name", name)
       // class labels are stored with inconsistent casing; ilike without
@@ -180,14 +180,14 @@ const AttendanceTaker = () => {
 
     if (existing && !existing.check_out_time) {
       const { error } = await supabase
-        .from("jmis_attendance")
+        .from("bluebell_attendance")
         .update({ check_out_time: new Date().toISOString(), sign_out_method: method })
         .eq("id", existing.id);
       if (error) throw error;
       toast.info(`${name} signed out (${method})`);
       if (opts.audit) {
         logAction(supabase, {
-          email, role: roleLabel, action: "attendance_signout", targetTable: "jmis_attendance",
+          email, role: roleLabel, action: "attendance_signout", targetTable: "bluebell_attendance",
           recordId: existing.id,
           details: { studentName: name, class: className, date: today, method },
         });
@@ -198,14 +198,14 @@ const AttendanceTaker = () => {
 
     if (existing) {
       const { error } = await supabase
-        .from("jmis_attendance")
+        .from("bluebell_attendance")
         .update({ check_in_time: new Date().toISOString(), method, check_out_time: null, sign_out_method: null })
         .eq("id", existing.id);
       if (error) throw error;
       toast.success(`${name} signed in again (${method})`);
       if (opts.audit) {
         logAction(supabase, {
-          email, role: roleLabel, action: "attendance_checkin", targetTable: "jmis_attendance",
+          email, role: roleLabel, action: "attendance_checkin", targetTable: "bluebell_attendance",
           recordId: existing.id,
           details: { studentName: name, class: className, date: today, method, recheckIn: true },
         });
@@ -215,7 +215,7 @@ const AttendanceTaker = () => {
     }
 
     const { data, error } = await supabase
-      .from("jmis_attendance")
+      .from("bluebell_attendance")
       .insert([{
         student_id: id || null,
         student_name: name,
@@ -240,7 +240,7 @@ const AttendanceTaker = () => {
         email,
         role: roleLabel,
         action: "attendance_manual_checkin",
-        targetTable: "jmis_attendance",
+        targetTable: "bluebell_attendance",
         recordId: data?.[0]?.id,
         details: { studentName: name, class: className, date: today, method },
       });
@@ -253,13 +253,13 @@ const AttendanceTaker = () => {
   const signOutStudentRow = async (r) => {
     try {
       const { error } = await supabase
-        .from("jmis_attendance")
+        .from("bluebell_attendance")
         .update({ check_out_time: new Date().toISOString(), sign_out_method: "manual" })
         .eq("id", r.id);
       if (error) throw error;
       toast.info(`${r.student_name} signed out`);
       logAction(supabase, {
-        email, role: roleLabel, action: "attendance_signout", targetTable: "jmis_attendance",
+        email, role: roleLabel, action: "attendance_signout", targetTable: "bluebell_attendance",
         recordId: r.id, details: { studentName: r.student_name, class: r.class, date: r.date, method: "manual" },
       });
       await refreshToday();
@@ -306,7 +306,7 @@ const AttendanceTaker = () => {
           }
           // verify the student exists before recording
           const { data: match } = await supabase
-            .from("jmis_student")
+            .from("bluebell_student")
             .select("id, name, class")
             .eq("name", parsed.name)
             .eq("class", parsed.class)
@@ -374,7 +374,7 @@ const AttendanceTaker = () => {
       const staff = staffList.find((s) => s.id === selectedStaff);
       const today = todayISO();
       const { data: existing } = await supabase
-        .from("jmis_staff_attendance")
+        .from("bluebell_staff_attendance")
         .select("id, check_out_time")
         .eq("staff_id", staff.id)
         .eq("date", today)
@@ -382,29 +382,29 @@ const AttendanceTaker = () => {
 
       if (existing && !existing.check_out_time) {
         const { error } = await supabase
-          .from("jmis_staff_attendance")
+          .from("bluebell_staff_attendance")
           .update({ check_out_time: new Date().toISOString(), sign_out_method: "manual" })
           .eq("id", existing.id);
         if (error) throw error;
         toast.info(`${staff.name} signed out`);
         logAction(supabase, {
-          email, role: roleLabel, action: "staff_attendance_signout", targetTable: "jmis_staff_attendance",
+          email, role: roleLabel, action: "staff_attendance_signout", targetTable: "bluebell_staff_attendance",
           recordId: existing.id, details: { staffName: staff.name, date: today },
         });
       } else if (existing) {
         const { error } = await supabase
-          .from("jmis_staff_attendance")
+          .from("bluebell_staff_attendance")
           .update({ check_in_time: new Date().toISOString(), check_out_time: null, sign_out_method: null })
           .eq("id", existing.id);
         if (error) throw error;
         toast.success(`${staff.name} signed in again`);
         logAction(supabase, {
-          email, role: roleLabel, action: "staff_attendance_checkin", targetTable: "jmis_staff_attendance",
+          email, role: roleLabel, action: "staff_attendance_checkin", targetTable: "bluebell_staff_attendance",
           recordId: existing.id, details: { staffName: staff.name, date: today, recheckIn: true },
         });
       } else {
         const { data, error } = await supabase
-          .from("jmis_staff_attendance")
+          .from("bluebell_staff_attendance")
           .insert([{ staff_id: staff.id, staff_name: staff.name, role: staff.role || "Staff", date: today }])
           .select();
         if (error && !(error.code === "23505" || /duplicate/i.test(error.message || ""))) throw error;
@@ -416,7 +416,7 @@ const AttendanceTaker = () => {
             email,
             role: roleLabel,
             action: "staff_attendance_checkin",
-            targetTable: "jmis_staff_attendance",
+            targetTable: "bluebell_staff_attendance",
             recordId: data?.[0]?.id,
             details: { staffName: staff.name, date: today },
           });
@@ -435,13 +435,13 @@ const AttendanceTaker = () => {
   const signOutStaffRow = async (r) => {
     try {
       const { error } = await supabase
-        .from("jmis_staff_attendance")
+        .from("bluebell_staff_attendance")
         .update({ check_out_time: new Date().toISOString(), sign_out_method: "manual" })
         .eq("id", r.id);
       if (error) throw error;
       toast.info(`${r.staff_name} signed out`);
       logAction(supabase, {
-        email, role: roleLabel, action: "staff_attendance_signout", targetTable: "jmis_staff_attendance",
+        email, role: roleLabel, action: "staff_attendance_signout", targetTable: "bluebell_staff_attendance",
         recordId: r.id, details: { staffName: r.staff_name, date: r.date },
       });
       await refreshToday();
@@ -451,7 +451,7 @@ const AttendanceTaker = () => {
     }
   };
 
-  // ---- staff directory (jmis_staff) ----
+  // ---- staff directory (bluebell_staff) ----
   const handleAddStaff = async (e) => {
     e.preventDefault();
     const name = staffForm.name.trim();
@@ -462,7 +462,7 @@ const AttendanceTaker = () => {
     setAddingStaff(true);
     try {
       const { data, error } = await supabase
-        .from("jmis_staff")
+        .from("bluebell_staff")
         .insert([{
           name,
           role: staffForm.role.trim() || "Staff",
@@ -477,7 +477,7 @@ const AttendanceTaker = () => {
         email,
         role: roleLabel,
         action: "staff_add",
-        targetTable: "jmis_staff",
+        targetTable: "bluebell_staff",
         recordId: data?.[0]?.id,
         details: { staffName: name, role: staffForm.role },
       });
@@ -494,14 +494,14 @@ const AttendanceTaker = () => {
   const toggleStaffStatus = async (s) => {
     const next = (s.status || "active") === "active" ? "inactive" : "active";
     try {
-      const { error } = await supabase.from("jmis_staff").update({ status: next }).eq("id", s.id);
+      const { error } = await supabase.from("bluebell_staff").update({ status: next }).eq("id", s.id);
       if (error) throw error;
       toast.info(`${s.name} marked ${next}`);
       logAction(supabase, {
         email,
         role: roleLabel,
         action: "staff_status_change",
-        targetTable: "jmis_staff",
+        targetTable: "bluebell_staff",
         recordId: s.id,
         details: { staffName: s.name, status: next },
       });
@@ -515,14 +515,14 @@ const AttendanceTaker = () => {
   const deleteStaff = async (s) => {
     if (!window.confirm(`Remove ${s.name} from the staff directory? Past attendance records are kept.`)) return;
     try {
-      const { error } = await supabase.from("jmis_staff").delete().eq("id", s.id);
+      const { error } = await supabase.from("bluebell_staff").delete().eq("id", s.id);
       if (error) throw error;
       toast.success(`${s.name} removed`);
       logAction(supabase, {
         email,
         role: roleLabel,
         action: "staff_delete",
-        targetTable: "jmis_staff",
+        targetTable: "bluebell_staff",
         recordId: s.id,
         details: { staffName: s.name },
       });
@@ -788,7 +788,7 @@ const AttendanceTaker = () => {
             </Card>
           </div>
 
-          {/* Staff directory — add / manage jmis_staff from the app */}
+          {/* Staff directory — add / manage bluebell_staff from the app */}
           <Card
             icon={<RiUserSettingsLine />}
             tone="purple"

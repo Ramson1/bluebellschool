@@ -127,20 +127,20 @@ export const Home = () => {
   const [academic, setAcademic] = useState({ lessonPlans: [], notes: [], assignments: [] });
 
   // Website enquiries widget — new leads + overdue follow-ups (Phase 3b).
-  // Tolerates a missing jmis_enquiries table (SQL not run yet) by staying 0/empty.
+  // Tolerates a missing bluebell_enquiries table (SQL not run yet) by staying 0/empty.
   useEffect(() => {
     const loadEnquiries = async () => {
       try {
         const today = new Date().toISOString().slice(0, 10);
         const [fresh, overdue, recent] = await Promise.all([
-          supabase.from("jmis_enquiries").select("*", { count: "exact", head: true }).eq("status", "new"),
+          supabase.from("bluebell_enquiries").select("*", { count: "exact", head: true }).eq("status", "new"),
           supabase
-            .from("jmis_enquiries")
+            .from("bluebell_enquiries")
             .select("*", { count: "exact", head: true })
             .lt("next_follow_up", today)
             .not("status", "in", "(closed,resolved)"),
           supabase
-            .from("jmis_enquiries")
+            .from("bluebell_enquiries")
             .select("name, email, enquiry_type, created_at")
             .eq("status", "new")
             .order("created_at", { ascending: false })
@@ -164,17 +164,17 @@ export const Home = () => {
     const loadAttendanceStats = async () => {
       try {
         const today = new Date().toISOString().slice(0, 10);
-        const { data: settingsData } = await supabase.from("jmis_settings").select("session, term").limit(1);
+        const { data: settingsData } = await supabase.from("bluebell_settings").select("session, term").limit(1);
         const current = settingsData && settingsData[0] ? settingsData[0] : {};
 
-        let studentsTodayQ = supabase.from("jmis_attendance").select("*", { count: "exact", head: true }).eq("date", today);
-        let staffTodayQ = supabase.from("jmis_staff_attendance").select("*", { count: "exact", head: true }).eq("date", today);
-        let studentsTermQ = supabase.from("jmis_attendance").select("*", { count: "exact", head: true });
+        let studentsTodayQ = supabase.from("bluebell_attendance").select("*", { count: "exact", head: true }).eq("date", today);
+        let staffTodayQ = supabase.from("bluebell_staff_attendance").select("*", { count: "exact", head: true }).eq("date", today);
+        let studentsTermQ = supabase.from("bluebell_attendance").select("*", { count: "exact", head: true });
         // staff attendance has no term column – use a current-month date range instead
         const monthStart = today.slice(0, 8) + "01";
         // real last day of month — a hard-coded "31" is out of range in short months
         const monthEnd = endOfMonth(today.slice(0, 7));
-        let staffTermQ = supabase.from("jmis_staff_attendance").select("*", { count: "exact", head: true }).gte("date", monthStart).lte("date", monthEnd);
+        let staffTermQ = supabase.from("bluebell_staff_attendance").select("*", { count: "exact", head: true }).gte("date", monthStart).lte("date", monthEnd);
         if (current.term) {
           studentsTermQ = studentsTermQ.eq("term", current.term);
           if (current.session) studentsTermQ = studentsTermQ.eq("session", current.session);
@@ -204,22 +204,22 @@ export const Home = () => {
     const loadRecents = async () => {
       const [att, stu, res, q] = await Promise.allSettled([
         supabase
-          .from("jmis_attendance")
+          .from("bluebell_attendance")
           .select("student_name, class, check_in_time, method")
           .order("check_in_time", { ascending: false })
           .limit(12),
         supabase
-          .from("jmis_student")
+          .from("bluebell_student")
           .select("id, name, class, sex")
           .order("id", { ascending: false })
           .limit(8),
         supabase
-          .from("jmis_cbt_results")
+          .from("bluebell_cbt_results")
           .select("studentName, studentClass, subject, term, percentage, sessionType, created_at")
           .order("created_at", { ascending: false })
           .limit(8),
         supabase
-          .from("jmis_cbtQuestions")
+          .from("bluebell_cbtQuestions")
           .select("subject, class, purpose, term, created_at")
           .order("created_at", { ascending: false })
           .limit(8),
@@ -242,17 +242,17 @@ export const Home = () => {
     const loadAcademic = async () => {
       const [plans, notes, assigns] = await Promise.allSettled([
         supabase
-          .from("jmis_lesson_plans")
+          .from("bluebell_lesson_plans")
           .select("class, subject, topic, teacher_name, submitted_by, review_status, academic_session, term, updated_at")
           .order("updated_at", { ascending: false })
           .limit(8),
         supabase
-          .from("jmis_notes")
+          .from("bluebell_notes")
           .select("class, subject, title, uploaded_by, academic_session, term, created_at")
           .order("created_at", { ascending: false })
           .limit(8),
         supabase
-          .from("jmis_assignments")
+          .from("bluebell_assignments")
           .select("class, subject, title, assignment_type, due_date, created_by, created_at")
           .order("created_at", { ascending: false })
           .limit(8),
@@ -280,8 +280,8 @@ export const Home = () => {
 
         // Fetch all required data in parallel
         const [teacherData, userData] = await Promise.all([
-          supabase.from("jmis_teacherauth").select("*"),
-          supabase.from("jmis_userauth").select("*"),
+          supabase.from("bluebell_teacherauth").select("*"),
+          supabase.from("bluebell_userauth").select("*"),
         ]);
 
         // Handle teacher auth data
@@ -311,7 +311,7 @@ export const Home = () => {
   async function getProducts() {
     try {
       const { data, error } = await supabase
-        .from("jmis_paymentsinfo")
+        .from("bluebell_paymentsinfo")
         .select("*");
       if (error) throw error;
       if (data != null) {
@@ -327,7 +327,7 @@ export const Home = () => {
     const getTotalStudents = async () => {
       try {
         const { count, error } = await supabase
-          .from("jmis_student")
+          .from("bluebell_student")
           .select("*", { count: "exact", head: true });
         if (error) throw error;
         setTotalStudents(count || 0);

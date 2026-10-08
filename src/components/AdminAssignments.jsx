@@ -4,11 +4,11 @@ import React from "react";
 import { RiFileTextLine } from "react-icons/ri";
 import { makeAdminAcademicsPage } from "./AdminAcademicsKit.jsx";
 
-// Admin oversight/management of assignments/assessments/projects (jmis_assignments).
+// Admin oversight/management of assignments/assessments/projects (bluebell_assignments).
 const TERMS = ["First Term", "Second Term", "Third Term"];
 
 const AdminAssignments = makeAdminAcademicsPage({
-  table: "jmis_assignments",
+  table: "bluebell_assignments",
   title: "Assignments",
   singular: "assignment",
   icon: RiFileTextLine,

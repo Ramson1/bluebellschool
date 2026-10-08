@@ -8,7 +8,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { RiArchive2Line, RiEyeLine, RiRefreshLine, RiLockLine } from "react-icons/ri";
 
-// Result Archive — every result ever recorded, drawn from jmis_result_history.
+// Result Archive — every result ever recorded, drawn from bluebell_result_history.
 // These rows are copies made at each new-session rollover (Settings) and when a
 // student is removed from the active list (Full Student Record). Because the
 // archive stores the student's NAME and CLASS alongside the scores, a result
@@ -53,7 +53,7 @@ export default function ResultHistory() {
 
         // Admin / dev gate (mirrors the Full Student Record guard).
         const [ua, da] = await Promise.all([
-          supabase.from("jmis_userauth").select("email"),
+          supabase.from("bluebell_userauth").select("email"),
           supabase.from("devauth").select("email"),
         ]);
         const admins = (ua.data || []).map((r) => (r.email || "").toLowerCase());
@@ -89,13 +89,13 @@ export default function ResultHistory() {
     try {
       const [hist, cur, st] = await Promise.all([
         supabase
-          .from("jmis_result_history")
+          .from("bluebell_result_history")
           .select("*")
           .order("archived_at", { ascending: false }),
         includeCurrent
-          ? supabase.from("jmis_result").select("*")
+          ? supabase.from("bluebell_result").select("*")
           : Promise.resolve({ data: [] }),
-        supabase.from("jmis_settings").select("session, term").limit(1),
+        supabase.from("bluebell_settings").select("session, term").limit(1),
       ]);
 
       if (hist.error) {
@@ -143,7 +143,7 @@ export default function ResultHistory() {
     let passportRow = {};
     try {
       const { data } = await supabase
-        .from("jmis_student")
+        .from("bluebell_student")
         .select("*")
         .eq("id", row.studentId)
         .maybeSingle();

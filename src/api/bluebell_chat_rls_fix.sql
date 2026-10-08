@@ -2,9 +2,9 @@
 -- Bluebell chat RLS fix — restore messaging after RLS was enabled on the chat tables
 -- -----------------------------------------------------------------------------
 -- SYMPTOM: creating a new thread in the Messages page fails with
---   "new row violates row-level security policy for table jmis_chat_conversations"
+--   "new row violates row-level security policy for table bluebell_chat_conversations"
 --
--- ROOT CAUSE: bluebellschool/src/api/jmis_chat_setup.sql creates the two chat tables
+-- ROOT CAUSE: bluebellschool/src/api/bluebell_chat_setup.sql creates the two chat tables
 -- WITHOUT Row Level Security (the chat is capability-addressed: threads are read
 -- and written by anyone holding an unguessable conversation uuid, mirroring the
 -- rest of the platform which reads student data with the anon key). RLS has since
@@ -24,35 +24,35 @@
 -- =============================================================================
 
 -- ---------------------------------------------------------------------------
--- jmis_chat_conversations
+-- bluebell_chat_conversations
 -- ---------------------------------------------------------------------------
-ALTER TABLE public.jmis_chat_conversations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.bluebell_chat_conversations ENABLE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS "chat_convo_anon_all"     ON public.jmis_chat_conversations;
-DROP POLICY IF EXISTS "chat_convo_authed_all"   ON public.jmis_chat_conversations;
+DROP POLICY IF EXISTS "chat_convo_anon_all"     ON public.bluebell_chat_conversations;
+DROP POLICY IF EXISTS "chat_convo_authed_all"   ON public.bluebell_chat_conversations;
 
 CREATE POLICY "chat_convo_anon_all"
-  ON public.jmis_chat_conversations FOR ALL TO anon
+  ON public.bluebell_chat_conversations FOR ALL TO anon
   USING (true) WITH CHECK (true);
 
 CREATE POLICY "chat_convo_authed_all"
-  ON public.jmis_chat_conversations FOR ALL TO authenticated
+  ON public.bluebell_chat_conversations FOR ALL TO authenticated
   USING (true) WITH CHECK (true);
 
 -- ---------------------------------------------------------------------------
--- jmis_chat_messages
+-- bluebell_chat_messages
 -- ---------------------------------------------------------------------------
-ALTER TABLE public.jmis_chat_messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.bluebell_chat_messages ENABLE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS "chat_msg_anon_all"       ON public.jmis_chat_messages;
-DROP POLICY IF EXISTS "chat_msg_authed_all"     ON public.jmis_chat_messages;
+DROP POLICY IF EXISTS "chat_msg_anon_all"       ON public.bluebell_chat_messages;
+DROP POLICY IF EXISTS "chat_msg_authed_all"     ON public.bluebell_chat_messages;
 
 CREATE POLICY "chat_msg_anon_all"
-  ON public.jmis_chat_messages FOR ALL TO anon
+  ON public.bluebell_chat_messages FOR ALL TO anon
   USING (true) WITH CHECK (true);
 
 CREATE POLICY "chat_msg_authed_all"
-  ON public.jmis_chat_messages FOR ALL TO authenticated
+  ON public.bluebell_chat_messages FOR ALL TO authenticated
   USING (true) WITH CHECK (true);
 
 -- ---------------------------------------------------------------------------
@@ -61,5 +61,5 @@ CREATE POLICY "chat_msg_authed_all"
 SELECT tablename, policyname, cmd, roles
 FROM pg_policies
 WHERE schemaname = 'public'
-  AND tablename IN ('jmis_chat_conversations', 'jmis_chat_messages')
+  AND tablename IN ('bluebell_chat_conversations', 'bluebell_chat_messages')
 ORDER BY tablename, policyname;

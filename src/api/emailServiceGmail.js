@@ -41,9 +41,9 @@
 //       return res.status(400).json({ error: 'Missing required fields: subject, and either text or html' });
 //     }
 
-//     // Fetch admin email from jmis_settings table
+//     // Fetch admin email from bluebell_settings table
 //     const { data: settings, error: settingsError } = await supabase
-//       .from('jmis_settings')
+//       .from('bluebell_settings')
 //       .select('adminEmail')
 //       .limit(1);
 
@@ -55,7 +55,7 @@
 //     const adminEmail = settings && settings.length > 0 ? settings[0].adminEmail : null;
 //     
 //     if (!adminEmail) {
-//       console.warn('Admin email not configured in jmis_settings');
+//       console.warn('Admin email not configured in bluebell_settings');
 //       return res.status(400).json({ error: 'Admin email not configured' });
 //     }
 

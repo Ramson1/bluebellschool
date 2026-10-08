@@ -7,14 +7,14 @@
 Open Supabase SQL Editor and run:
 
 ```sql
-ALTER TABLE jmis_settings 
+ALTER TABLE bluebell_settings 
 ADD COLUMN IF NOT EXISTS additionalEmails TEXT;
 ```
 
 Then configure your recipients:
 
 ```sql
-UPDATE jmis_settings 
+UPDATE bluebell_settings 
 SET 
   adminEmail = 'principal@bluebellschool.com',
   additionalEmails = 'registrar@bluebellschool.com,ict@bluebellschool.com';

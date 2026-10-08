@@ -95,7 +95,7 @@ const [newDetailContent, setNewDetailContent] = useState('');
     const fetchTeacherAuth = async () => {
       try {
         const { data, error } = await supabase
-          .from('jmis_teacherauth')
+          .from('bluebell_teacherauth')
           .select('email');
         if (error) throw error;
         setTeacherAuth(data);
@@ -105,7 +105,7 @@ const [newDetailContent, setNewDetailContent] = useState('');
     const fetchData = async () => {
       try {
         const { data: settings } = await supabase
-        .from('jmis_settings')
+        .from('bluebell_settings')
         .select('*')
         .single();
 
@@ -135,7 +135,7 @@ const [newDetailContent, setNewDetailContent] = useState('');
       // Fetch class-specific fees
       try {
         const { data: classFeesData, error: classFeesError } = await supabase
-          .from('jmis_class_specific_fees')
+          .from('bluebell_class_specific_fees')
           .select('*');
           
         if (classFeesError) throw classFeesError;
@@ -156,7 +156,7 @@ const [newDetailContent, setNewDetailContent] = useState('');
     const fetchUserAuth = async () => {
       try {
         const { data, error } = await supabase
-          .from('jmis_userauth') // Assuming 'userauth' is the table name
+          .from('bluebell_userauth') // Assuming 'userauth' is the table name
           .select('email');
         if (error) throw error;
         setUserAuth(data); // Set userauth from Supabase
@@ -261,7 +261,7 @@ const processImages = async (contentArray) => {
         user_id: user.id,
       };
     // Check if settings for the user already exist
-    const { data: existingSettingsData, error: fetchError } = await supabase.from('jmis_settings').select('*').eq('user_id', user.id);
+    const { data: existingSettingsData, error: fetchError } = await supabase.from('bluebell_settings').select('*').eq('user_id', user.id);
     
     if (fetchError) {
       console.error('Error fetching existing settings:', fetchError);
@@ -272,8 +272,8 @@ const processImages = async (contentArray) => {
     const existingSettings = existingSettingsData && existingSettingsData.length > 0 ? existingSettingsData[0] : null;
     
     const query = existingSettings
-      ? supabase.from('jmis_settings').update(settingsData).eq('user_id', user.id) // Update existing settings
-      : supabase.from('jmis_settings').insert([settingsData]); // Insert new settings if none exist
+      ? supabase.from('bluebell_settings').update(settingsData).eq('user_id', user.id) // Update existing settings
+      : supabase.from('bluebell_settings').insert([settingsData]); // Insert new settings if none exist
 
           const { error: saveError } = await query;
       if (saveError) {
@@ -284,7 +284,7 @@ const processImages = async (contentArray) => {
       // Save class-specific fees
       for (const fee of classFees) {
         const { error: feeError } = await supabase
-          .from('jmis_class_specific_fees')
+          .from('bluebell_class_specific_fees')
           .update({ next_term_fees: fee.next_term_fees })
           .eq('class_name', fee.class_name);
           
@@ -301,7 +301,7 @@ const processImages = async (contentArray) => {
       email: user?.user_metadata?.email,
       role: 'admin',
       action: 'settings_save',
-      targetTable: 'jmis_settings',
+      targetTable: 'bluebell_settings',
       details: { session, term },
     });
   } catch (e) {
@@ -675,7 +675,7 @@ const handleRemoveDetail = (index) => {
 
                           // Save the updated value to Supabase
                           const { error } = await supabase
-                            .from('jmis_settings')
+                            .from('bluebell_settings')
                             .update({ lockResult: newLockResult })
                             .eq('user_id', user.id);
 

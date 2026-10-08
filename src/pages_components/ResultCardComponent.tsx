@@ -282,7 +282,7 @@ const ResultCardComponent: React.FC<{ studentData?: ExtendedStudentData; passpor
   const fetchSettingsTable = async () => {
     try {
       // Query the 'settings' table
-      const { data, error } = await supabase.from('jmis_settings').select('*');
+      const { data, error } = await supabase.from('bluebell_settings').select('*');
 
       // Handle errors if any occur
       if (error) {
@@ -306,7 +306,7 @@ const ResultCardComponent: React.FC<{ studentData?: ExtendedStudentData; passpor
     
     try {
       const { data, error } = await supabase
-        .from('jmis_result')
+        .from('bluebell_result')
         .select('*')
         .eq('studentClass', studentData.studentClass);
       if (error) throw error;
@@ -320,7 +320,7 @@ const ResultCardComponent: React.FC<{ studentData?: ExtendedStudentData; passpor
   const classFee = async () => {
     try {
       const { data: classFeesData, error: classFeesError } = await supabase
-        .from('jmis_class_specific_fees')
+        .from('bluebell_class_specific_fees')
         .select('*');
       if (classFeesError) throw classFeesError;
       setClassFees(classFeesData || []); // Update state with the fetched data
@@ -333,7 +333,7 @@ const ResultCardComponent: React.FC<{ studentData?: ExtendedStudentData; passpor
   const classBalance = async () => {
     try {
       const { data: classBalData, error: classBalError } = await supabase
-        .from('jmis_paymentsinfo')
+        .from('bluebell_paymentsinfo')
         .select('*');
       if (classBalError) throw classBalError;
       setClassBal(classBalData || []); // Update state with the fetched data
@@ -353,7 +353,7 @@ const ResultCardComponent: React.FC<{ studentData?: ExtendedStudentData; passpor
       const set = selectedTerm;
       try {
         const { data: paymentsData, error: paymentsError } = await supabase
-          .from('jmis_paymentsinfo')
+          .from('bluebell_paymentsinfo')
           .select('*')
           .eq('name', studentData.studentName)
           .eq('currentterm', set);
@@ -653,7 +653,7 @@ const ResultCardComponent: React.FC<{ studentData?: ExtendedStudentData; passpor
 
   useEffect(() => {
     const updateTokenCount = async () => {
-      // Token budget now lives on jmis_student (single source of truth).
+      // Token budget now lives on bluebell_student (single source of truth).
       // Consume one view from the student's shared count, keyed by studentId.
       // Guard on preventTokenUpdate so admin previews don't consume tokens.
       if (studentData?.tokenCount !== undefined && studentData?.studentId && (!propStudentData || !propStudentData.preventTokenUpdate)) {
@@ -662,7 +662,7 @@ const ResultCardComponent: React.FC<{ studentData?: ExtendedStudentData; passpor
 
         // Decrement the student's budget in the database
         const { error } = await supabase
-          .from('jmis_student')
+          .from('bluebell_student')
           .update({ tokenCount: newTokenCount })
           .eq('id', studentData.studentId);
 

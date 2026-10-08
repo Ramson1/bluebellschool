@@ -5,7 +5,7 @@
 // service-role API route), shows the auto-generated default password, and
 // stores the staff row with staff_no auto-filled by a DB trigger.
 // Developers (super_admin) additionally get a Password column holding the
-// password on record for every staff member, read from jmis_staff_credentials
+// password on record for every staff member, read from bluebell_staff_credentials
 // through /api/staff-credentials. That route enforces the developer check —
 // the isDev test below only decides whether to ask for the list at all.
 // Admins can also reset passwords and block/suspend/activate staff here;
@@ -138,7 +138,7 @@ export default function StaffAccounts() {
     if (!allowed) return;
     loadStaff();
     if (showPasswords) loadCredentials();
-    supabase.from("jmis_settings").select("session").limit(1).then(({ data }) => {
+    supabase.from("bluebell_settings").select("session").limit(1).then(({ data }) => {
       if (data?.[0]?.session) setSession(data[0].session);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -151,7 +151,7 @@ export default function StaffAccounts() {
       // Supabase role can only see a staff member's OWN assignment rows, so a
       // direct read here would look empty and the edit modal would seed nothing.
       const [staffRes, assignJson] = await Promise.all([
-        supabase.from("jmis_staff").select("*").order("name", { ascending: true }),
+        supabase.from("bluebell_staff").select("*").order("name", { ascending: true }),
         api("/api/staff-assignments", "GET").then((j) => { setAssignmentsOk(true); return j; })
           .catch((e) => {
             setAssignmentsOk(false);
@@ -245,7 +245,7 @@ export default function StaffAccounts() {
   const openEdit = (row) => {
     setEditing(row);
     // Seed the inline editor from this staff member's session-scoped
-    // jmis_staff_assignments rows so the diff on save only touches real changes.
+    // bluebell_staff_assignments rows so the diff on save only touches real changes.
     const seeded = (assignmentsByStaff[row.id] || [])
       .filter((a) => !a.academic_session || !session || a.academic_session === session)
       .map((a) => ({
@@ -332,7 +332,7 @@ export default function StaffAccounts() {
         picPath = await uploadPic(picFile);
       }
       // Only Academic staff carry class/subject assignments. The authoritative
-      // per-class access lives in jmis_staff_assignments; the flat subjects /
+      // per-class access lives in bluebell_staff_assignments; the flat subjects /
       // class_assigned columns are kept as a derived snapshot for the directory
       // display and the staff portal's legacy fallback.
       const isAcademic = form.department === "Academic";
@@ -357,7 +357,7 @@ export default function StaffAccounts() {
         staffId = updated.id;
         setStaff((list) => list.map((s) => (s.id === editing.id ? updated : s)));
         logAction(supabase, {
-          email, role: actorRole, action: "staff_update", targetTable: "jmis_staff",
+          email, role: actorRole, action: "staff_update", targetTable: "bluebell_staff",
           recordId: updated.id, details: { before: editing, after: updated },
         });
         toast.success("Staff record updated");
@@ -366,7 +366,7 @@ export default function StaffAccounts() {
         staffId = created.id;
         setStaff((list) => [...list, created].sort((a, b) => (a.name || "").localeCompare(b.name || "")));
         logAction(supabase, {
-          email, role: actorRole, action: "staff_add", targetTable: "jmis_staff",
+          email, role: actorRole, action: "staff_add", targetTable: "bluebell_staff",
           recordId: created.id, details: { name: created.name, email: created.email, staff_no: created.staff_no },
         });
         setPwModal({
@@ -378,7 +378,7 @@ export default function StaffAccounts() {
       }
 
       // Write class/subject rows — the staff portal reads exactly these.
-      // The API route reconciles jmis_staff_assignments with the service-role
+      // The API route reconciles bluebell_staff_assignments with the service-role
       // key, so the write succeeds regardless of the browser session's role.
       // Skipped when the current assignment list failed to load: diffing
       // against a stale/empty seed would wrongly delete stored rows.
@@ -392,7 +392,7 @@ export default function StaffAccounts() {
           } else {
             if ((res.added || 0) + (res.removed || 0) > 0) {
               logAction(supabase, {
-                email, role: actorRole, action: "staff_assignments_sync", targetTable: "jmis_staff_assignments",
+                email, role: actorRole, action: "staff_assignments_sync", targetTable: "bluebell_staff_assignments",
                 recordId: staffId, details: { added: res.added, removed: res.removed },
               });
             }
@@ -437,7 +437,7 @@ export default function StaffAccounts() {
     try {
       const { tempPassword } = await api(`/api/staff-accounts/${row.id}`, "PATCH", { action: "reset_password" });
       logAction(supabase, {
-        email, role: actorRole, action: "staff_password_reset", targetTable: "jmis_staff",
+        email, role: actorRole, action: "staff_password_reset", targetTable: "bluebell_staff",
         recordId: row.id, details: { name: row.name },
       });
       setPwModal({ show: true, password: tempPassword, title: `New password for ${row.name}` });
@@ -486,7 +486,7 @@ export default function StaffAccounts() {
       const { staff: updated } = await api(`/api/staff-accounts/${row.id}`, "PATCH", { action: "set_status", status });
       setStaff((list) => list.map((s) => (s.id === row.id ? updated : s)));
       logAction(supabase, {
-        email, role: actorRole, action: "staff_status_change", targetTable: "jmis_staff",
+        email, role: actorRole, action: "staff_status_change", targetTable: "bluebell_staff",
         recordId: row.id, details: { name: row.name, status },
       });
       toast.success(`${row.name} is now ${status}`);
@@ -529,7 +529,7 @@ export default function StaffAccounts() {
         return next;
       });
       logAction(supabase, {
-        email, role: actorRole, action: "staff_delete", targetTable: "jmis_staff",
+        email, role: actorRole, action: "staff_delete", targetTable: "bluebell_staff",
         recordId: row.id, details: { name: row.name, email: row.email, staff_no: row.staff_no },
       });
       toast.success(`${row.name} removed from the system`);
@@ -549,7 +549,7 @@ export default function StaffAccounts() {
   };
 
   // Class/subject assignment is edited inline via the "Class & Subjects" editor
-  // in the modal (syncStaffAssignments writes jmis_staff_assignments). The
+  // in the modal (syncStaffAssignments writes bluebell_staff_assignments). The
   // dedicated School-wide Staff Assignments page (/staff_assignments) manages
   // the same rows for bulk / cross-staff work.
 
@@ -560,7 +560,7 @@ export default function StaffAccounts() {
   };
 
   // Directory cell: subjects grouped by the class they apply to, straight from
-  // jmis_staff_assignments. Falls back to the legacy flat fields when a staff
+  // bluebell_staff_assignments. Falls back to the legacy flat fields when a staff
   // has no assignment rows.
   const assignmentCell = (s) => {
     const rows = (assignmentsByStaff[s.id] || []).filter(

@@ -1,5 +1,5 @@
 -- =====================================================================
--- NEW TABLE: jmis_assignment_submissions (student -> teacher submissions)
+-- NEW TABLE: bluebell_assignment_submissions (student -> teacher submissions)
 -- Requirement 10: students submit their assignment / assessment / project
 -- work (text and/or a file) to the teacher who set it; the teacher reviews
 -- it in the staff portal (Submissions page).
@@ -12,9 +12,9 @@
 -- storage policy is required here.
 -- =====================================================================
 
-CREATE TABLE IF NOT EXISTS jmis_assignment_submissions (
+CREATE TABLE IF NOT EXISTS bluebell_assignment_submissions (
   id              bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  assignment_id   bigint NOT NULL,        -- references jmis_assignments.id (no FK, matches platform style)
+  assignment_id   bigint NOT NULL,        -- references bluebell_assignments.id (no FK, matches platform style)
   class           text NOT NULL,
   subject         text,
   student_id      bigint,
@@ -29,22 +29,22 @@ CREATE TABLE IF NOT EXISTS jmis_assignment_submissions (
 -- One submission per student per assignment — enables an idempotent upsert
 -- (re-submitting edits the same row instead of creating duplicates).
 CREATE UNIQUE INDEX IF NOT EXISTS uq_submission_assignment_student
-  ON jmis_assignment_submissions (assignment_id, student_id);
+  ON bluebell_assignment_submissions (assignment_id, student_id);
 CREATE INDEX IF NOT EXISTS idx_submission_assignment
-  ON jmis_assignment_submissions (assignment_id);
+  ON bluebell_assignment_submissions (assignment_id);
 
 -- RLS: students submit without a full login (token access, anon key) and the
 -- staff/admin read + review with an authenticated session. Mirror the
 -- permissive posture of the other jmis platform tables (chat / academics).
-ALTER TABLE jmis_assignment_submissions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE bluebell_assignment_submissions ENABLE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS "submissions_anon_all"   ON jmis_assignment_submissions;
-DROP POLICY IF EXISTS "submissions_authed_all" ON jmis_assignment_submissions;
-CREATE POLICY "submissions_anon_all"   ON jmis_assignment_submissions FOR ALL TO anon          USING (true) WITH CHECK (true);
-CREATE POLICY "submissions_authed_all" ON jmis_assignment_submissions FOR ALL TO authenticated USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "submissions_anon_all"   ON bluebell_assignment_submissions;
+DROP POLICY IF EXISTS "submissions_authed_all" ON bluebell_assignment_submissions;
+CREATE POLICY "submissions_anon_all"   ON bluebell_assignment_submissions FOR ALL TO anon          USING (true) WITH CHECK (true);
+CREATE POLICY "submissions_authed_all" ON bluebell_assignment_submissions FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
 -- Verify
 SELECT column_name, data_type
 FROM information_schema.columns
-WHERE table_name = 'jmis_assignment_submissions'
+WHERE table_name = 'bluebell_assignment_submissions'
 ORDER BY ordinal_position;

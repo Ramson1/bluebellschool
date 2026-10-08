@@ -71,15 +71,15 @@ export default function SecretaryView() {
       try {
         const [stuRes, staffRes, assignRes] = await Promise.all([
           supabase
-            .from("jmis_student")
+            .from("bluebell_student")
             .select("id, name, class, sex, parentcontact, passport, token")
             .order("name", { ascending: true }),
           supabase
-            .from("jmis_staff")
+            .from("bluebell_staff")
             .select("id, staff_no, name, sex, designation, department, email, phone, address, class_assigned, subjects, profile_pic, status")
             .order("name", { ascending: true }),
           // assignments table may not exist until the SQL migration runs — never fatal
-          Promise.resolve(supabase.from("jmis_staff_assignments").select("staff_id, class, subject, assignment_type")).catch(() => ({ data: [], error: null })),
+          Promise.resolve(supabase.from("bluebell_staff_assignments").select("staff_id, class, subject, assignment_type")).catch(() => ({ data: [], error: null })),
         ]);
         if (stuRes.error) throw stuRes.error;
         if (staffRes.error) throw staffRes.error;

@@ -13,7 +13,7 @@ import { requireAdminCaller, serviceClient } from '@/src/utils/serverAdminAuth';
 // email is sent, so the provisional @bluebellschool.com mailboxes are irrelevant.
 //
 // Enforced server-side via requireAdminCaller (UI gating is not a boundary).
-// Ephemeral by design: nothing is written to jmis_auditlogs, and the token is
+// Ephemeral by design: nothing is written to bluebell_auditlogs, and the token is
 // never logged. Returns { url } — a fully-formed staff-portal URL whose hash
 // fragment carries the one-time token (a fragment is not sent to any server,
 // stored in history, or leaked via referrer).
@@ -31,7 +31,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
     const admin = serviceClient();
     const { data: staff, error: fetchErr } = await admin
-      .from('jmis_staff')
+      .from('bluebell_staff')
       .select('*')
       .eq('id', id)
       .maybeSingle();

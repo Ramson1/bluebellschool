@@ -67,8 +67,8 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
         
         setUser(currentUser);
 
-        // Admin dashboard lockdown: only admin (jmis_userauth), developer
-        // (devauth + hard-coded fallback) and the secretary (jmis_secretaryauth)
+        // Admin dashboard lockdown: only admin (bluebell_userauth), developer
+        // (devauth + hard-coded fallback) and the secretary (bluebell_secretaryauth)
         // may enter. Teachers are no longer admitted — the Staff Portal
         // (separate project) is their home. fetchAuthRoles tolerates the
         // secretary table missing until the SQL migration has been run.

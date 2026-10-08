@@ -56,7 +56,7 @@ export default function FullPayment() {
         
         // Fetch all required data in parallel
         const [teacherData] = await Promise.all([
-          supabase.from('jmis_teacherauth').select('email')
+          supabase.from('bluebell_teacherauth').select('email')
         ]);
         
         // Handle teacher auth data
@@ -89,7 +89,7 @@ export default function FullPayment() {
     // Fetch all payment records
     async function fetchPayments() {
       try {
-        const { data, error } = await supabase.from("jmis_paymentsinfo").select("*");
+        const { data, error } = await supabase.from("bluebell_paymentsinfo").select("*");
         if (error) throw error;
         if (data != null) {
           setPay(data);
@@ -114,7 +114,7 @@ export default function FullPayment() {
     try {
       // First, get the payment details before deleting
       const { data: paymentData, error: fetchError } = await supabase
-        .from("jmis_paymentsinfo")
+        .from("bluebell_paymentsinfo")
         .select('*')
         .eq("id", id)
         .single();
@@ -124,7 +124,7 @@ export default function FullPayment() {
         return;
       }
       
-      const { error } = await supabase.from("jmis_paymentsinfo").delete().eq("id", id);
+      const { error } = await supabase.from("bluebell_paymentsinfo").delete().eq("id", id);
       if (error) {
         toast.error("Error deleting payment: " + error.message);
         return;
@@ -157,7 +157,7 @@ Date: ${paymentData.date}`;
 
   async function handleSave(paymentId) {
     // Save updated payment details
-    const { data, error } = await supabase.from("jmis_paymentsinfo").update(editedPayment).eq("id", paymentId);
+    const { data, error } = await supabase.from("bluebell_paymentsinfo").update(editedPayment).eq("id", paymentId);
 
     if (error) {
       toast.error(error.message);
@@ -174,7 +174,7 @@ Date: ${paymentData.date}`;
     // Fetch user authorization data
     const fetchUserAuth = async () => {
       try {
-        const { data, error } = await supabase.from("jmis_userauth").select("email");
+        const { data, error } = await supabase.from("bluebell_userauth").select("email");
         if (error) throw error;
         setUserAuth(data);
       } catch (error) {

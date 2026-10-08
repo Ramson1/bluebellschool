@@ -1,7 +1,7 @@
 "use client";
 
 // Enquiries — website enquiry follow-up pipeline (Phase 3b). Every contact /
-// admissions form on bluebellschool-website lands in jmis_enquiries; this page is
+// admissions form on bluebellschool-website lands in bluebell_enquiries; this page is
 // where admin/dev triage status, log follow-up notes, set the next callback
 // date and reply directly to the parent by email (via /api/send-email).
 // Only admins/developers may open this page.
@@ -84,7 +84,7 @@ export default function Enquiries() {
     setLoadingData(true);
     try {
       const { data, error } = await supabase
-        .from("jmis_enquiries")
+        .from("bluebell_enquiries")
         .select("*")
         .order("created_at", { ascending: false })
         .limit(500);
@@ -92,7 +92,7 @@ export default function Enquiries() {
       setRows(data || []);
     } catch (e) {
       console.error("Failed to load enquiries:", e);
-      toast.error("Could not load enquiries. Is jmis_enquiries created? (Run platform_website_enquiries_setup.sql)");
+      toast.error("Could not load enquiries. Is bluebell_enquiries created? (Run platform_website_enquiries_setup.sql)");
     } finally {
       setLoadingData(false);
     }
@@ -129,7 +129,7 @@ export default function Enquiries() {
 
   const patchRow = async (id, patch) => {
     const { data, error } = await supabase
-      .from("jmis_enquiries")
+      .from("bluebell_enquiries")
       .update(patch)
       .eq("id", id)
       .select()
@@ -145,7 +145,7 @@ export default function Enquiries() {
       await patchRow(row.id, { status });
       logAction(supabase, {
         email, role: actorRole, action: "enquiry_status",
-        targetTable: "jmis_enquiries", recordId: String(row.id),
+        targetTable: "bluebell_enquiries", recordId: String(row.id),
         details: { status, from: row.status, contact: row.email },
       });
       toast.success(`Marked ${STATUS_LABELS[status] || status}`);
@@ -173,7 +173,7 @@ export default function Enquiries() {
       setNoteText("");
       logAction(supabase, {
         email, role: actorRole, action: "enquiry_note",
-        targetTable: "jmis_enquiries", recordId: String(selected.id),
+        targetTable: "bluebell_enquiries", recordId: String(selected.id),
         details: { contact: selected.email, chars: text.length },
       });
       toast.success("Follow-up note added");
@@ -210,7 +210,7 @@ export default function Enquiries() {
       });
       logAction(supabase, {
         email, role: actorRole, action: "enquiry_reply",
-        targetTable: "jmis_enquiries", recordId: String(selected.id),
+        targetTable: "bluebell_enquiries", recordId: String(selected.id),
         details: { to: selected.email, subject: reply.subject },
       });
       setReplyOpen(false);

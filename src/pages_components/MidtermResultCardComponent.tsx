@@ -198,7 +198,7 @@ const MidtermResultCardComponent: React.FC<{ studentData?: ExtendedStudentData; 
   const fetchSettingsTable = async () => {
     try {
       // Query the 'settings' table
-      const { data, error } = await supabase.from('jmis_settings').select('*');
+      const { data, error } = await supabase.from('bluebell_settings').select('*');
 
       // Handle errors if any occur
       if (error) {
@@ -222,9 +222,9 @@ const MidtermResultCardComponent: React.FC<{ studentData?: ExtendedStudentData; 
     }
 
     try {
-      // Query the 'jmis_student' table for students in the same class
+      // Query the 'bluebell_student' table for students in the same class
       const { data, error } = await supabase
-        .from('jmis_student')
+        .from('bluebell_student')
         .select('*')
         .eq('class', studentData.studentClass); // Filter by class
 
@@ -245,7 +245,7 @@ const MidtermResultCardComponent: React.FC<{ studentData?: ExtendedStudentData; 
   const fetchPaymentsTable = async () => {
     try {
       // Query the 'payments' table
-      const { data, error } = await supabase.from('jmis_payments').select('*');
+      const { data, error } = await supabase.from('bluebell_payments').select('*');
 
       // Handle errors if any occur
       if (error) {
@@ -264,7 +264,7 @@ const MidtermResultCardComponent: React.FC<{ studentData?: ExtendedStudentData; 
   const fetchClassBalTable = async () => {
     try {
       // Query the 'class_bal' table
-      const { data, error } = await supabase.from('jmis_class_bal').select('*');
+      const { data, error } = await supabase.from('bluebell_class_bal').select('*');
 
       // Handle errors if any occur
       if (error) {
@@ -283,7 +283,7 @@ const MidtermResultCardComponent: React.FC<{ studentData?: ExtendedStudentData; 
   const fetchClassFeesTable = async () => {
     try {
       // Query the 'class_fees' table
-      const { data, error } = await supabase.from('jmis_class_specific_fees').select('*');
+      const { data, error } = await supabase.from('bluebell_class_specific_fees').select('*');
 
       // Handle errors if any occur
       if (error) {

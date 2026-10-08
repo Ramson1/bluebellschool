@@ -49,7 +49,7 @@ const AuditLogs = () => {
   useEffect(() => {
     if (!allowed) return;
     // never fatal: staff directory may be empty before the SQL migration
-    Promise.resolve(supabase.from("jmis_staff").select("name, email").order("name"))
+    Promise.resolve(supabase.from("bluebell_staff").select("name, email").order("name"))
       .then(({ data }) => setStaffOptions((data || []).filter((s) => s.email)))
       .catch(() => setStaffOptions([]));
   }, [allowed]);
@@ -59,7 +59,7 @@ const AuditLogs = () => {
     setLoading(true);
     try {
       let q = supabase
-        .from("jmis_auditlogs")
+        .from("bluebell_auditlogs")
         .select("*")
         .order("created_at", { ascending: false })
         .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);

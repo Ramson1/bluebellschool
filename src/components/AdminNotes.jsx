@@ -4,11 +4,11 @@ import React from "react";
 import { RiBookOpenLine } from "react-icons/ri";
 import { makeAdminAcademicsPage } from "./AdminAcademicsKit.jsx";
 
-// Admin oversight/management of lesson notes across all classes (jmis_notes).
+// Admin oversight/management of lesson notes across all classes (bluebell_notes).
 const TERMS = ["First Term", "Second Term", "Third Term"];
 
 const AdminNotes = makeAdminAcademicsPage({
-  table: "jmis_notes",
+  table: "bluebell_notes",
   title: "E-Notes",
   singular: "note",
   icon: RiBookOpenLine,

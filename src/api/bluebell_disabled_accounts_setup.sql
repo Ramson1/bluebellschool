@@ -11,8 +11,8 @@
 -- Follows the proven DROP-if-exists + CREATE convention (lowercase names).
 -- =====================================================================
 
-DROP TABLE IF EXISTS jmis_disabled_accounts CASCADE;
-CREATE TABLE jmis_disabled_accounts (
+DROP TABLE IF EXISTS bluebell_disabled_accounts CASCADE;
+CREATE TABLE bluebell_disabled_accounts (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   email TEXT NOT NULL UNIQUE,
   role TEXT NOT NULL DEFAULT 'admin',        -- 'admin' | 'super_admin' (which table to restore into)
@@ -21,7 +21,7 @@ CREATE TABLE jmis_disabled_accounts (
   disabled_by TEXT,                         -- owner email that performed the action
   disabled_at TIMESTAMPTZ DEFAULT NOW()
 );
-CREATE INDEX IF NOT EXISTS idx_jmis_disabled_email ON jmis_disabled_accounts(lower(email));
+CREATE INDEX IF NOT EXISTS idx_bluebell_disabled_email ON bluebell_disabled_accounts(lower(email));
 
 -- ---------------------------------------------------------------------
 -- RLS: default-deny writes; SELECT is readable by anon/authenticated so the
@@ -29,11 +29,11 @@ CREATE INDEX IF NOT EXISTS idx_jmis_disabled_email ON jmis_disabled_accounts(low
 -- honour the disabled set. All writes go through the service-role API route
 -- (app/api/access-control/route.ts) which bypasses RLS entirely.
 -- ---------------------------------------------------------------------
-ALTER TABLE jmis_disabled_accounts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE bluebell_disabled_accounts ENABLE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS "jmis_disabled_accounts_select" ON jmis_disabled_accounts;
-CREATE POLICY "jmis_disabled_accounts_select"
-  ON jmis_disabled_accounts FOR SELECT
+DROP POLICY IF EXISTS "bluebell_disabled_accounts_select" ON bluebell_disabled_accounts;
+CREATE POLICY "bluebell_disabled_accounts_select"
+  ON bluebell_disabled_accounts FOR SELECT
   TO anon, authenticated
   USING (true);
 
@@ -44,5 +44,5 @@ CREATE POLICY "jmis_disabled_accounts_select"
 -- Verify
 -- ---------------------------------------------------------------------
 SELECT column_name FROM information_schema.columns
-WHERE table_name = 'jmis_disabled_accounts'
+WHERE table_name = 'bluebell_disabled_accounts'
 ORDER BY column_name;

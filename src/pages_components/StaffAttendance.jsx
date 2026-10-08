@@ -36,7 +36,7 @@ const AttendanceRecords = () => {
   const [ready, setReady] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // which population is being viewed: students (jmis_attendance) or staff (jmis_staff_attendance)
+  // which population is being viewed: students (bluebell_attendance) or staff (bluebell_staff_attendance)
   const [who, setWho] = useState("student");
   const [classFilter, setClassFilter] = useState("");
   const [classes, setClasses] = useState([]);
@@ -63,7 +63,7 @@ const AttendanceRecords = () => {
   const allowed = isAdmin(email, roles.adminEmails) || isDev(email, roles.devEmails);
 
   const isStudent = who === "student";
-  const table = isStudent ? "jmis_attendance" : "jmis_staff_attendance";
+  const table = isStudent ? "bluebell_attendance" : "bluebell_staff_attendance";
   const nameCol = isStudent ? "student_name" : "staff_name";
 
   useEffect(() => {
@@ -84,7 +84,7 @@ const AttendanceRecords = () => {
     let active = true;
     (async () => {
       try {
-        const { data } = await supabase.from("jmis_attendance").select("class").not("class", "is", null);
+        const { data } = await supabase.from("bluebell_attendance").select("class").not("class", "is", null);
         if (!active) return;
         const uniq = Array.from(new Set((data || []).map((r) => r.class).filter(Boolean))).sort();
         setClasses(uniq);

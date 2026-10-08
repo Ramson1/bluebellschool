@@ -26,7 +26,7 @@ handleSubmitExam() called
         ↓
 uploadResults() executed
         ↓
-Save to Database (jmis_result)
+Save to Database (bluebell_result)
         ↓
 Success? → sendResultEmail()
         ↓
@@ -115,7 +115,7 @@ Look for these indicators:
 
 ### Issue 2: Database Save Fails
 **Possible Causes**:
-- Student not found in `jmis_student` table
+- Student not found in `bluebell_student` table
 - Network connectivity issues
 - Database permissions
 

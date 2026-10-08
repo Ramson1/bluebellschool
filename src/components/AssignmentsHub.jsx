@@ -7,8 +7,8 @@ import StaffAssignments from "./StaffAssignments.jsx";
 import "../styles/AdminPages.css";
 
 // One Assignments page, two tabs:
-//   Student Homework      -> jmis_assignments      (class work set by teachers)
-//   Teaching Assignments  -> jmis_staff_assignments (which teacher owns which class/subject)
+//   Student Homework      -> bluebell_assignments      (class work set by teachers)
+//   Teaching Assignments  -> bluebell_staff_assignments (which teacher owns which class/subject)
 // They are different data sets, so instead of merging the logic each tab renders
 // its original, untouched management component — every function of both pages
 // is preserved. `initialTab` lets the legacy /staff_assignments route open the

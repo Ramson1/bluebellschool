@@ -5,7 +5,7 @@
 -- ============================================
 -- SECTION 1: Create Completion Questions Table
 -- ============================================
-CREATE TABLE IF NOT EXISTS jmis_cbtCompletion (
+CREATE TABLE IF NOT EXISTS bluebell_cbtCompletion (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   subject TEXT NOT NULL,
   class TEXT NOT NULL,
@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS jmis_cbtCompletion (
 -- ============================================
 -- SECTION 2: Create Essay Questions Table
 -- ============================================
-CREATE TABLE IF NOT EXISTS jmis_cbtEssay (
+CREATE TABLE IF NOT EXISTS bluebell_cbtEssay (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   subject TEXT NOT NULL,
   class TEXT NOT NULL,
@@ -41,42 +41,42 @@ CREATE TABLE IF NOT EXISTS jmis_cbtEssay (
 -- Completion table indexes
 DO $$ 
 BEGIN
-  -- Check and create indexes for jmis_cbtCompletion
+  -- Check and create indexes for bluebell_cbtCompletion
   IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_cbt_completion_subject') THEN
-    CREATE INDEX idx_cbt_completion_subject ON jmis_cbtCompletion(subject);
+    CREATE INDEX idx_cbt_completion_subject ON bluebell_cbtCompletion(subject);
   END IF;
   
   IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_cbt_completion_class') THEN
-    CREATE INDEX idx_cbt_completion_class ON jmis_cbtCompletion(class);
+    CREATE INDEX idx_cbt_completion_class ON bluebell_cbtCompletion(class);
   END IF;
   
   IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_cbt_completion_term') THEN
-    CREATE INDEX idx_cbt_completion_term ON jmis_cbtCompletion(term);
+    CREATE INDEX idx_cbt_completion_term ON bluebell_cbtCompletion(term);
   END IF;
   
   IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_cbt_completion_purpose') THEN
-    CREATE INDEX idx_cbt_completion_purpose ON jmis_cbtCompletion(purpose);
+    CREATE INDEX idx_cbt_completion_purpose ON bluebell_cbtCompletion(purpose);
   END IF;
 END $$;
 
 -- Essay table indexes
 DO $$ 
 BEGIN
-  -- Check and create indexes for jmis_cbtEssay
+  -- Check and create indexes for bluebell_cbtEssay
   IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_cbt_essay_subject') THEN
-    CREATE INDEX idx_cbt_essay_subject ON jmis_cbtEssay(subject);
+    CREATE INDEX idx_cbt_essay_subject ON bluebell_cbtEssay(subject);
   END IF;
   
   IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_cbt_essay_class') THEN
-    CREATE INDEX idx_cbt_essay_class ON jmis_cbtEssay(class);
+    CREATE INDEX idx_cbt_essay_class ON bluebell_cbtEssay(class);
   END IF;
   
   IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_cbt_essay_term') THEN
-    CREATE INDEX idx_cbt_essay_term ON jmis_cbtEssay(term);
+    CREATE INDEX idx_cbt_essay_term ON bluebell_cbtEssay(term);
   END IF;
   
   IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_cbt_essay_purpose') THEN
-    CREATE INDEX idx_cbt_essay_purpose ON jmis_cbtEssay(purpose);
+    CREATE INDEX idx_cbt_essay_purpose ON bluebell_cbtEssay(purpose);
   END IF;
 END $$;
 
@@ -90,5 +90,5 @@ SELECT
   data_type,
   column_default
 FROM information_schema.columns
-WHERE table_name IN ('jmis_cbtcompletion', 'jmis_cbtessay')
+WHERE table_name IN ('bluebell_cbtcompletion', 'bluebell_cbtessay')
 ORDER BY table_name, ordinal_position;

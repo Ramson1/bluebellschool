@@ -29,7 +29,7 @@ async function getAdminEmail() {
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
     const { data: settings, error } = await supabase
-      .from('jmis_settings')
+      .from('bluebell_settings')
       .select('adminEmail')
       .limit(1);
 

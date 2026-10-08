@@ -58,7 +58,7 @@ const NewPaymentWithPaystack = () => {
         const fetchUserAuth = async () => {
             try {
                 const { data, error } = await supabase
-                    .from('jmis_userauth') // Assuming 'userauth' is the table name
+                    .from('bluebell_userauth') // Assuming 'userauth' is the table name
                     .select('email');
                 if (error) throw error;
                 setUserAuth(data); // Set userauth from Supabase
@@ -79,7 +79,7 @@ const NewPaymentWithPaystack = () => {
         const fetchStudents = async () => {
             try {
                 const { data, error } = await supabase
-                    .from('jmis_student') // Assuming 'students' is the table name
+                    .from('bluebell_student') // Assuming 'students' is the table name
                     .select('name'); // Adjust the field name as necessary
                 if (error) throw error;
                 const sortedStudents = data.map(student => student.name).sort();
@@ -92,7 +92,7 @@ const NewPaymentWithPaystack = () => {
         const fetchClassFees = async () => {
             try {
                 const { data, error } = await supabase
-                    .from('jmis_classfees') // Assuming 'classfees' is the table name
+                    .from('bluebell_classfees') // Assuming 'classfees' is the table name
                     .select('*')
                     .single();
                 if (error) throw error;
@@ -130,7 +130,7 @@ const NewPaymentWithPaystack = () => {
 
         try {
             const { data: existingPayments, error: fetchError } = await supabase
-                .from('jmis_paymentsinfo')
+                .from('bluebell_paymentsinfo')
                 .select('*')
                 .eq('name', name)
                 .eq('description', newPayments)
@@ -148,7 +148,7 @@ const NewPaymentWithPaystack = () => {
                 const updatedAmount = parseFloat(oldAmount) + parseFloat(newAmountPaid);
 
                 const { error: updateError } = await supabase
-                    .from("jmis_paymentsinfo")
+                    .from("bluebell_paymentsinfo")
                     .update({
                         amountpaid: updatedAmount,
                         date: newDate,
@@ -163,7 +163,7 @@ const NewPaymentWithPaystack = () => {
                 }
             } else {
                 // If no record exists or term is different, create a new payment
-                const { data, error } = await supabase.from("jmis_paymentsinfo").insert([receiptData]);
+                const { data, error } = await supabase.from("bluebell_paymentsinfo").insert([receiptData]);
 
                 if (error) {
                     toast.error("Error creating payment: " + error.message);

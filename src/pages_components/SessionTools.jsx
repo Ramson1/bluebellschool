@@ -61,7 +61,7 @@ export default function SessionTools() {
   const [ready, setReady] = useState(false);
   const [activeTab, setActiveTab] = useState("session");
 
-  const [settingsRow, setSettingsRow] = useState(null); // the single jmis_settings row
+  const [settingsRow, setSettingsRow] = useState(null); // the single bluebell_settings row
   const [session, setSession] = useState("");
   const [term, setTerm] = useState("");
   const [sessionHistory, setSessionHistory] = useState([]);
@@ -124,7 +124,7 @@ export default function SessionTools() {
   }, [allowed]);
 
   const loadSettings = async () => {
-    const { data, error } = await supabase.from("jmis_settings").select("*").single();
+    const { data, error } = await supabase.from("bluebell_settings").select("*").single();
     if (error) {
       if (error.code !== "PGRST116") toast.error("Failed to load settings: " + error.message);
       return;
@@ -138,7 +138,7 @@ export default function SessionTools() {
   const loadStudents = async () => {
     setLoadingStudents(true);
     const { data, error } = await supabase
-      .from("jmis_student")
+      .from("bluebell_student")
       .select("id, name, class")
       .order("name", { ascending: true });
     if (error) toast.error("Failed to load students: " + error.message);
@@ -174,7 +174,7 @@ export default function SessionTools() {
     if (!settingsRow) throw new Error("No settings row found — open Settings once first");
     const col = settingsRow.id != null ? "id" : "user_id";
     const val = settingsRow.id != null ? settingsRow.id : settingsRow.user_id;
-    const { error } = await supabase.from("jmis_settings").update(payload).eq(col, val);
+    const { error } = await supabase.from("bluebell_settings").update(payload).eq(col, val);
     if (error) throw error;
   };
 
@@ -187,7 +187,7 @@ export default function SessionTools() {
       setSession(next);
       setTerm("1st Term");
       setSessionHistory(history);
-      logAction(supabase, { email, role: "admin", action: "session_increment", targetTable: "jmis_settings", details: { from: session, to: next } });
+      logAction(supabase, { email, role: "admin", action: "session_increment", targetTable: "bluebell_settings", details: { from: session, to: next } });
       toast.success(`Academic session moved forward to ${next}`);
     } catch (e) {
       toast.error(e.message);
@@ -205,7 +205,7 @@ export default function SessionTools() {
       await updateSettingsRow({ session: prev, session_history: history });
       setSession(prev);
       setSessionHistory(history);
-      logAction(supabase, { email, role: "admin", action: "session_decrement", targetTable: "jmis_settings", details: { from: session, to: prev } });
+      logAction(supabase, { email, role: "admin", action: "session_decrement", targetTable: "bluebell_settings", details: { from: session, to: prev } });
       toast.success(`Academic session reverted to ${prev}`);
     } catch (e) {
       toast.error(e.message);
@@ -249,7 +249,7 @@ export default function SessionTools() {
     try {
       await updateSettingsRow({ term: newTerm });
       setTerm(newTerm);
-      logAction(supabase, { email, role: "admin", action: "term_change", targetTable: "jmis_settings", details: { from: term, to: newTerm } });
+      logAction(supabase, { email, role: "admin", action: "term_change", targetTable: "bluebell_settings", details: { from: term, to: newTerm } });
       toast.success(`Current term set to ${newTerm}`);
     } catch (e) {
       toast.error(e.message);
@@ -275,7 +275,7 @@ export default function SessionTools() {
   // Re-tag archived result rows so grouping follows a corrected session label.
   const retagArchivedSession = async (fromLabel, toLabel) => {
     if (!fromLabel || fromLabel === toLabel) return;
-    const { error } = await supabase.from("jmis_result_history").update({ archived_session: toLabel }).eq("archived_session", fromLabel);
+    const { error } = await supabase.from("bluebell_result_history").update({ archived_session: toLabel }).eq("archived_session", fromLabel);
     if (error) throw error;
   };
 
@@ -290,7 +290,7 @@ export default function SessionTools() {
       await updateSettingsRow({ session: next });
       setSession(next);
       setEditCurrent(false);
-      logAction(supabase, { email, role: "admin", action: "session_label_corrected", targetTable: "jmis_settings", details: { from: session, to: next, scope: "current" } });
+      logAction(supabase, { email, role: "admin", action: "session_label_corrected", targetTable: "bluebell_settings", details: { from: session, to: next, scope: "current" } });
       toast.success(`Current session corrected to ${next}`);
     } catch (e) {
       toast.error(e.message);
@@ -312,7 +312,7 @@ export default function SessionTools() {
       await updateSettingsRow({ session_history: updated });
       setSessionHistory(updated);
       setEditingIdx(-1);
-      logAction(supabase, { email, role: "admin", action: "session_label_corrected", targetTable: "jmis_settings", details: { from: old, to: next, scope: "history" } });
+      logAction(supabase, { email, role: "admin", action: "session_label_corrected", targetTable: "bluebell_settings", details: { from: old, to: next, scope: "history" } });
       toast.success(`Session corrected to ${next} — archived results re-tagged`);
     } catch (e) {
       toast.error(e.message);
@@ -334,7 +334,7 @@ export default function SessionTools() {
       setSession(target);
       setTerm("1st Term");
       setSessionHistory(nextHistory);
-      logAction(supabase, { email, role: "admin", action: "session_activated", targetTable: "jmis_settings", details: { activated: target, previous } });
+      logAction(supabase, { email, role: "admin", action: "session_activated", targetTable: "bluebell_settings", details: { activated: target, previous } });
       toast.success(`Current session switched to ${target}`);
     } catch (e) {
       toast.error(e.message);
@@ -360,19 +360,19 @@ export default function SessionTools() {
     setRollover({ show: true, newLabel: "", promote: true, rotateTokens: true, preview });
   };
 
-  // Copy all jmis_result rows into jmis_result_history (paged, raw passthrough).
+  // Copy all bluebell_result rows into bluebell_result_history (paged, raw passthrough).
   // Deletes the source rows ONLY after the inserted count matches the source count.
   const archiveResultsToHistory = async () => {
     let from = 0, sourceCount = 0, insertedOk = 0;
     for (;;) {
-      const { data, error } = await supabase.from("jmis_result").select("*").range(from, from + 999);
+      const { data, error } = await supabase.from("bluebell_result").select("*").range(from, from + 999);
       if (error) throw error;
       const rows = data || [];
       if (rows.length === 0) break;
       sourceCount += rows.length;
       for (let i = 0; i < rows.length; i += 500) {
         const chunk = rows.slice(i, i + 500).map(({ id, ...rest }) => ({ ...rest, archived_session: session }));
-        const { error: insErr } = await supabase.from("jmis_result_history").insert(chunk);
+        const { error: insErr } = await supabase.from("bluebell_result_history").insert(chunk);
         if (insErr) throw insErr;
         insertedOk += chunk.length;
       }
@@ -381,7 +381,7 @@ export default function SessionTools() {
     }
     if (insertedOk !== sourceCount) throw new Error(`Archive verification failed (${insertedOk}/${sourceCount} rows copied) — nothing was deleted`);
     if (sourceCount > 0) {
-      const { error: delErr } = await supabase.from("jmis_result").delete().not("id", "is", null);
+      const { error: delErr } = await supabase.from("bluebell_result").delete().not("id", "is", null);
       if (delErr) throw delErr;
     }
     return sourceCount;
@@ -393,13 +393,13 @@ export default function SessionTools() {
     for (let i = 0; i < students.length; i++) {
       const s = students[i];
       const t = tokens[i];
-      const { error } = await supabase.from("jmis_student").update({ token: t }).eq("id", s.id);
+      const { error } = await supabase.from("bluebell_student").update({ token: t }).eq("id", s.id);
       if (error) throw error;
-      const { error: rErr } = await supabase.from("jmis_result").update({ token: t, tokenCount: 5 }).eq("studentId", s.id);
+      const { error: rErr } = await supabase.from("bluebell_result").update({ token: t, tokenCount: 5 }).eq("studentId", s.id);
       if (rErr) throw rErr;
       count++;
     }
-    const { error: bulkErr } = await supabase.from("jmis_result").update({ tokenCount: 5 }).neq("tokenCount", 5);
+    const { error: bulkErr } = await supabase.from("bluebell_result").update({ tokenCount: 5 }).neq("tokenCount", 5);
     if (bulkErr) throw bulkErr;
     return count;
   };
@@ -407,7 +407,7 @@ export default function SessionTools() {
   const promoteAllBulk = async () => {
     let moved = 0;
     for (const r of rollover.preview.filter((x) => !x.held)) {
-      const { error } = await supabase.from("jmis_student").update({ class: r.to }).eq("id", r.id);
+      const { error } = await supabase.from("bluebell_student").update({ class: r.to }).eq("id", r.id);
       if (error) throw error;
       moved++;
     }
@@ -423,14 +423,14 @@ export default function SessionTools() {
       let rotated = 0;
       if (rollover.rotateTokens) {
         rotated = await rotateAllTokens();
-        logAction(supabase, { email, role: "admin", action: "student_token_rotation", targetTable: "jmis_student", details: { previousSession, studentsRotated: rotated, via: "rollover" } });
+        logAction(supabase, { email, role: "admin", action: "student_token_rotation", targetTable: "bluebell_student", details: { previousSession, studentsRotated: rotated, via: "rollover" } });
       }
       const archived = await archiveResultsToHistory();
-      logAction(supabase, { email, role: "admin", action: "results_archive", targetTable: "jmis_result_history", details: { previousSession, rowsArchived: archived } });
+      logAction(supabase, { email, role: "admin", action: "results_archive", targetTable: "bluebell_result_history", details: { previousSession, rowsArchived: archived } });
       let moved = 0;
       if (rollover.promote) {
         moved = await promoteAllBulk();
-        logAction(supabase, { email, role: "admin", action: "student_promotion", targetTable: "jmis_student", details: { previousSession, studentsPromoted: moved, via: "rollover" } });
+        logAction(supabase, { email, role: "admin", action: "student_promotion", targetTable: "bluebell_student", details: { previousSession, studentsPromoted: moved, via: "rollover" } });
       }
       const history = [...sessionHistory, { session: previousSession, endedAt: new Date().toISOString(), resultsArchived: archived }];
       await updateSettingsRow({ session: newLabel, term: "1st Term", session_history: history });
@@ -462,12 +462,12 @@ export default function SessionTools() {
     let moved = 0;
     try {
       for (const r of promotable) {
-        const { error } = await supabase.from("jmis_student").update({ class: r.to }).eq("id", r.id);
+        const { error } = await supabase.from("bluebell_student").update({ class: r.to }).eq("id", r.id);
         if (error) throw error;
         moved++;
       }
       await loadStudents();
-      logAction(supabase, { email, role: "admin", action: "student_promotion", targetTable: "jmis_student", details: { scope, studentsPromoted: moved } });
+      logAction(supabase, { email, role: "admin", action: "student_promotion", targetTable: "bluebell_student", details: { scope, studentsPromoted: moved } });
       toast.success(`${moved} student${moved === 1 ? "" : "s"} promoted${promotionRows.length - moved > 0 ? `, ${promotionRows.length - moved} held back (top class)` : ""}`);
       setScope("all"); setScopeClass(""); setSelectedIds({});
     } catch (e) {
@@ -500,18 +500,18 @@ export default function SessionTools() {
       for (let i = 0; i < targets.length; i++) {
         const s = targets[i];
         const t = tokens[i];
-        const { error } = await supabase.from("jmis_student").update({ token: t }).eq("id", s.id);
+        const { error } = await supabase.from("bluebell_student").update({ token: t }).eq("id", s.id);
         if (error) throw error;
         // sync existing result rows to the new token + reset its view counter
         const { error: rErr } = await supabase
-          .from("jmis_result")
+          .from("bluebell_result")
           .update({ token: t, tokenCount: 5 })
           .eq("studentId", s.id);
         if (rErr) throw rErr;
         out.push({ name: s.name, token: t });
       }
       await loadStudents();
-      logAction(supabase, { email, role: "admin", action: "student_token_rotation", targetTable: "jmis_student", details: { scope, studentsRotated: out.length } });
+      logAction(supabase, { email, role: "admin", action: "student_token_rotation", targetTable: "bluebell_student", details: { scope, studentsRotated: out.length } });
       setTokenResult({ show: true, rows: out });
       setScope("all"); setScopeClass(""); setSelectedIds({});
     } catch (e) {

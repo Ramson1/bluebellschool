@@ -1,4 +1,4 @@
--- SQL Documentation: CBT Score Storage in jmis_result
+-- SQL Documentation: CBT Score Storage in bluebell_result
 -- This file documents how CBT exam scores are stored in the database.
 -- It is documentation only: nothing here needs to be run.
 
@@ -11,7 +11,7 @@
 --                                      >=66 C+, >=56 C, >=46 D, below that E)
 -- A mid-term CBT paper is scored out of 30 on its own.
 
--- The jmis_result table stores subjects as JSONB arrays (term1Subjects,
+-- The bluebell_result table stores subjects as JSONB arrays (term1Subjects,
 -- term2Subjects, term3Subjects). Each entry in one of those arrays uses these
 -- fields, which are the names the application actually writes:
 -- {
@@ -43,7 +43,7 @@
 --   purpose = 'midterm' or 'test'          -> writes 'test',        capped at 30
 --   purpose = 'practice', empty, anything else -> nothing is stored
 -- A paper's own marks are the teacher-declared "Maximum score" on the exam row
--- (jmis_cbtQuestions.maxScore, see jmis_cbt_max_score.sql); when it is not set,
+-- (bluebell_cbtQuestions.maxScore, see bluebell_cbt_max_score.sql); when it is not set,
 -- the paper is worth one mark per question. The answers are recounted against the
 -- questions that are actually stored for that paper and then scaled:
 --
@@ -55,7 +55,7 @@
 -- an 80-mark examination paper), the editor warns and the write still clamps to
 -- 60 — 'total' can never exceed 100.
 
--- Each CBT attempt also leaves a row in jmis_cbt_results carrying the raw
+-- Each CBT attempt also leaves a row in bluebell_cbt_results carrying the raw
 -- answers, the question count, the paper maximum and the stable submissionKey.
 -- That key ("cbt:objective:<studentId>:<paperId>:<subject>:<term>:<purpose>") is
 -- the dedupe marker: it is stamped as 'cbtKey' on the subject entry above and

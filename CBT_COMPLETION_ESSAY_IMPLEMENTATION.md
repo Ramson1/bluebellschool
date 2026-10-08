@@ -12,7 +12,7 @@ All features have been successfully implemented as per the approved plan.
 
 1. **`src/api/cbt_completion_essay_schema.sql`**
    - Database migration script
-   - Creates `jmis_cbtCompletion` and `jmis_cbtEssay` tables
+   - Creates `bluebell_cbtCompletion` and `bluebell_cbtEssay` tables
    - Includes performance indexes
 
 2. **`public/completionTemplate.json`**
@@ -120,7 +120,7 @@ All features have been successfully implemented as per the approved plan.
 ### 5. Scoring & Results
 - ✅ Completion: Binary scoring (correct/incorrect)
 - ✅ Essay: Weighted scoring (keywords + semantic)
-- ✅ Results saved to `jmis_cbt_results` table
+- ✅ Results saved to `bluebell_cbt_results` table
 - ✅ Session type tracked in results
 - ✅ Email notifications with detailed breakdowns
 
@@ -135,7 +135,7 @@ All features have been successfully implemented as per the approved plan.
 
 ### New Tables:
 
-**`jmis_cbtCompletion`**
+**`bluebell_cbtCompletion`**
 ```sql
 - id (UUID, primary key)
 - subject (TEXT)
@@ -149,7 +149,7 @@ All features have been successfully implemented as per the approved plan.
 - updated_at (TIMESTAMP)
 ```
 
-**`jmis_cbtEssay`**
+**`bluebell_cbtEssay`**
 ```sql
 - id (UUID, primary key)
 - subject (TEXT)
@@ -279,7 +279,7 @@ app/exam/page.jsx routes to correct component
     ↓
 CompletionExam.jsx or EssayExam.jsx loads
     ↓
-Fetches questions from jmis_cbtCompletion or jmis_cbtEssay
+Fetches questions from bluebell_cbtCompletion or bluebell_cbtEssay
     ↓
 Student answers questions (auto-saves to localStorage)
     ↓
@@ -287,7 +287,7 @@ Student submits exam
     ↓
 nlpScorer.js evaluates answers
     ↓
-Results saved to jmis_cbt_results
+Results saved to bluebell_cbt_results
     ↓
 Email sent to administrators
     ↓

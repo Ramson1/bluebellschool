@@ -42,7 +42,7 @@ const AdminDashboardGraphs = () => {
   useEffect(() => {
     // Fetch all students
     supabase
-      .from("jmis_student")
+      .from("bluebell_student")
       .select("*")
       .then(({ data, error }) => {
         if (!error && data) setStudents(data);
@@ -50,7 +50,7 @@ const AdminDashboardGraphs = () => {
 
     // Fetch all payments
     supabase
-      .from("jmis_paymentsinfo")
+      .from("bluebell_paymentsinfo")
       .select("*")
       .then(({ data, error }) => {
         if (!error && data) setPayments(data);

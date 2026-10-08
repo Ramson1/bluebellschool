@@ -35,9 +35,9 @@ export default function AdminChat() {
     // uuid, so the parent portal can't see them) and teacher_staff_id set so the
     // staff member's portal lists and can reply to them.
     const [{ data: students, error: sErr }, { data: staff, error: tErr }] = await Promise.all([
-      supabase.from("jmis_student").select("id, name, class").order("name").limit(1000),
+      supabase.from("bluebell_student").select("id, name, class").order("name").limit(1000),
       supabase
-        .from("jmis_staff")
+        .from("bluebell_staff")
         .select("id, name, designation, department, status")
         .order("name")
         .limit(1000),

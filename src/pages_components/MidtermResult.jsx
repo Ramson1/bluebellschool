@@ -227,10 +227,10 @@
         
 //         // Fetch all required data in parallel
 //         const [teacherData, userData, devData, studentsData] = await Promise.all([
-//           supabase.from('jmis_teacherauth').select('email'),
-//           supabase.from('jmis_userauth').select('email'),
+//           supabase.from('bluebell_teacherauth').select('email'),
+//           supabase.from('bluebell_userauth').select('email'),
 //           supabase.from('devauth').select('email'),
-//           supabase.from('jmis_student').select('*')
+//           supabase.from('bluebell_student').select('*')
 //         ]);
         
 //         // Handle teacher auth data
@@ -313,7 +313,7 @@
     
 //     try {
 //       const { data: existingResultData, error: fetchError } = await supabase
-//         .from("jmis_result")
+//         .from("bluebell_result")
 //         .select("*")
 //         .eq("studentId", studentInfo.id)
 //         .single();
@@ -526,7 +526,7 @@
 //     try {
 //       // Check if result already exists for this student
 //       const { data: existingResultData, error: fetchError } = await supabase
-//         .from("jmis_result")
+//         .from("bluebell_result")
 //         .select("*")
 //         .eq("studentId", studentId)
 //         .single();
@@ -548,7 +548,7 @@
 //       if (existingResultData) {
 //         // Update existing record
 //         const { data, error } = await supabase
-//           .from("jmis_result")
+//           .from("bluebell_result")
 //           .update(updateData)
 //           .eq("studentId", studentId);
           
@@ -557,7 +557,7 @@
 //       } else {
 //         // Create new record
 //         const { data, error } = await supabase
-//           .from("jmis_result")
+//           .from("bluebell_result")
 //           .insert([updateData]);
           
 //         if (error) throw error;
@@ -591,11 +591,11 @@
 //     const fetchClassStats = async () => {
 //       try {
 //         const { data: studentsData, error: studentsError } = await supabase
-//           .from("jmis_student")
+//           .from("bluebell_student")
 //           .select("class");
 
 //         const { data: resultsData, error: resultsError } = await supabase
-//           .from("jmis_result")
+//           .from("bluebell_result")
 //           .select("studentClass, term1midtermsubjects, term2midtermsubjects, term3midtermsubjects");
 
 //         if (studentsError || resultsError) {
@@ -941,7 +941,7 @@
 //                                       : "term3MidtermSubjects";
 
 //                                 const { data, error } = await supabase
-//                                   .from("jmis_result")
+//                                   .from("bluebell_result")
 //                                   .select("studentName")
 //                                   .eq("studentClass", stat.className)
 //                                   .not(termKey, "is", null); // Dynamically check the correct term column

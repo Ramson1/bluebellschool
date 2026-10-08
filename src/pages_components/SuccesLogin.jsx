@@ -40,7 +40,7 @@ export default function SuccesLogin() {
     const fetchUserAuth = async () => {
       try {
         const { data, error } = await supabase
-          .from('jmis_userauth') // Assuming 'userauth' is the table name
+          .from('bluebell_userauth') // Assuming 'userauth' is the table name
           .select('email');
         if (error) throw error;
         setUserAuth(data); // Set userauth from Supabase

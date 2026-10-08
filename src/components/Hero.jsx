@@ -10,7 +10,7 @@ const Hero = () => {
     useEffect(() => {
     const fetchSettingsTable = async () => {
       try {
-        const { data, error } = await supabase.from('jmis_settings').select('*').single();
+        const { data, error } = await supabase.from('bluebell_settings').select('*').single();
         if (error) {
           console.error('Error fetching settings table:', error);
           throw error;

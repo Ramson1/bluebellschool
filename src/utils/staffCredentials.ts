@@ -1,4 +1,4 @@
-// Server-only helpers for the jmis_staff_credentials store.
+// Server-only helpers for the bluebell_staff_credentials store.
 //
 // The store holds the password we ISSUED to a staff member, so that developers
 // can read it back on the Staff Accounts page while it is still their live
@@ -26,7 +26,7 @@ export async function saveStaffCredential(
   args: { staffId: string; email?: string | null; password: string; setBy?: string | null }
 ): Promise<boolean> {
   try {
-    const { error } = await admin.from('jmis_staff_credentials').upsert(
+    const { error } = await admin.from('bluebell_staff_credentials').upsert(
       {
         staff_id: args.staffId,
         email: args.email || null,
@@ -47,7 +47,7 @@ export async function saveStaffCredential(
 // works (their new one is unknown to us and must stay unknown).
 export async function clearStaffCredential(admin: SupabaseClient, staffId: string): Promise<boolean> {
   try {
-    const { error } = await admin.from('jmis_staff_credentials').delete().eq('staff_id', staffId);
+    const { error } = await admin.from('bluebell_staff_credentials').delete().eq('staff_id', staffId);
     return !error;
   } catch {
     return false;

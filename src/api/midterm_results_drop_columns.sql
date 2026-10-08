@@ -1,4 +1,4 @@
--- Direct SQL commands to drop obsolete midterm columns from jmis_result table
+-- Direct SQL commands to drop obsolete midterm columns from bluebell_result table
 -- Run these commands in your Supabase SQL editor
 
 -- Drop indexes on midterm subject arrays if they exist
@@ -7,7 +7,7 @@ DROP INDEX IF EXISTS idx_result_term2_midterm_subjects;
 DROP INDEX IF EXISTS idx_result_term3_midterm_subjects;
 
 -- Drop midterm subject and overall columns
-ALTER TABLE jmis_result 
+ALTER TABLE bluebell_result 
   DROP COLUMN IF EXISTS term1midtermsubjects,
   DROP COLUMN IF EXISTS term2midtermsubjects,
   DROP COLUMN IF EXISTS term3midtermsubjects,
@@ -18,6 +18,6 @@ ALTER TABLE jmis_result
 -- Verify that the columns were removed
 SELECT column_name, data_type 
 FROM information_schema.columns 
-WHERE table_name = 'jmis_result' 
+WHERE table_name = 'bluebell_result' 
   AND (column_name LIKE '%midterm%');
 

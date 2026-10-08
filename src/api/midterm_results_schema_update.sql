@@ -1,4 +1,4 @@
--- SQL script to add midterm result fields to jmis_result table
+-- SQL script to add midterm result fields to bluebell_result table
 
 -- First, let's see what tables exist that match our result table pattern
 DO $$
@@ -10,7 +10,7 @@ BEGIN
   SELECT table_name INTO result_table_name
   FROM information_schema.tables
   WHERE table_schema = 'public'
-    AND LOWER(table_name) = 'jmis_result'
+    AND LOWER(table_name) = 'bluebell_result'
   LIMIT 1;
   
   IF result_table_name IS NOT NULL THEN
@@ -33,6 +33,6 @@ BEGIN
   END IF;
   
   IF NOT table_found THEN
-    RAISE NOTICE 'Table jmis_result does not exist, skipping schema update';
+    RAISE NOTICE 'Table bluebell_result does not exist, skipping schema update';
   END IF;
 END $$;

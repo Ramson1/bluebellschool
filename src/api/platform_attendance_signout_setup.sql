@@ -4,23 +4,23 @@
 -- Adds check-out tracking to BOTH student and staff attendance so the
 -- admin dashboard and the (future) mobile app can record sign-in AND
 -- sign-out per person per day. Existing tables hold live data — ALTER only.
--- NOTE: jmis_staff_attendance already has staff_id (feature_expansion_setup).
+-- NOTE: bluebell_staff_attendance already has staff_id (feature_expansion_setup).
 -- =====================================================================
 
-ALTER TABLE jmis_attendance ADD COLUMN IF NOT EXISTS check_out_time TIMESTAMPTZ;
-ALTER TABLE jmis_attendance ADD COLUMN IF NOT EXISTS sign_out_method TEXT;   -- 'qr' | 'manual'
+ALTER TABLE bluebell_attendance ADD COLUMN IF NOT EXISTS check_out_time TIMESTAMPTZ;
+ALTER TABLE bluebell_attendance ADD COLUMN IF NOT EXISTS sign_out_method TEXT;   -- 'qr' | 'manual'
 
-ALTER TABLE jmis_staff_attendance ADD COLUMN IF NOT EXISTS check_out_time TIMESTAMPTZ;
-ALTER TABLE jmis_staff_attendance ADD COLUMN IF NOT EXISTS sign_out_method TEXT;
+ALTER TABLE bluebell_staff_attendance ADD COLUMN IF NOT EXISTS check_out_time TIMESTAMPTZ;
+ALTER TABLE bluebell_staff_attendance ADD COLUMN IF NOT EXISTS sign_out_method TEXT;
 
 -- Index to speed up "who is still in today" queries
-CREATE INDEX IF NOT EXISTS idx_jmis_attendance_signout ON jmis_attendance(date, check_out_time);
-CREATE INDEX IF NOT EXISTS idx_jmis_staff_att_signout ON jmis_staff_attendance(date, check_out_time);
+CREATE INDEX IF NOT EXISTS idx_bluebell_attendance_signout ON bluebell_attendance(date, check_out_time);
+CREATE INDEX IF NOT EXISTS idx_bluebell_staff_att_signout ON bluebell_staff_attendance(date, check_out_time);
 
 -- ---------------------------------------------------------------------
 -- Verify
 -- ---------------------------------------------------------------------
 SELECT column_name FROM information_schema.columns
-WHERE table_name IN ('jmis_attendance','jmis_staff_attendance')
+WHERE table_name IN ('bluebell_attendance','bluebell_staff_attendance')
   AND column_name IN ('check_out_time','sign_out_method','staff_id')
 ORDER BY table_name, column_name;

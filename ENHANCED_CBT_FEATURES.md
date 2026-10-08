@@ -60,10 +60,10 @@ Fixed position top-right, always visible during exam
 ## 📊 Database Schema
 
 Your existing tables remain unchanged:
-- `jmis_cbtQuestions` - Question bank
-- `jmis_result` - Student results
-- `jmis_student` - Student records
-- `jmis_settings` - Admin settings
+- `bluebell_cbtQuestions` - Question bank
+- `bluebell_result` - Student results
+- `bluebell_student` - Student records
+- `bluebell_settings` - Admin settings
 
 **No database migration needed!** The enhancement works with your existing schema.
 
@@ -86,7 +86,7 @@ useEffect(() => {
     const startTime = Date.now();
     try {
       const { error } = await supabase
-        .from('jmis_cbtQuestions')
+        .from('bluebell_cbtQuestions')
         .select('id')
         .limit(1)
         .maybeSingle();
@@ -147,12 +147,12 @@ useEffect(() => {
 **Support Queries:**
 ```sql
 -- Check recent results
-SELECT * FROM jmis_result 
+SELECT * FROM bluebell_result 
 WHERE studentName = 'Student Name'
 ORDER BY studentClass DESC;
 
 -- Verify result was saved
-SELECT term1Subjects FROM jmis_result 
+SELECT term1Subjects FROM bluebell_result 
 WHERE studentId = 'STUDENT_ID';
 ```
 
@@ -164,8 +164,8 @@ WHERE studentId = 'STUDENT_ID';
 ### Issue: Results not saving even on good network
 **Solution**: 
 1. Check browser console for errors
-2. Verify `jmis_result` table permissions
-3. Ensure student exists in `jmis_student` table
+2. Verify `bluebell_result` table permissions
+3. Ensure student exists in `bluebell_student` table
 
 ### Issue: Retry button not working
 **Solution**: Check if maximum attempts (3) reached
@@ -219,7 +219,7 @@ For issues or questions:
 1. Check browser console for errors
 2. Review network status indicator
 3. Verify Supabase connection
-4. Check `jmis_result` table permissions
+4. Check `bluebell_result` table permissions
 
 ---
 

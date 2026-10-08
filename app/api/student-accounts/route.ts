@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     const admin = serviceClient();
 
     const { data: student, error: fetchErr } = await admin
-      .from('jmis_student')
+      .from('bluebell_student')
       .select('*')
       .eq('id', studentId)
       .maybeSingle();
@@ -36,7 +36,7 @@ export async function POST(request: Request) {
 
     // One login per email — reject if another student (or auth user) has it
     const { data: clash } = await admin
-      .from('jmis_student')
+      .from('bluebell_student')
       .select('id, name')
       .ilike('email', loginEmail)
       .neq('id', studentId)
@@ -61,7 +61,7 @@ export async function POST(request: Request) {
     }
 
     const { data: updated, error: updErr } = await admin
-      .from('jmis_student')
+      .from('bluebell_student')
       .update({ auth_user_id: created.user.id, email: loginEmail, first_login: true, portal_status: 'active' })
       .eq('id', studentId)
       .select('id, name, class, email, auth_user_id, portal_status')

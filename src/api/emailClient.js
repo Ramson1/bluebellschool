@@ -69,7 +69,7 @@ export const getAdminEmail = async () => {
     const { supabase } = await import('../supabaseClient');
     
     const { data: settings, error } = await supabase
-      .from('jmis_settings')
+      .from('bluebell_settings')
       .select('adminEmail')
       .limit(1);
       

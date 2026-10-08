@@ -127,9 +127,9 @@ export default function TermlyFees() {
                 
                 // Fetch all required data in parallel
                 const [userData, teacherData, classFeesData] = await Promise.all([
-                    supabase.from('jmis_userauth').select('email'),
-                    supabase.from('jmis_teacherauth').select('email'),
-                    supabase.from('jmis_classfees').select('*')
+                    supabase.from('bluebell_userauth').select('email'),
+                    supabase.from('bluebell_teacherauth').select('email'),
+                    supabase.from('bluebell_classfees').select('*')
                 ]);
                 
                 // Handle user auth data
@@ -185,13 +185,13 @@ export default function TermlyFees() {
         e.preventDefault();
         for (const fee of editedFees) {
             const { error } = await supabase
-                .from('jmis_classfees') // Replace with your actual table name
+                .from('bluebell_classfees') // Replace with your actual table name
                 .update(fee)
                 .eq('id', fee.id); // Assuming 'id' is the primary key
             if (error) console.error(error);
         }
         // Optionally, refetch the class fees after updating
-        const { data } = await supabase.from('jmis_classfees').select('*');
+        const { data } = await supabase.from('bluebell_classfees').select('*');
         setClassFees(data);
         toast.success("Termly fees successfully updated!!");
         // navigate('/home');
@@ -200,7 +200,7 @@ export default function TermlyFees() {
     const handleAddNewFee = async (e) => {
         e.preventDefault(); // Prevent default form submission
         const { error } = await supabase
-            .from('jmis_classfees') // Ensure this matches your table name
+            .from('bluebell_classfees') // Ensure this matches your table name
             .insert([newFee]); // Insert the new fee
         if (error) {
             console.error("Error adding new fee:", error); // Log any errors

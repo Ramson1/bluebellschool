@@ -99,8 +99,8 @@ export default function Receipt() {
                 
                 // Fetch all required data in parallel
                 const [userData, teacherData] = await Promise.all([
-                    supabase.from('jmis_userauth').select('email'),
-                    supabase.from('jmis_teacherauth').select('email')
+                    supabase.from('bluebell_userauth').select('email'),
+                    supabase.from('bluebell_teacherauth').select('email')
                 ]);
                 
                 // Handle user auth data
@@ -147,7 +147,7 @@ export default function Receipt() {
         try {
             // Fetch payment information for the user
             const { data: paymentData, error: paymentError } = await supabase
-                .from('jmis_paymentsinfo')
+                .from('bluebell_paymentsinfo')
                 .select('*');
             
             if (!paymentError && paymentData) {

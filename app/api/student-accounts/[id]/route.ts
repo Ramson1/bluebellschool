@@ -22,7 +22,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     const admin = serviceClient();
 
     const { data: student, error: fetchErr } = await admin
-      .from('jmis_student')
+      .from('bluebell_student')
       .select('*')
       .eq('id', id)
       .maybeSingle();
@@ -42,7 +42,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         return NextResponse.json({ error: 'Password reset failed: ' + resetErr.message }, { status: 500 });
       }
       // force first-login password-change prompt + kill live sessions
-      await admin.from('jmis_student').update({ first_login: true }).eq('id', id);
+      await admin.from('bluebell_student').update({ first_login: true }).eq('id', id);
       try { await admin.auth.admin.signOut(student.auth_user_id); } catch { /* ignore */ }
       return NextResponse.json({ tempPassword });
     }
@@ -52,7 +52,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         return NextResponse.json({ error: 'Invalid status' }, { status: 400 });
       }
       const { error: stErr } = await admin
-        .from('jmis_student')
+        .from('bluebell_student')
         .update({ portal_status: status })
         .eq('id', id);
       if (stErr) {

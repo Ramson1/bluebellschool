@@ -7,7 +7,7 @@ import { requireAdminCaller, serviceClient } from '@/src/utils/serverAdminAuth';
 // Unlike the staff portal, the student portal does NOT use Supabase Auth. A
 // student signs in with their FULL NAME + RESULT ACCESS TOKEN, and the portal
 // keeps a lightweight client session (localStorage { id, token }) that it
-// re-validates against jmis_student.token on every load. The token is therefore
+// re-validates against bluebell_student.token on every load. The token is therefore
 // the secret capability the whole portal already trusts — so handing it to the
 // student portal is what establishes the session; there is nothing to "mint"
 // and no password is touched.
@@ -35,7 +35,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
     const admin = serviceClient();
     const { data: student, error: fetchErr } = await admin
-      .from('jmis_student')
+      .from('bluebell_student')
       .select('*')
       .eq('id', id)
       .maybeSingle();

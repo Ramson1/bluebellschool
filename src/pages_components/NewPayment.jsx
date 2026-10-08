@@ -67,8 +67,8 @@ const NewPayment = () => {
                 
                 // Fetch all required data in parallel
                 const [userData, teacherData] = await Promise.all([
-                    supabase.from('jmis_userauth').select('email'),
-                    supabase.from('jmis_teacherauth').select('email')
+                    supabase.from('bluebell_userauth').select('email'),
+                    supabase.from('bluebell_teacherauth').select('email')
                 ]);
                 
                 // Handle user auth data
@@ -93,7 +93,7 @@ const NewPayment = () => {
                 
                 // Fetch students data
                 const { data: studentsData, error: studentsError } = await supabase
-                    .from('jmis_student')
+                    .from('bluebell_student')
                     .select('name');
                 if (studentsError) throw studentsError;
                 const sortedStudents = studentsData.map(student => student.name).sort();
@@ -185,7 +185,7 @@ const NewPayment = () => {
         try {
             for (const paymentData of paymentsToUpload) {
                 const { data: existingPayments, error: fetchError } = await supabase
-                    .from("jmis_paymentsinfo")
+                    .from("bluebell_paymentsinfo")
                     .select("*")
                     .eq("name", paymentData.name)
                     .eq("description", paymentData.description)
@@ -202,7 +202,7 @@ const NewPayment = () => {
                     const updatedAmount = parseFloat(oldAmount) + parseFloat(paymentData.amountpaid);
 
                     const { error: updateError } = await supabase
-                        .from("jmis_paymentsinfo")
+                        .from("bluebell_paymentsinfo")
                         .update({
                             amountpaid: updatedAmount,
                             date: newDate,
@@ -233,13 +233,13 @@ Date: ${paymentData.date}`;
                             email: currentUserEmail,
                             role: getAuditRole(),
                             action: "payment_update",
-                            targetTable: "jmis_paymentsinfo",
+                            targetTable: "bluebell_paymentsinfo",
                             recordId: existingPayments[0].id,
                             details: { name: paymentData.name, class: paymentData.class, description: paymentData.description, amountpaid: paymentData.amountpaid, term: paymentData.currentterm },
                         });
                     }
                 } else {
-                    const { error } = await supabase.from("jmis_paymentsinfo").insert([paymentData]);
+                    const { error } = await supabase.from("bluebell_paymentsinfo").insert([paymentData]);
 
                     if (error) {
                         toast.error("Error creating payment: " + error.message);
@@ -264,7 +264,7 @@ Date: ${paymentData.date}`;
                             email: currentUserEmail,
                             role: getAuditRole(),
                             action: "payment_create",
-                            targetTable: "jmis_paymentsinfo",
+                            targetTable: "bluebell_paymentsinfo",
                             details: { name: paymentData.name, class: paymentData.class, description: paymentData.description, amountpaid: paymentData.amountpaid, term: paymentData.currentterm },
                         });
                     }

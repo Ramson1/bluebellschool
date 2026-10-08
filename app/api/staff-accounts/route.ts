@@ -5,7 +5,7 @@ import { saveStaffCredential } from '@/src/utils/staffCredentials';
 // POST /api/staff-accounts — admin creates a staff member + portal login.
 // The Supabase auth user is created with the service-role key (never exposed
 // to the browser); the auto-generated default password is returned to the
-// admin UI AND recorded in jmis_staff_credentials, which only a developer can
+// admin UI AND recorded in bluebell_staff_credentials, which only a developer can
 // read back (see GET /api/staff-credentials). It is forgotten the moment the
 // staff member sets their own password. Body:
 // { name, sex, address, class_assigned, designation, department, subjects[],
@@ -27,7 +27,7 @@ export async function POST(request: Request) {
     const admin = serviceClient();
 
     // Reject duplicate staff emails early (both in directory and auth)
-    const { data: existing } = await admin.from('jmis_staff').select('id, email').ilike('email', email).maybeSingle();
+    const { data: existing } = await admin.from('bluebell_staff').select('id, email').ilike('email', email).maybeSingle();
     if (existing) {
       return NextResponse.json({ error: 'A staff member with this email already exists' }, { status: 409 });
     }
@@ -44,7 +44,7 @@ export async function POST(request: Request) {
     }
 
     const { data: staffRow, error: insertErr } = await admin
-      .from('jmis_staff')
+      .from('bluebell_staff')
       .insert({
         name,
         sex: sex || null,

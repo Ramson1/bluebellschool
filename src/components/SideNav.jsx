@@ -124,10 +124,10 @@ const SideNav = ({ collapsed, setCollapsed }) => {
         // tolerated – tables may not exist yet; the Supabase builder is a thenable
         // without .catch, so wrap it in a real Promise)
         const [userData, teacherData, devData, secretaryData] = await Promise.all([
-          supabase.from('jmis_userauth').select('email'),
-          supabase.from('jmis_teacherauth').select('email'),
+          supabase.from('bluebell_userauth').select('email'),
+          supabase.from('bluebell_teacherauth').select('email'),
           Promise.resolve(supabase.from('devauth').select('email')).catch(() => ({ data: [], error: null })),
-          Promise.resolve(supabase.from('jmis_secretaryauth').select('email')).catch(() => ({ data: [], error: null }))
+          Promise.resolve(supabase.from('bluebell_secretaryauth').select('email')).catch(() => ({ data: [], error: null }))
         ]);
         
         // Handle user auth data

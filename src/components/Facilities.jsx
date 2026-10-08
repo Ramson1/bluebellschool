@@ -10,7 +10,7 @@ export const Facilities = () => {
            useEffect(() => {
             const fetchSettingsTable = async () => {
               try {
-                const { data, error } = await supabase.from('jmis_settings').select('*');
+                const { data, error } = await supabase.from('bluebell_settings').select('*');
                 if (error) {
                   console.error('Error fetching settings table:', error);
                   throw error;

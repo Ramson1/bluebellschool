@@ -8,8 +8,8 @@ const AssignmentsHub = dynamic(() => import("../../src/components/AssignmentsHub
   loading: () => <div>Loading…</div>,
 });
 
-// Combined page: Student Homework (jmis_assignments) + Teaching Assignments
-// (jmis_staff_assignments) as tabs — all functions of both former pages.
+// Combined page: Student Homework (bluebell_assignments) + Teaching Assignments
+// (bluebell_staff_assignments) as tabs — all functions of both former pages.
 export default function AssignmentsPage() {
   return <AssignmentsHub initialTab="student" />;
 }

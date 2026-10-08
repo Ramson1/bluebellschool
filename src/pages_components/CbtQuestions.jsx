@@ -128,9 +128,9 @@ const CbtQuestions = () => {
     try {
       // Fetch from all three session type tables
       const [objectiveData, completionData, essayData] = await Promise.all([
-        supabase.from('jmis_cbtQuestions').select('*').order('created_at', { ascending: false }),
-        supabase.from('jmis_cbt_completion').select('*').order('created_at', { ascending: false }),
-        supabase.from('jmis_cbt_essay').select('*').order('created_at', { ascending: false })
+        supabase.from('bluebell_cbtQuestions').select('*').order('created_at', { ascending: false }),
+        supabase.from('bluebell_cbt_completion').select('*').order('created_at', { ascending: false }),
+        supabase.from('bluebell_cbt_essay').select('*').order('created_at', { ascending: false })
       ]);
 
       if (objectiveData.error) throw objectiveData.error;
@@ -171,8 +171,8 @@ const CbtQuestions = () => {
         
         // Fetch all required data in parallel
         const [teacherData, userData, devData] = await Promise.all([
-          supabase.from('jmis_teacherauth').select('email'),
-          supabase.from('jmis_userauth').select('email'),
+          supabase.from('bluebell_teacherauth').select('email'),
+          supabase.from('bluebell_userauth').select('email'),
           supabase.from('devauth').select('email')
         ]);
         
@@ -556,10 +556,10 @@ const CbtQuestions = () => {
     
     // Determine table based on session type
     const targetTable = questionToDelete.sessionType === 'objective' 
-      ? 'jmis_cbtQuestions' 
+      ? 'bluebell_cbtQuestions' 
       : questionToDelete.sessionType === 'completion' 
-        ? 'jmis_cbt_completion' 
-        : 'jmis_cbt_essay';
+        ? 'bluebell_cbt_completion' 
+        : 'bluebell_cbt_essay';
     
     // First, get the question details before deleting
     const { data: questionData, error: fetchError } = await supabase
@@ -644,22 +644,22 @@ Class: ${questionData.class}`;
         purpose: newPurpose, // Include purpose in update data
         image: imageUrl,
       };
-      // Only sent when the teacher set it: until jmis_cbt_max_score.sql has been
+      // Only sent when the teacher set it: until bluebell_cbt_max_score.sql has been
       // run the column does not exist and an unknown column would fail the save
       const declaredMaxScore = Number(newMaxScore);
       if (Number.isFinite(declaredMaxScore) && declaredMaxScore > 0) updateData.maxScore = declaredMaxScore;
 
       let saveEdit = await supabase
-        .from('jmis_cbtQuestions')
+        .from('bluebell_cbtQuestions')
         .update(updateData)
         .eq('id', currentQuestionId);
       if (saveEdit.error && updateData.maxScore !== undefined && /maxScore/i.test(saveEdit.error.message || '')) {
         delete updateData.maxScore;
         saveEdit = await supabase
-          .from('jmis_cbtQuestions')
+          .from('bluebell_cbtQuestions')
           .update(updateData)
           .eq('id', currentQuestionId);
-        toast.warn('Saved without the maximum score. Run jmis_cbt_max_score.sql in the Supabase SQL Editor to enable it.');
+        toast.warn('Saved without the maximum score. Run bluebell_cbt_max_score.sql in the Supabase SQL Editor to enable it.');
       }
       const { data, error } = saveEdit;
       if (error) throw error;
@@ -688,7 +688,7 @@ Class: ${questionData.class}`;
         email: getCurrentUserEmail(),
         role: getAuditRole(),
         action: "cbt_question_update",
-        targetTable: 'jmis_cbtQuestions',
+        targetTable: 'bluebell_cbtQuestions',
         recordId: currentQuestionId,
         details: { questionText: updateData?.questionText },
       });
@@ -769,10 +769,10 @@ ${questionsList}`;
       
       // Determine target table based on session type
       const targetTable = sessionType === 'objective' 
-        ? 'jmis_cbtQuestions' 
+        ? 'bluebell_cbtQuestions' 
         : sessionType === 'completion' 
-          ? 'jmis_cbt_completion' 
-          : 'jmis_cbt_essay';
+          ? 'bluebell_cbt_completion' 
+          : 'bluebell_cbt_essay';
       
       const newQuestionData = {
         subject: newSubject,
@@ -783,7 +783,7 @@ ${questionsList}`;
         image: newImage ? await uploadImage(imageFile) : null,
         questions: questionsData,
       };
-      // Only sent when the teacher set it: until jmis_cbt_max_score.sql has been
+      // Only sent when the teacher set it: until bluebell_cbt_max_score.sql has been
       // run the column does not exist and an unknown column would reject the paper
       const declaredInsertMax = Number(newMaxScore);
       if (Number.isFinite(declaredInsertMax) && declaredInsertMax > 0) newQuestionData.maxScore = declaredInsertMax;
@@ -796,7 +796,7 @@ ${questionsList}`;
         insertAttempt = await supabase
           .from(targetTable)
           .insert([newQuestionData]);
-        toast.warn('Saved without the maximum score. Run jmis_cbt_max_score.sql in the Supabase SQL Editor to enable it.');
+        toast.warn('Saved without the maximum score. Run bluebell_cbt_max_score.sql in the Supabase SQL Editor to enable it.');
       }
 
       const { data, error } = insertAttempt;
@@ -1193,7 +1193,7 @@ ${questionsList}`;
                   }
                   try {
                     const { error } = await supabase
-                      .from('jmis_cbtQuestions')
+                      .from('bluebell_cbtQuestions')
                       .delete()
                       .not('id', 'is', null);
                     if (error) {
@@ -1211,7 +1211,7 @@ ${questionsList}`;
                       email: currentUserEmail,
                       role: getAuditRole(),
                       action: "cbt_questions_delete_all",
-                      targetTable: 'jmis_cbtQuestions',
+                      targetTable: 'bluebell_cbtQuestions',
                     });
                   } catch (error) {
                     toast.error('Failed to delete all CBT questions');

@@ -12,7 +12,7 @@ export default function CardComponent({ payments }) {
     // async function getProducts() { // Unused function removed
     //     try {
     //         const { data, error } = await supabase
-    //             .from('jmis_paymentsinfo')
+    //             .from('bluebell_paymentsinfo')
     //             .select("*")
     //             .limit(4)
     //         if (error) throw error;

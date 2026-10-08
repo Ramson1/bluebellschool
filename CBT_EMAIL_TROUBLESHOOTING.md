@@ -36,7 +36,7 @@ I've updated the CBT Questions component with better error handling:
 
 #### ❌ If No Recipients Configured:
 ```
-⚠️ No email recipients configured in jmis_settings
+⚠️ No email recipients configured in bluebell_settings
 ❌ [CBT Create] Email failed: No email recipients configured
 ```
 **Solution**: See "Fix 1" below
@@ -57,12 +57,12 @@ I've updated the CBT Questions component with better error handling:
 
 ### Fix 1: Configure Email Recipients in Database
 
-The email system needs recipients configured in the `jmis_settings` table.
+The email system needs recipients configured in the `bluebell_settings` table.
 
 #### Option A: Using Supabase Dashboard
 1. Go to your Supabase project
 2. Open **Table Editor**
-3. Select `jmis_settings` table
+3. Select `bluebell_settings` table
 4. Make sure these columns have values:
    - `adminEmail` (required) - e.g., `your-email@gmail.com`
    - `additionalEmails` (optional) - e.g., `person1@gmail.com,person2@gmail.com`
@@ -73,11 +73,11 @@ Run this in Supabase **SQL Editor**:
 ```sql
 -- Check current settings
 SELECT adminEmail, additionalEmails 
-FROM jmis_settings 
+FROM bluebell_settings 
 LIMIT 1;
 
 -- Update with your email addresses
-UPDATE jmis_settings 
+UPDATE bluebell_settings 
 SET 
   adminEmail = 'your-email@gmail.com',
   additionalEmails = 'person1@gmail.com,person2@gmail.com'
@@ -85,7 +85,7 @@ WHERE id IS NOT NULL;
 
 -- Verify the update
 SELECT adminEmail, additionalEmails 
-FROM jmis_settings 
+FROM bluebell_settings 
 LIMIT 1;
 ```
 
@@ -170,7 +170,7 @@ After my updates, you should see:
 - [ ] No console errors about "Email service not configured"
 - [ ] API response status is 200 (not 400 or 500)
 - [ ] Gmail credentials are set in environment variables
-- [ ] `jmis_settings` table has `adminEmail` value
+- [ ] `bluebell_settings` table has `adminEmail` value
 - [ ] Check spam/junk folder in Gmail
 
 ---

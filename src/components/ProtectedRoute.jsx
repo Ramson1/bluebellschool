@@ -38,7 +38,7 @@ const ProtectedRoute = ({ children, allowedRoles = ['admin'] }) => {
         
         // Fetch user authorization data
         const { data: userData, error: userError } = await supabase
-          .from('jmis_userauth')
+          .from('bluebell_userauth')
           .select('email');
         
         if (userError) throw userError;
@@ -46,7 +46,7 @@ const ProtectedRoute = ({ children, allowedRoles = ['admin'] }) => {
         
         // Fetch teacher authorization data
         const { data: teacherData, error: teacherError } = await supabase
-          .from('jmis_teacherauth')
+          .from('bluebell_teacherauth')
           .select('email');
         
         if (teacherError) throw teacherError;

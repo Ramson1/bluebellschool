@@ -83,11 +83,11 @@ export default function FullStudent() {
         
         // Fetch all required data in parallel
         const results = await Promise.allSettled([
-          supabase.from('jmis_userauth').select('email'),
-          supabase.from('jmis_teacherauth').select('email'),
+          supabase.from('bluebell_userauth').select('email'),
+          supabase.from('bluebell_teacherauth').select('email'),
           supabase.from('devauth').select('email'),
-          supabase.from('jmis_student').select('*'),
-          supabase.from('jmis_result').select('studentId, token, tokenCount')
+          supabase.from('bluebell_student').select('*'),
+          supabase.from('bluebell_result').select('studentId, token, tokenCount')
         ]);
         
         const [userData, teacherData, devData, studentData, resultData] = results.map(r => r.status === 'fulfilled' ? r.value : { error: r.reason });
@@ -123,7 +123,7 @@ export default function FullStudent() {
 
         // Handle result data
         if (resultData.error) {
-          console.error('Result Data Error (jmis_result):', resultData.error);
+          console.error('Result Data Error (bluebell_result):', resultData.error);
         } else {
           setStudentResults(resultData.data || []);
         }
@@ -204,8 +204,8 @@ export default function FullStudent() {
       sex: student.sex, 
       parentcontact: student.parentcontact,
       token: student.token || studentResult.token || "",
-      // tokenCount now lives on jmis_student (single source of truth). Fall
-      // back to the legacy jmis_result value only if the DB column is missing.
+      // tokenCount now lives on bluebell_student (single source of truth). Fall
+      // back to the legacy bluebell_result value only if the DB column is missing.
       tokenCount: student.tokenCount ?? studentResult.tokenCount ?? 0
     });
   };
@@ -309,9 +309,9 @@ export default function FullStudent() {
         passportValue = PASSPORT_PLACEHOLDER;
       }
 
-      // Update jmis_student (token + per-student token budget)
+      // Update bluebell_student (token + per-student token budget)
       const { error: studentError } = await supabase
-        .from('jmis_student')
+        .from('bluebell_student')
         .update({ 
           name: updatedData.name, 
           class: updatedData.class, 
@@ -327,10 +327,10 @@ export default function FullStudent() {
 
       // Keep the access token in sync on any existing result row.
       // tokenCount is intentionally NOT written here anymore: it lives on
-      // jmis_student, and the old per-result update was a silent 0-row no-op
+      // bluebell_student, and the old per-result update was a silent 0-row no-op
       // for students without a result row (which left the counter stuck at 0).
       const { error: resultError } = await supabase
-        .from('jmis_result')
+        .from('bluebell_result')
         .update({ 
           token: updatedData.token
         })
@@ -364,7 +364,7 @@ Token Count: ${updatedData.tokenCount || 0}`;
         email: user?.user_metadata?.email,
         role: 'admin',
         action: 'student_edit',
-        targetTable: 'jmis_student',
+        targetTable: 'bluebell_student',
         recordId: updatedData.id,
         details: {
           name: updatedData.name,
@@ -376,8 +376,8 @@ Token Count: ${updatedData.tokenCount || 0}`;
 
       // Re-fetch data to get updated values
       const [newStudentData, newResultData] = await Promise.all([
-        supabase.from('jmis_student').select('*'),
-        supabase.from('jmis_result').select('studentId, token, tokenCount')
+        supabase.from('bluebell_student').select('*'),
+        supabase.from('bluebell_result').select('studentId, token, tokenCount')
       ]);
       
       setStudents(newStudentData.data || []);
@@ -394,7 +394,7 @@ Token Count: ${updatedData.tokenCount || 0}`;
   const handleDeleteClick = async (id) => {
     // Confirm before removing a student and their results
     const { data: studentData, error: fetchError } = await supabase
-      .from('jmis_student')
+      .from('bluebell_student')
       .select('*')
       .eq('id', id)
       .single();
@@ -409,10 +409,10 @@ Token Count: ${updatedData.tokenCount || 0}`;
       return;
     }
 
-    // Archive the student's current results into jmis_result_history BEFORE deleting,
+    // Archive the student's current results into bluebell_result_history BEFORE deleting,
     // so the admin can always access every child's past results even after removal.
     const { data: liveResults, error: liveReadErr } = await supabase
-      .from('jmis_result')
+      .from('bluebell_result')
       .select('*')
       .eq('studentId', id);
 
@@ -424,13 +424,13 @@ Token Count: ${updatedData.tokenCount || 0}`;
 
     if (liveResults && liveResults.length > 0) {
       // Tag the archive with the current session for provenance.
-      const { data: st } = await supabase.from('jmis_settings').select('session').limit(1);
+      const { data: st } = await supabase.from('bluebell_settings').select('session').limit(1);
       const sessionLabel = (st && st[0] && st[0].session) || 'unassigned';
       const archiveRows = liveResults.map(({ id: _drop, ...rest }) => ({
         ...rest,
         archived_session: `${sessionLabel} (student departed)`,
       }));
-      const { error: insErr } = await supabase.from('jmis_result_history').insert(archiveRows);
+      const { error: insErr } = await supabase.from('bluebell_result_history').insert(archiveRows);
       if (insErr) {
         console.error('Error archiving student results:', insErr);
         toast.error('Could not archive results — nothing was deleted');
@@ -440,7 +440,7 @@ Token Count: ${updatedData.tokenCount || 0}`;
 
     // Delete associated live results only after a verified archive copy
     const { error: resultError } = await supabase
-      .from('jmis_result')
+      .from('bluebell_result')
       .delete()
       .eq('studentId', id);
 
@@ -452,7 +452,7 @@ Token Count: ${updatedData.tokenCount || 0}`;
 
     // Then delete the student
     const { error: studentError } = await supabase
-      .from('jmis_student')
+      .from('bluebell_student')
       .delete()
       .eq('id', id);
 
@@ -478,7 +478,7 @@ Student Class: ${studentData.class}`;
       }
 
       // Re-fetch students to get updated data
-      const { data } = await supabase.from('jmis_student').select('*');
+      const { data } = await supabase.from('bluebell_student').select('*');
       setStudents(data);
       toast.success(`${studentData.name} removed — their results were archived and remain viewable in Result Archive`);
 
@@ -486,7 +486,7 @@ Student Class: ${studentData.class}`;
         email: user?.user_metadata?.email,
         role: 'admin',
         action: 'student_delete',
-        targetTable: 'jmis_student',
+        targetTable: 'bluebell_student',
         recordId: id,
         details: { name: studentData.name, class: studentData.class, resultsArchived: (liveResults || []).length },
       });

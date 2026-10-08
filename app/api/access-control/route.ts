@@ -5,7 +5,7 @@ import { requireSuperOwner, serviceClient, OWNER_EMAIL } from '@/src/utils/serve
 // Lets that one account suspend / restore any OTHER admin or super_admin.
 // Disabling is reversible: the account's Supabase login + data stay intact,
 // we only remove its email from the role table and record a snapshot in
-// jmis_disabled_accounts so it can be re-enabled to the exact same role.
+// bluebell_disabled_accounts so it can be re-enabled to the exact same role.
 //
 // Every handler is hard-gated with requireSuperOwner, so no other admin or
 // developer can call these endpoints even with a valid token or by hand.
@@ -26,9 +26,9 @@ async function findAuthUserId(admin: ReturnType<typeof serviceClient>, email: st
 }
 
 // GET /api/access-control — the owner's management view data:
-//   admins        : jmis_userauth entries (excluding the owner)
+//   admins        : bluebell_userauth entries (excluding the owner)
 //   superAdmins   : devauth entries + built-in DEV_EMAILS (excluding the owner)
-//   disabled      : jmis_disabled_accounts snapshots
+//   disabled      : bluebell_disabled_accounts snapshots
 export async function GET(request: Request) {
   try {
     const owner = await requireSuperOwner(request);
@@ -37,10 +37,10 @@ export async function GET(request: Request) {
     const admin = serviceClient();
 
     const [userauthRes, devRes, disabledRes, staffRes] = await Promise.all([
-      admin.from('jmis_userauth').select('email'),
+      admin.from('bluebell_userauth').select('email'),
       Promise.resolve(admin.from('devauth').select('email')).catch(() => ({ data: [], error: null } as any)),
-      admin.from('jmis_disabled_accounts').select('*'),
-      Promise.resolve(admin.from('jmis_staff').select('email, name')).catch(() => ({ data: [], error: null } as any)),
+      admin.from('bluebell_disabled_accounts').select('*'),
+      Promise.resolve(admin.from('bluebell_staff').select('email, name')).catch(() => ({ data: [], error: null } as any)),
     ]);
 
     // email -> display name (best effort, from the staff directory)
@@ -110,7 +110,7 @@ export async function POST(request: Request) {
       // Snapshot the record first (name resolved from staff dir / auth meta).
       let snapshotName = String(body.name || '').trim();
       if (!snapshotName) {
-        const { data: st } = await admin.from('jmis_staff').select('name').ilike('email', email).maybeSingle();
+        const { data: st } = await admin.from('bluebell_staff').select('name').ilike('email', email).maybeSingle();
         snapshotName = st?.name || '';
       }
       if (!snapshotName) {
@@ -122,7 +122,7 @@ export async function POST(request: Request) {
       }
 
       // Record in the disabled registry (upsert so re-disable refreshes it).
-      const { error: insErr } = await admin.from('jmis_disabled_accounts').upsert(
+      const { error: insErr } = await admin.from('bluebell_disabled_accounts').upsert(
         { email, role, name: snapshotName || null, reason: String(body.reason || '').trim() || null, disabled_by: owner.email },
         { onConflict: 'email' },
       );
@@ -131,7 +131,7 @@ export async function POST(request: Request) {
       }
 
       // Remove from every role table so all presence checks fail immediately.
-      try { await admin.from('jmis_userauth').delete().ilike('email', email); } catch { /* ignore */ }
+      try { await admin.from('bluebell_userauth').delete().ilike('email', email); } catch { /* ignore */ }
       try { await admin.from('devauth').delete().ilike('email', email); } catch { /* ignore */ }
 
       // Drop live sessions so an already-signed-in account loses access now.
@@ -145,7 +145,7 @@ export async function POST(request: Request) {
 
     if (action === 'enable') {
       const { data: row, error: fetchErr } = await admin
-        .from('jmis_disabled_accounts').select('*').ilike('email', email).maybeSingle();
+        .from('bluebell_disabled_accounts').select('*').ilike('email', email).maybeSingle();
       if (fetchErr || !row) {
         return NextResponse.json({ error: 'That account is not disabled' }, { status: 404 });
       }
@@ -154,10 +154,10 @@ export async function POST(request: Request) {
       if ((row.role || 'admin') === 'super_admin') {
         try { await admin.from('devauth').insert({ email: restoreEmail }); } catch { /* ignore duplicate */ }
       } else {
-        try { await admin.from('jmis_userauth').insert({ email: restoreEmail }); } catch { /* ignore duplicate */ }
+        try { await admin.from('bluebell_userauth').insert({ email: restoreEmail }); } catch { /* ignore duplicate */ }
       }
 
-      const { error: delErr } = await admin.from('jmis_disabled_accounts').delete().ilike('email', email);
+      const { error: delErr } = await admin.from('bluebell_disabled_accounts').delete().ilike('email', email);
       if (delErr) {
         return NextResponse.json({ error: 'Failed to clear suspension: ' + delErr.message }, { status: 500 });
       }

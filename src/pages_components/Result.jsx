@@ -191,7 +191,7 @@ export default function Result() {
     const fetchUserAuth = async () => {
       try {
         const { data, error } = await supabase
-          .from('jmis_userauth')
+          .from('bluebell_userauth')
           .select('email');
         if (error) throw error;
         setUserAuth(data);
@@ -203,7 +203,7 @@ export default function Result() {
     const fetchTeacherAuth = async () => {
       try {
         const { data, error } = await supabase
-          .from('jmis_teacherauth')
+          .from('bluebell_teacherauth')
           .select('email');
         if (error) throw error;
         setTeacherAuth(data);
@@ -251,7 +251,7 @@ export default function Result() {
   const handleExport = async () => {
     toast.info("Exporting data...");
     try {
-      let query = supabase.from('jmis_result').select('*');
+      let query = supabase.from('bluebell_result').select('*');
       
       if (exportScope === 'individual') {
         if (!exportStudentName) {
@@ -329,7 +329,7 @@ export default function Result() {
   useEffect(() => {
     const fetchStudents = async () => {
       try {
-        const { data, error } = await supabase.from("jmis_student").select("id, name, class");
+        const { data, error } = await supabase.from("bluebell_student").select("id, name, class");
         if (error) throw error;
 
         const sortedStudents = data.map((student) => student.name).sort();
@@ -379,7 +379,7 @@ export default function Result() {
     console.log("Term subjects updated:", termSubjects);
   }, [termSubjects]);
 
-  // Attendance history for the selected student (current term, from jmis_attendance)
+  // Attendance history for the selected student (current term, from bluebell_attendance)
   const [studentAttendance, setStudentAttendance] = useState([]);
 
   useEffect(() => {
@@ -388,7 +388,7 @@ export default function Result() {
       if (!selectedStudent || !studentClassFilter || !termFilter) return;
       try {
         const { data: settingsData } = await supabase
-          .from("jmis_settings")
+          .from("bluebell_settings")
           .select("session, term, schoolOpened")
           .limit(1);
         const s = (settingsData && settingsData[0]) || {};
@@ -396,7 +396,7 @@ export default function Result() {
         if (!s.term || s.term.toLowerCase().trim() !== termFilter.toLowerCase().trim()) return;
 
         const { data } = await supabase
-          .from("jmis_attendance")
+          .from("bluebell_attendance")
           .select("*")
           .eq("student_name", selectedStudent)
           .eq("term", s.term)
@@ -450,11 +450,11 @@ export default function Result() {
     const fetchClassStats = async () => {
       try {
         const { data: studentsData, error: studentsError } = await supabase
-          .from("jmis_student")
+          .from("bluebell_student")
           .select("name, class");
 
         const { data: resultsData, error: resultsError } = await supabase
-          .from("jmis_result")
+          .from("bluebell_result")
           .select("studentName, studentClass, term1Subjects, term2Subjects, term3Subjects");
 
         if (studentsError || resultsError) {
@@ -631,7 +631,7 @@ export default function Result() {
           const classCandidates = Array.from(new Set([studentClass, normalizedClassNoSpace]));
 
           const { data: existingResult, error } = await supabase
-            .from("jmis_result")
+            .from("bluebell_result")
             .select("*")
             .eq("studentId", studentId)
             .in("studentClass", classCandidates);
@@ -640,9 +640,9 @@ export default function Result() {
             throw error;
           }
 
-          // A student with no live jmis_result row starts a fresh current-session
-          // entry. Do NOT fall back to jmis_result_history here: the "Start New
-          // Session" rollover archives the previous session and clears jmis_result,
+          // A student with no live bluebell_result row starts a fresh current-session
+          // entry. Do NOT fall back to bluebell_result_history here: the "Start New
+          // Session" rollover archives the previous session and clears bluebell_result,
           // so re-loading the latest archived row would resurrect old-session results
           // and block new-session entry (this mirrors the staff portal Result page,
           // which already starts clean for a student with no live row).
@@ -1136,7 +1136,7 @@ export default function Result() {
       const studentInfo = getStudentInfo(studentName);
       if (studentInfo && studentInfo.class) {
         const { data: data1, error: error1 } = await supabase
-          .from("jmis_student")
+          .from("bluebell_student")
           .select("token")
           .eq("name", studentName)
           .eq("class", studentInfo.class);
@@ -1154,7 +1154,7 @@ export default function Result() {
 
       // If that didn't work, try exact match with provided class
       let { data, error } = await supabase
-        .from("jmis_student")
+        .from("bluebell_student")
         .select("token")
         .eq("name", studentName)
         .eq("class", studentClass);
@@ -1162,7 +1162,7 @@ export default function Result() {
       // If still no results found, try case-insensitive match for the class
       if ((!data || data.length === 0) && !error) {
         const { data: caseInsensitiveData, error: caseInsensitiveError } = await supabase
-          .from("jmis_student")
+          .from("bluebell_student")
           .select("token")
           .eq("name", studentName)
           .ilike("class", studentClass); // ilike for case-insensitive match
@@ -1359,7 +1359,7 @@ export default function Result() {
       if (fetchedResultId) {
         // Update record
         const { error } = await supabase
-          .from("jmis_result")
+          .from("bluebell_result")
           .update(updatedResultData)
           .eq("id", fetchedResultId);
 
@@ -1402,13 +1402,13 @@ ${detailedScores}`;
           email: getCurrentUserEmail(),
           role: getAuditRole(),
           action: "result_update",
-          targetTable: "jmis_result",
+          targetTable: "bluebell_result",
           recordId: fetchedResultId,
           details: { studentName: selectedStudent, class: studentClass, term: termFilter, subjects: subjects.length },
         });
       } else {
         // Create new record
-        const { error } = await supabase.from("jmis_result").insert([updatedResultData]);
+        const { error } = await supabase.from("bluebell_result").insert([updatedResultData]);
 
         if (error) {
           toast.error("Error in Response, Reload application! ");
@@ -1449,7 +1449,7 @@ ${detailedScores}`;
           email: getCurrentUserEmail(),
           role: getAuditRole(),
           action: "result_upload",
-          targetTable: "jmis_result",
+          targetTable: "bluebell_result",
           details: { studentName: selectedStudent, class: studentClass, term: termFilter, subjects: subjects.length },
         });
       }
@@ -1473,7 +1473,7 @@ ${detailedScores}`;
     try {
       // First, get the result details for the email notification
       const { data: resultData, error: fetchError } = await supabase
-        .from("jmis_result")
+        .from("bluebell_result")
         .select("studentName, studentClass, term1Subjects, term2Subjects, term3Subjects")
         .eq("id", fetchedResultId)
         .single();
@@ -1481,7 +1481,7 @@ ${detailedScores}`;
       if (fetchError) throw fetchError;
 
       const { /* data, */ error } = await supabase
-        .from("jmis_result")
+        .from("bluebell_result")
         .update({ uploadResult: true })
         .eq("id", fetchedResultId);
 
@@ -2256,7 +2256,7 @@ Number of Subjects: ${termSubjects.length}`;
       </div>
     </div>
     
-    {/* Debit Amount Section - Only visible to jmis_userauth users */}
+    {/* Debit Amount Section - Only visible to bluebell_userauth users */}
     {(userAuth && userAuth.some && userAuth.some(auth => auth.email === user?.user_metadata?.email)) && (
       <div className="res-eval">
         <h5><span className="ic red"><RiBankLine /></span> Debit Amount</h5>

@@ -64,7 +64,7 @@ export default function AdminLessonPlans() {
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => setEmail(user?.email || "admin@school"));
-    supabase.from("jmis_settings").select("session").limit(1).then(({ data }) => {
+    supabase.from("bluebell_settings").select("session").limit(1).then(({ data }) => {
       if (data && data[0]?.session) setSession(data[0].session);
     });
     load();
@@ -119,8 +119,8 @@ export default function AdminLessonPlans() {
       const saved = await savePlan(form, { editing, authorEmail: email });
       logAction(supabase, {
         email, role: "admin",
-        action: editing ? "jmis_lesson_plans_update" : "jmis_lesson_plans_add",
-        targetTable: "jmis_lesson_plans", recordId: saved?.id,
+        action: editing ? "bluebell_lesson_plans_update" : "bluebell_lesson_plans_add",
+        targetTable: "bluebell_lesson_plans", recordId: saved?.id,
         details: { class: saved?.class, subject: saved?.subject, topic: saved?.topic || "" },
       });
       if (editing) setRows((rs) => rs.map((r) => (r.id === editing.id ? saved : r)));
@@ -139,7 +139,7 @@ export default function AdminLessonPlans() {
     setDeleting(true);
     try {
       await deletePlan(r.id);
-      logAction(supabase, { email, role: "admin", action: "jmis_lesson_plans_delete", targetTable: "jmis_lesson_plans", recordId: r.id, details: { class: r.class, subject: r.subject, topic: r.topic || "" } });
+      logAction(supabase, { email, role: "admin", action: "bluebell_lesson_plans_delete", targetTable: "bluebell_lesson_plans", recordId: r.id, details: { class: r.class, subject: r.subject, topic: r.topic || "" } });
       setRows((rs) => rs.filter((x) => x.id !== r.id));
       setPendingDelete(null);
       toast.success("Lesson plan deleted.");
