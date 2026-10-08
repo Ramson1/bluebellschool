@@ -1,0 +1,64 @@
+/* Add styling for the gallery in Gallery.css */
+.gallery-container {
+  padding: 20px;
+  text-align: center;
+  font-family: Arial, sans-serif;
+}
+
+.gallery-title {
+  font-size: 24px;
+  margin-bottom: 20px;
+  color: #4facfe;
+  font-weight: 700;
+  text-shadow: 0px 1px 0px rgba(70, 70, 70, 0.589);
+}
+
+.image-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
+}
+
+.image-card {
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  overflow: hidden;
+  width: 250px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s;
+  justify-items: center;
+}
+
+.image-card:hover {
+  transform: scale(1.05);
+}
+
+.image {
+  min-width: 200px;
+  height: 200px;
+  flex: 1;
+  display: block;
+}
+
+.image-description {
+  padding: 10px;
+  font-size: 14px;
+  color: #555;
+}
+
+.toggle-button {
+  margin-top: 20px;
+  padding: 10px 15px;
+  font-size: 16px;
+  color: #fff;
+  background-color: #007bff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.toggle-button:hover {
+  background-color: #0056b3;
+}

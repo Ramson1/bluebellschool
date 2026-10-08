@@ -1,0 +1,867 @@
+/* ============================================================
+   Settings page — tabbed, accessible layout built on the admin
+   green identity (matches AdminPages.css .ap-* tokens).
+   Light + dark mode via the app's CSS variables / data-theme.
+   ============================================================ */
+
+.settings-container {
+  background: var(--container-bg, #f4f6f9);
+  min-height: 100vh;
+  display: block;
+  padding: 90px 18px 60px;
+}
+
+.settings-card {
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+  max-width: 1080px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* ---------- Page header ---------- */
+.settings-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--text-primary, #1f2937);
+  margin: 0 0 4px;
+  border: none;
+  padding: 0;
+}
+
+.settings-heading::before {
+  content: "";
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  flex: 0 0 auto;
+  background: linear-gradient(120deg, #011b97, #022aa1)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='3'/%3E%3Cpath d='M194 12a7 7 0 0 0-.1-1l2-1.6a.5.5 0 0 0 .1-.6l-2-3.4a.5.5 0 0 0-.6-.2l-2.4 1a7 7 0 0 0-1.7-1l-.4-2.5a.5.5 0 0 0-.5-.4h-4a.5.5 0 0 0-.5.4l-.4 2.5a7 7 0 0 0-1.7 1l-2.4-1a.5.5 0 0 0-.6.2l-2 3.4a.5.5 0 0 0 .1.6l2 1.6a7 7 0 0 0 0 2l-2 1.6a.5.5 0 0 0-.1.6l2 3.4a.5.5 0 0 0 .6.2l2.4-1a7 7 0 0 0 1.7 1l.4 2.5a.5.5 0 0 0 .5.4h4a.5.5 0 0 0 .5-.4l.4-2.5a7 7 0 0 0 1.7-1l2.4 1a.5.5 0 0 0 .6-.2l2-3.4a.5.5 0 0 0-.1-.6l-2-1.6a7 7 0 0 0 .1-1z'/%3E%3C/svg%3E")
+    center / 22px no-repeat;
+  box-shadow: 0 6px 16px rgba(1, 27, 151, 0.28);
+}
+
+/* ---------- Tab bar ---------- */
+.settings-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 18px 0 22px;
+  padding-bottom: 4px;
+}
+
+.settings-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--card-border, #e5e7eb);
+  background: var(--card-bg, #fff);
+  color: var(--text-secondary, #6b7280);
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.settings-tab svg {
+  font-size: 1.1rem;
+}
+
+.settings-tab:hover {
+  border-color: #022aa1;
+  color: #022aa1;
+}
+
+.settings-tab:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(2, 42, 161, 0.25);
+}
+
+.settings-tab.active {
+  background: linear-gradient(120deg, #011b97, #022aa1);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(1, 27, 151, 0.25);
+}
+
+/* ---------- Section card ---------- */
+.settings-section {
+  margin-bottom: 20px;
+  padding: 22px 22px 24px;
+  border-radius: 16px;
+  background: var(--card-bg, #fff);
+  border: 1px solid var(--card-border, #e5e7eb);
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.05);
+}
+
+.settings-subheading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.12rem;
+  font-weight: 800;
+  color: var(--text-primary, #1f2937);
+  margin: 0 0 6px;
+}
+
+.settings-subheading + p,
+.settings-section > p {
+  color: var(--text-secondary, #6b7280);
+  font-size: 0.9rem;
+  margin: 0 0 16px;
+}
+
+.settings-label {
+  display: block;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary, #6b7280);
+  margin: 16px 0 6px;
+}
+
+.settings-input-group {
+  margin: 0 0 14px;
+}
+
+.settings-input-group > label {
+  display: block;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary, #6b7280);
+  margin-bottom: 6px;
+}
+
+.settings-input,
+.settings-section input[type="text"],
+.settings-section input[type="email"],
+.settings-section input[type="number"],
+.settings-section input[type="date"],
+.settings-section input[type="password"],
+.settings-section textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--card-border, #d1d5db);
+  border-radius: 10px;
+  margin-top: 4px;
+  font-size: 0.92rem;
+  background: var(--card-bg, #fff);
+  color: var(--text-primary, #1f2937);
+  box-shadow: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.settings-input:focus,
+.settings-section input:focus,
+.settings-section textarea:focus {
+  outline: none;
+  border-color: #022aa1;
+  box-shadow: 0 0 0 3px rgba(2, 42, 161, 0.18);
+}
+
+.settings-section textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+/* General settings two-column grid */
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 4px 18px;
+}
+
+@media (max-width: 640px) {
+  .settings-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- Buttons ---------- */
+.btn-save,
+.settings-section .btn-save {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(120deg, #011b97, #022aa1);
+  color: #fff;
+  border: none;
+  padding: 11px 22px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 0.92rem;
+  font-weight: 700;
+  margin-top: 20px;
+  box-shadow: 0 4px 12px rgba(1, 27, 151, 0.24);
+  transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
+}
+
+.btn-save:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(1, 27, 151, 0.3);
+}
+
+.btn-save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-remove {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(217, 83, 79, 0.12);
+  color: #a13834;
+  border: 1px solid rgba(217, 83, 79, 0.3);
+  padding: 7px 14px;
+  border-radius: 9px;
+  margin-top: 10px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.btn-remove:hover {
+  background: rgba(217, 83, 79, 0.2);
+}
+
+/* Website content item cards */
+.settings-item,
+.settings-section > div[id],
+.settings-section [class*="hero"] {
+  border-radius: 12px;
+}
+
+.preview-image {
+  display: block;
+  max-height: 220px;
+  width: auto;
+  max-width: 100%;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid var(--card-border, #e5e7eb);
+  margin: 10px 0;
+}
+
+/* ---------- Password field ---------- */
+.password-input-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.password-input-container .settings-input {
+  flex: 1;
+}
+
+.toggle-password-btn {
+  padding: 9px 14px;
+  background: rgba(45, 137, 239, 0.12);
+  color: #1c5eb8;
+  border: 1px solid rgba(45, 137, 239, 0.28);
+  border-radius: 9px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.toggle-password-btn:hover {
+  background: rgba(45, 137, 239, 0.2);
+}
+
+/* ---------- Lock Result toggle ---------- */
+.lock-result-group {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 14px 16px;
+  margin: 4px 0 2px;
+  border: 1px solid var(--card-border, #e5e7eb);
+  border-radius: 14px;
+  background: var(--container-bg, #f7f9fb);
+}
+
+.lock-result-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.lock-result-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 800;
+  font-size: 0.98rem;
+  color: var(--text-primary, #1f2937);
+}
+
+.lock-result-title svg {
+  font-size: 1.05rem;
+  color: #b45309;
+}
+
+.lock-result-desc {
+  font-size: 0.8rem;
+  color: var(--text-secondary, #6b7280);
+}
+
+/* The whole row is a clickable <label>; the native checkbox is visually hidden
+   but stays focusable for keyboard/screen-reader users. */
+.lock-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+  flex: 0 0 auto;
+}
+
+.lock-toggle-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  margin: 0;
+  pointer-events: none;
+}
+
+.lock-toggle-track {
+  position: relative;
+  width: 56px;
+  height: 30px;
+  border-radius: 999px;
+  background: #cbd5e1;
+  transition: background 0.22s ease;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.lock-toggle-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #fff;
+  color: #64748b;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.22s ease;
+}
+
+/* Checked (locked) state — slide right, red, white icon */
+.lock-toggle-input:checked ~ .lock-toggle-track {
+  background: #d9534f;
+}
+
+.lock-toggle-input:checked ~ .lock-toggle-track .lock-toggle-thumb {
+  transform: translateX(26px);
+  color: #d9534f;
+}
+
+/* Accessible focus ring when tabbing to the hidden checkbox */
+.lock-toggle-input:focus-visible ~ .lock-toggle-track {
+  outline: 2px solid #011b97;
+  outline-offset: 2px;
+}
+
+.lock-toggle-state {
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+  min-width: 62px;
+}
+
+.lock-toggle-state.on {
+  color: #b91c1c;
+}
+
+.lock-toggle-state.off {
+  color: var(--text-secondary, #6b7280);
+}
+
+html[data-theme="dark"] .lock-result-group {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+html[data-theme="dark"] .lock-result-title {
+  color: #e5e7eb;
+}
+
+html[data-theme="dark"] .lock-toggle-track {
+  background: #475569;
+}
+
+html[data-theme="dark"] .lock-toggle-input:checked ~ .lock-toggle-track {
+  background: #b91c1c;
+}
+
+html[data-theme="dark"] .lock-toggle-thumb {
+  background: #f1f5f9;
+}
+
+html[data-theme="dark"] .lock-toggle-state.off {
+  color: #9ca3af;
+}
+
+/* ---------- Session manager ---------- */
+.session-current-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 16px;
+  margin: 8px 0 4px;
+  border: 1px solid var(--card-border, #e5e7eb);
+  border-left: 4px solid #e0a800;
+  border-radius: 12px;
+  background: var(--container-bg, #f7f9fb);
+}
+
+.session-current-main {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  flex: 1;
+}
+
+.session-current-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary, #6b7280);
+}
+
+.session-active-dot {
+  color: #1f4fd8;
+  font-size: 1rem;
+}
+
+.session-current-value {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.session-current-value strong {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--text-primary, #1f2937);
+}
+
+.session-term-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(2, 42, 161, 0.14);
+  color: #011b97;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.session-edit-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.session-edit-row .settings-input {
+  flex: 1;
+  min-width: 140px;
+  max-width: 280px;
+  margin-top: 0;
+}
+
+.session-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  border: 1px solid var(--card-border, #d1d5db);
+  background: var(--card-bg, #fff);
+  color: var(--text-secondary, #6b7280);
+  cursor: pointer;
+  transition: 0.15s ease;
+  flex: 0 0 auto;
+}
+
+.session-icon-btn:hover {
+  border-color: #011b97;
+  color: #011b97;
+  background: rgba(2, 42, 161, 0.08);
+}
+
+.session-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.session-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--card-border, #e5e7eb);
+  border-radius: 10px;
+  background: var(--card-bg, #fff);
+  flex-wrap: wrap;
+}
+
+.session-row-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.session-row-label {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary, #1f2937);
+}
+
+.session-row-meta {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  font-size: 0.78rem;
+  color: var(--text-secondary, #6b7280);
+}
+
+.session-row-meta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.session-row-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.session-empty {
+  color: var(--text-secondary, #6b7280);
+  font-size: 0.88rem;
+  font-style: italic;
+  margin: 8px 0;
+}
+
+html[data-theme="dark"] .session-current-card,
+html[data-theme="dark"] .session-row {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+html[data-theme="dark"] .session-icon-btn {
+  background: rgba(255, 255, 255, 0.04);
+  color: #9ca3af;
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+html[data-theme="dark"] .session-current-value strong,
+html[data-theme="dark"] .session-row-label {
+  color: #e5e7eb;
+}
+
+/* ---------- Class fees ---------- */
+.class-fees-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.class-fee-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--card-border, #e5e7eb);
+  border-radius: 12px;
+  background: var(--container-bg, #f7f9fb);
+}
+
+.class-fee-item label {
+  font-weight: 700;
+  color: var(--text-primary, #1f2937);
+  min-width: 0;
+}
+
+.class-fee-item input {
+  flex: 0 0 130px;
+  max-width: 130px;
+  margin-top: 0;
+}
+
+/* ---------- Details list (About) ---------- */
+.details-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.detail-item {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 10px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid var(--card-border, #e5e7eb);
+  border-radius: 12px;
+  background: var(--container-bg, #f7f9fb);
+}
+
+@media (max-width: 640px) {
+  .detail-item {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---------- Profile tab ---------- */
+.profile-grid {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 760px) {
+  .profile-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.profile-card {
+  padding: 22px;
+  border-radius: 16px;
+  background: var(--card-bg, #fff);
+  border: 1px solid var(--card-border, #e5e7eb);
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.05);
+}
+
+.profile-identity {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 6px;
+}
+
+.settings-avatar {
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #022aa1;
+  background: #e9ecef;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.4rem;
+  font-weight: 800;
+  color: #1f4fd8;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+.settings-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.settings-avatar.busy {
+  opacity: 0.6;
+}
+
+.profile-name {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--text-primary, #1f2937);
+}
+
+.profile-email {
+  font-size: 0.85rem;
+  color: var(--text-secondary, #6b7280);
+  word-break: break-all;
+}
+
+.profile-actions {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.profile-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.88rem;
+  cursor: pointer;
+  border: 1px solid var(--card-border, #d1d5db);
+  background: var(--card-bg, #fff);
+  color: var(--text-primary, #1f2937);
+  transition: background 0.12s ease, border-color 0.12s ease;
+}
+
+.profile-btn:hover:not(:disabled) {
+  border-color: #022aa1;
+  background: rgba(2, 42, 161, 0.08);
+}
+
+.profile-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.profile-btn.primary {
+  background: linear-gradient(120deg, #011b97, #022aa1);
+  color: #fff;
+  border-color: transparent;
+}
+
+.profile-field {
+  margin-bottom: 16px;
+}
+
+.profile-field label {
+  display: block;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary, #6b7280);
+  margin-bottom: 6px;
+}
+
+.profile-hint {
+  margin: 0 0 14px;
+  font-size: 0.82rem;
+  color: var(--text-secondary, #6b7280);
+}
+
+.profile-divider {
+  height: 1px;
+  background: var(--card-border, #e5e7eb);
+  margin: 20px 0;
+}
+
+/* ---------- Unauthorized ---------- */
+.user-error {
+  text-align: center;
+}
+
+.btn-login {
+  padding: 10px 20px;
+  background: linear-gradient(120deg, #011b97, #022aa1);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  display: inline-block;
+  margin-top: 10px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+/* ============================================================
+   Dark mode
+   ============================================================ */
+html[data-theme="dark"] .settings-container {
+  background: #0f1420;
+}
+
+html[data-theme="dark"] .settings-heading {
+  color: #e5e7eb;
+}
+
+html[data-theme="dark"] .settings-section,
+html[data-theme="dark"] .profile-card,
+html[data-theme="dark"] .settings-tab {
+  background: #1a1f2b;
+  border-color: #2a2f3a;
+}
+
+html[data-theme="dark"] .settings-tab {
+  color: #cbd5e1;
+}
+
+html[data-theme="dark"] .settings-tab.active {
+  color: #fff;
+}
+
+html[data-theme="dark"] .settings-subheading {
+  color: #e5e7eb;
+}
+
+html[data-theme="dark"] .settings-input,
+html[data-theme="dark"] .settings-section input,
+html[data-theme="dark"] .settings-section textarea,
+html[data-theme="dark"] .profile-btn {
+  background: #232837 !important;
+  border-color: #3a4150 !important;
+  color: #e5e7eb !important;
+}
+
+html[data-theme="dark"] .class-fee-item,
+html[data-theme="dark"] .detail-item {
+  background: #151a24;
+  border-color: #2a2f3a;
+}
+
+html[data-theme="dark"] .class-fee-item label {
+  color: #e5e7eb;
+}
+
+html[data-theme="dark"] .settings-avatar {
+  background: #232837;
+  color: #94b6f0;
+}
+
+html[data-theme="dark"] .profile-divider {
+  background: #2a2f3a;
+}

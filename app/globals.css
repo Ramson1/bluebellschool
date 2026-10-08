@@ -1,0 +1,496 @@
+@import "bootstrap/dist/css/bootstrap.min.css";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+  --container-bg: #f8f9fa;
+  --card-bg: #ffffff;
+  --card-border: #f0f2f5;
+  --text-primary: #222;
+  --text-secondary: #888;
+  --input-bg: #ffffff;
+  --input-border: #42aff8;
+  --shadow-color: rgba(0, 0, 0, 0.1);
+  --warning-bg: #fff3cd;
+}
+
+/* Automatic mode (no explicit choice yet): follow the OS preference.
+   Guarded with :not() so the manual toggles below always win. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not([data-theme="dark"]) {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+    --container-bg: #1a1a1a;
+    --card-bg: #242424;
+    --card-border: #333333;
+    --text-primary: #e0e0e0;
+    --text-secondary: #a0a0a0;
+    --input-bg: #2a2a2a;
+    --input-border: #555555;
+    --shadow-color: rgba(0, 0, 0, 0.3);
+    --warning-bg: #3d3520;
+    /* Sidebar palette — dark */
+    --snav-bg: linear-gradient(180deg, #171a21 0%, #12141a 100%);
+    --snav-fg: #ffffff;
+    --snav-heading: #ffffff;
+    --snav-muted: #5f6775;
+    --snav-link: #a6adbb;
+    --snav-hover-bg: rgba(255, 255, 255, 0.06);
+    --snav-hover-fg: #ffffff;
+    --snav-active-bg: rgba(66, 175, 248, 0.16);
+    --snav-active-fg: #ffffff;
+    --snav-active-icon: #42aff8;
+    --snav-border: rgba(255, 255, 255, 0.07);
+    --snav-shadow: 2px 0 14px rgba(0, 0, 0, 0.25);
+    --snav-divider: rgba(255, 255, 255, 0.08);
+    --snav-chip-bg: rgba(66, 175, 248, 0.18);
+    --snav-chip-fg: #42aff8;
+    --snav-btn-bg: rgba(255, 255, 255, 0.06);
+    --snav-btn-bg-hover: rgba(255, 255, 255, 0.12);
+    --snav-signout-bg: rgba(240, 83, 94, 0.14);
+    --snav-signout-fg: #ff7b85;
+    --snav-signout-bg-hover: rgba(240, 83, 94, 0.3);
+    --snav-signout-fg-hover: #ffffff;
+    --snav-scroll-thumb: rgba(255, 255, 255, 0.15);
+    --snav-logo-border: rgba(255, 255, 255, 0.15);
+  }
+}
+
+/* Explicit choices — set by the sidebar theme toggle (src/utils/theme.js) */
+:root[data-theme="dark"] {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  --container-bg: #1a1a1a;
+  --card-bg: #242424;
+  --card-border: #333333;
+  --text-primary: #e0e0e0;
+  --text-secondary: #a0a0a0;
+  --input-bg: #2a2a2a;
+  --input-border: #555555;
+  --shadow-color: rgba(0, 0, 0, 0.3);
+  --warning-bg: #3d3520;
+  /* Sidebar palette — dark */
+  --snav-bg: linear-gradient(180deg, #171a21 0%, #12141a 100%);
+  --snav-fg: #ffffff;
+  --snav-heading: #ffffff;
+  --snav-muted: #5f6775;
+  --snav-link: #a6adbb;
+  --snav-hover-bg: rgba(255, 255, 255, 0.06);
+  --snav-hover-fg: #ffffff;
+  --snav-active-bg: rgba(66, 175, 248, 0.16);
+  --snav-active-fg: #ffffff;
+  --snav-active-icon: #42aff8;
+  --snav-border: rgba(255, 255, 255, 0.07);
+  --snav-shadow: 2px 0 14px rgba(0, 0, 0, 0.25);
+  --snav-divider: rgba(255, 255, 255, 0.08);
+  --snav-chip-bg: rgba(66, 175, 248, 0.18);
+  --snav-chip-fg: #42aff8;
+  --snav-btn-bg: rgba(255, 255, 255, 0.06);
+  --snav-btn-bg-hover: rgba(255, 255, 255, 0.12);
+  --snav-signout-bg: rgba(240, 83, 94, 0.14);
+  --snav-signout-fg: #ff7b85;
+  --snav-signout-bg-hover: rgba(240, 83, 94, 0.3);
+  --snav-signout-fg-hover: #ffffff;
+  --snav-scroll-thumb: rgba(255, 255, 255, 0.15);
+  --snav-logo-border: rgba(255, 255, 255, 0.15);
+}
+
+:root[data-theme="light"] {
+  --background: #ffffff;
+  --foreground: #171717;
+  --container-bg: #f8f9fa;
+  --card-bg: #ffffff;
+  --card-border: #f0f2f5;
+  --text-primary: #222;
+  --text-secondary: #888;
+  --input-bg: #ffffff;
+  --input-border: #42aff8;
+  --shadow-color: rgba(0, 0, 0, 0.1);
+  --warning-bg: #fff3cd;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Bootstrap's .text-muted uses a fixed grey that is unreadable on dark
+   backgrounds — theme it with the palette above. */
+html[data-theme="dark"] .text-muted {
+  color: var(--text-secondary, #a0a0a0) !important;
+}
+
+/* =====================================================================
+   DARK MODE — native Bootstrap control layer (app-wide).
+   Bootstrap derives table / form / modal / list / dropdown colours from its
+   own fixed --bs-body-* / --bs-border-* variables, so on a dark background a
+   raw .table / .form-control / .modal-content renders dark-on-dark and is
+   unreadable. Redirecting those variables to the palette above fixes every
+   management page at once. :root is <html data-theme="...">, and react-
+   bootstrap modals/dropdowns portal underneath it, so the override cascades
+   to them too. `color-scheme: dark` additionally makes native widgets
+   (scrollbars, <select> popups, date/number inputs) follow the theme.
+   Printable documents (result card, ID card, lesson-plan doc) set explicit
+   light colours on their own cells and print @media rules, and the card
+   theads use .table-light — which we deliberately do NOT re-theme here — so
+   they stay white and are intentionally unaffected.
+   ===================================================================== */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bs-body-bg: var(--background);
+  --bs-body-color: var(--foreground);
+  --bs-emphasis-color: #ffffff;
+  --bs-border-color: var(--card-border);
+  --bs-secondary-bg: var(--input-bg);
+  --bs-tertiary-bg: var(--card-bg);
+  --bs-secondary-color: var(--text-secondary);
+  --bs-tertiary-color: var(--text-secondary);
+  --bs-link-color: #42aff8;
+  --bs-link-hover-color: #78c6ff;
+  --bs-code-color: #f7b6d2;
+  --bs-highlight-bg: #3d3520;
+}
+
+/* Explicit fallbacks for controls whose surfaces come from fixed values, and
+   for native dropdown option lists (which ignore variable inheritance on some
+   engines). Kept low-specificity so the ap / fs / settings dark rules, which
+   use !important or more specific selectors, still win on their own pages. */
+:root[data-theme="dark"] .form-control,
+:root[data-theme="dark"] .form-select,
+:root[data-theme="dark"] .input-group-text,
+:root[data-theme="dark"] textarea {
+  background-color: var(--input-bg);
+  color: var(--foreground);
+  border-color: var(--card-border);
+}
+
+:root[data-theme="dark"] .form-control::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.8;
+}
+
+:root[data-theme="dark"] select option,
+:root[data-theme="dark"] select optgroup {
+  background-color: var(--input-bg);
+  color: var(--foreground);
+}
+
+:root[data-theme="dark"] .card,
+:root[data-theme="dark"] .modal-content,
+:root[data-theme="dark"] .offcanvas,
+:root[data-theme="dark"] .dropdown-menu,
+:root[data-theme="dark"] .list-group-item {
+  background-color: var(--card-bg);
+  color: var(--foreground);
+  border-color: var(--card-border);
+}
+
+:root[data-theme="dark"] .dropdown-item {
+  color: var(--foreground);
+}
+
+:root[data-theme="dark"] .dropdown-item:hover,
+:root[data-theme="dark"] .dropdown-item:focus {
+  background-color: var(--container-bg);
+  color: #ffffff;
+}
+
+:root[data-theme="dark"] .table:not(.redesigned-table) {
+  --bs-table-color: var(--foreground);
+  --bs-table-bg: transparent;
+  --bs-table-border-color: var(--card-border);
+  --bs-table-striped-bg: #232323;
+  --bs-table-striped-color: var(--foreground);
+  --bs-table-hover-bg: #2b2b2b;
+  --bs-table-hover-color: #ffffff;
+  color: var(--foreground);
+  border-color: var(--card-border);
+}
+
+/* Common container styles for dark mode support */
+.admin-container {
+  background-color: var(--container-bg);
+  color: var(--foreground);
+}
+
+.admin-card {
+  background-color: var(--card-bg);
+  border: 1px solid var(--card-border);
+  color: var(--foreground);
+}
+
+.admin-input {
+  background-color: var(--input-bg);
+  border-color: var(--input-border);
+  color: var(--foreground);
+}
+
+.admin-text-primary {
+  color: var(--text-primary);
+}
+
+.admin-text-secondary {
+  color: var(--text-secondary);
+}
+
+/* Custom styles for the application */
+.spinner-border {
+  display: inline-block;
+  width: 2rem;
+  height: 2rem;
+  vertical-align: text-bottom;
+  border: 0.25em solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: spinner-border 0.75s linear infinite;
+}
+
+@keyframes spinner-border {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ===== Sidebar navigation (SideNav.jsx) =====
+   All colors come from the --snav-* palette above so the sidebar follows the
+   dark/light theme toggle together with the rest of the app. */
+:root {
+  /* Sidebar palette — light (default; dark overrides live in the theme blocks above) */
+  --snav-bg: linear-gradient(180deg, #ffffff 0%, #eef1f6 100%);
+  --snav-fg: #1f2937;
+  --snav-heading: #171a21;
+  --snav-muted: #7c8798;
+  --snav-link: #4b5563;
+  --snav-hover-bg: rgba(23, 26, 33, 0.06);
+  --snav-hover-fg: #171a21;
+  --snav-active-bg: rgba(1, 27, 151, 0.1);
+  --snav-active-fg: #171a21;
+  --snav-active-icon: #011b97;
+  --snav-border: rgba(23, 26, 33, 0.09);
+  --snav-shadow: 2px 0 14px rgba(23, 26, 33, 0.08);
+  --snav-divider: rgba(23, 26, 33, 0.1);
+  --snav-chip-bg: rgba(1, 27, 151, 0.12);
+  --snav-chip-fg: #011b97;
+  --snav-btn-bg: rgba(23, 26, 33, 0.05);
+  --snav-btn-bg-hover: rgba(23, 26, 33, 0.1);
+  --snav-signout-bg: rgba(240, 83, 94, 0.1);
+  --snav-signout-fg: #d64550;
+  --snav-signout-bg-hover: rgba(240, 83, 94, 0.22);
+  --snav-signout-fg-hover: #b02a37;
+  --snav-scroll-thumb: rgba(23, 26, 33, 0.18);
+  --snav-logo-border: rgba(23, 26, 33, 0.12);
+}
+
+.sidenav-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  margin: 2px 12px;
+  border-radius: 10px;
+  color: var(--snav-link);
+  text-decoration: none;
+  font-size: 14px;
+  line-height: 1.2;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.sidenav-link:hover {
+  background: var(--snav-hover-bg);
+  color: var(--snav-hover-fg);
+  text-decoration: none;
+}
+
+.sidenav-link.active {
+  background: var(--snav-active-bg);
+  color: var(--snav-active-fg);
+  font-weight: 600;
+}
+
+.sidenav-link.active .sidenav-icon {
+  color: var(--snav-active-icon);
+}
+
+/* Collapsed mode: centered icon with comfortable breathing room */
+.sidenav-link--collapsed {
+  justify-content: center;
+  padding: 11px 0;
+  margin: 3px 14px;
+  gap: 0;
+}
+
+.sidenav-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 19px;
+  flex: 0 0 auto;
+}
+
+.sidenav-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidenav-section-title {
+  padding: 18px 0 6px 24px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: var(--snav-muted);
+}
+
+/* Divider shown in place of section titles when collapsed */
+.sidenav-divider {
+  height: 1px;
+  background: var(--snav-divider);
+  margin: 14px 18px;
+  list-style: none;
+}
+
+.sidenav-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--snav-link);
+  font-size: 18px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.sidenav-toggle:hover {
+  background: var(--snav-hover-bg);
+  color: var(--snav-hover-fg);
+}
+
+.sidenav-signout {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex: 1 1 auto;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 10px;
+  background: var(--snav-signout-bg);
+  color: var(--snav-signout-fg);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.sidenav-signout:hover {
+  background: var(--snav-signout-bg-hover);
+  color: var(--snav-signout-fg-hover);
+}
+
+.sidenav-signout--collapsed {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  gap: 0;
+  margin: 0 auto;
+  font-size: 20px;
+  flex: 0 0 auto;
+}
+
+/* Dark/light theme toggle (sits next to Sign Out in the sidebar footer) */
+.sidenav-theme {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex: 0 0 auto;
+  min-width: 44px;
+  padding: 0 12px;
+  height: 42px;
+  border: none;
+  border-radius: 10px;
+  background: var(--snav-btn-bg);
+  color: var(--snav-link);
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.sidenav-theme:hover {
+  background: var(--snav-btn-bg-hover);
+  color: var(--snav-hover-fg);
+}
+
+.sidenav-theme--collapsed {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  margin: 0 auto;
+  flex: 0 0 auto;
+}
+
+/* Thin custom scrollbar for the nav area */
+.sidenav-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.sidenav-scroll::-webkit-scrollbar-thumb {
+  background: var(--snav-scroll-thumb);
+  border-radius: 3px;
+}
+
+.sidenav-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ===== ID Cards page: select pill overlaid on each card (IdCards.jsx) ===== */
+.idcard-select-check {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  padding: 4px 11px 4px 7px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid #ced4da;
+  border-radius: 999px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+  cursor: pointer;
+}
+
+.idcard-select-check .form-check-input {
+  position: static;
+  float: none;
+  margin: 0;
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.idcard-select-check .form-check-label {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  cursor: pointer;
+}
+
+.idcard-select-check.checked {
+  background: #198754;
+  border-color: #198754;
+}
+
+.idcard-select-check.checked .form-check-label {
+  color: #fff;
+}

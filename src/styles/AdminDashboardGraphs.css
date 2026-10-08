@@ -1,0 +1,41 @@
+.dashboard-graphs-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 32px;
+    padding: 32px 0;
+    background: linear-gradient(135deg, #f8fafc 0%, #e3e9f7 100%);
+    border-radius: 24px;
+    box-shadow: 0 8px 32px rgba(44, 62, 80, 0.08);
+  }
+  
+  .dashboard-graph-card {
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 4px 16px rgba(44, 62, 80, 0.10);
+    padding: 28px 18px 18px 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 0;
+    min-height: 340px;
+    max-height: 420px; /* Set a max height for the graph card */
+    transition: box-shadow 0.2s;
+    overflow: hidden;
+  }
+  
+  .dashboard-graph-card canvas {
+    max-height: 260px !important; /* Set a max height for the chart itself */
+  }
+  
+  .dashboard-graph-card:hover {
+    box-shadow: 0 8px 32px rgba(44, 62, 80, 0.16);
+  }
+  
+  .dashboard-graph-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #4e73df;
+    margin-bottom: 18px;
+    letter-spacing: 0.5px;
+    text-align: center;
+  }

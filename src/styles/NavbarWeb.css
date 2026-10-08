@@ -1,0 +1,92 @@
+/* NavbarWeb.css */
+/* Styling the overall navbar */
+.navbar-custom {
+  /* Changed to dark green and black gradient */
+  background: linear-gradient(to right, #000000, #011b97);
+  font-family: 'Poppins', sans-serif; /* Clean and modern font */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow effect for depth */
+  height: 60px;
+  justify-content: center;
+  align-items: center;
+  padding-left: 48px;
+  padding-right: 48px; 
+  border-radius: 15px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.75);
+  border: 2px solid white;
+}
+
+/* Brand/logo styling */
+.navbar-brand-custom {
+  display: flex;
+  align-items: center;
+  padding: 0;
+  margin-right: auto; /* Push navigation items to the right */
+}
+
+/* Navigation link styles */
+.nav-link-custom {
+  color: #fff; 
+  font-size: 1.1rem;
+  margin: 0 10px;
+  transition: color 0.3s, transform 0.2s; 
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+/* Hover effect for links */
+.nav-link-custom:hover {
+  color: #ffe256; /* Bright yellow color on hover */
+  transform: translateY(-2px); /* Slight upward animation */
+}
+
+/* Active link styling */
+.nav-item.active .nav-link-custom {
+  color: #ffe256; /* Highlight active link */
+  font-weight: bold;
+}
+
+/* Custom button styling */
+.navbar-button {
+  background: #4facfe; /* Highlight button color */
+  color: #fff;
+  border-radius: 20px;
+  padding: 5px 15px;
+  border: none;
+  font-weight: 600;
+  transition: background 0.3s, transform 0.2s;
+}
+
+/* Hover effect for button */
+.navbar-button.hover-effect:hover {
+  background: #fdca00;
+  transform: scale(1.1); /* Slight enlargement */
+}
+
+/* Responsive styles for mobile */
+@media (max-width: 768px) {
+  .navbar-custom {
+    font-size: 0.9rem;
+    justify-content: space-between;
+    align-items: center;
+    height: 80px;
+    width: 100vw;
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+  .navbar-toggler{
+    background-color: white
+  }
+  .navbar-brand-custom {
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    padding: 0;
+  }
+  .nav-link-custom {
+    margin: 0 5px;
+    color: #000;
+  }
+  .nav-link-custom:hover {
+    color: #4facfe;
+  }
+}

@@ -1,0 +1,113 @@
+/* About.css */
+
+/* About Section Styling */
+.about-section {
+  padding: 4rem 2rem;
+  background: linear-gradient(to bottom, #f6f6f6, #ffffff);
+  font-family: 'Poppins', sans-serif;
+  color: #333;
+  text-align: center;
+  padding-top: 6rem;
+}
+
+/* Hero Section */
+.about-hero {
+  position: relative;
+}
+
+.about-hero-image {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+.about-title {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #de1c24; /* Matching school branding */
+  margin-top: -2rem;
+}
+
+/* Content Section */
+.about-content {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* Mission Section Styling */
+.about-mission {
+  margin-bottom: 2rem;
+}
+
+.about-heading {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: #4facfe;
+  text-shadow: 0px 1px 0px rgba(72, 72, 72, 0.571);
+}
+
+.about-mission p {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  color: #555;
+}
+
+/* Highlights Section Styling */
+.about-highlights ul {
+  text-align: left;
+  padding: 0;
+  list-style: none;
+  margin-top: 1rem;
+}
+
+.about-highlights li {
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+  padding-left: 2rem;
+  position: relative;
+  line-height: 1.6;
+  color: #555;
+}
+
+.about-highlights li::before {
+  content: "✓";
+  color: #de1c24; /* Red for branding */
+  font-weight: bold;
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+
+/* Closing Statement */
+.about-closing {
+  margin-top: 3rem;
+}
+
+.about-closing p {
+  font-size: 1.2rem;
+  line-height: 1.8;
+  color: #444;
+  font-weight: 500;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .about-title {
+    font-size: 1.7rem;
+  }
+
+  .about-heading {
+    font-size: 1.5rem;
+  }
+
+  .about-content {
+    padding: 0 1rem;
+  }
+
+  .about-closing p {
+    font-size: 1rem;
+  }
+}

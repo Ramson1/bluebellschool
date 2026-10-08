@@ -1,0 +1,103 @@
+/* =====================================================================
+   Mobile bottom navigation — modern, professional tab dock.
+   Theme-aware (light + dark), safe-area aware, horizontally scrollable,
+   with a brand-green active indicator. Single icon family (Remix Line).
+   ===================================================================== */
+
+:root {
+  --bnav-brand: #1f4fd8;
+  --bnav-brand-soft: rgba(2, 42, 161, 0.12);
+}
+
+.bnav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: stretch;
+  gap: 2px;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  padding: 6px 8px;
+  padding-bottom: calc(6px + env(safe-area-inset-bottom, 0px));
+  background: var(--card-bg, #ffffff);
+  border-top: 1px solid var(--card-border, #e6e9ef);
+  box-shadow: 0 -8px 24px rgba(15, 23, 42, 0.08);
+  scrollbar-width: none;         /* Firefox */
+  -ms-overflow-style: none;      /* IE/Edge */
+}
+.bnav::-webkit-scrollbar { display: none; }  /* Chrome/Safari */
+
+.bnav-item {
+  position: relative;
+  flex: 0 0 auto;
+  min-width: 62px;
+  max-width: 84px;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 8px 6px 6px;
+  border: 0;
+  background: transparent;
+  border-radius: 12px;
+  color: var(--text-secondary, #64707f);
+  font-size: 0.66rem;
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: 0.1px;
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease, transform 0.06s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.bnav-item svg {
+  font-size: 1.25rem;
+}
+.bnav-item span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+.bnav-item:active { transform: scale(0.95); }
+
+/* Active tab: brand tint + a small top indicator bar */
+.bnav-item.active {
+  color: var(--bnav-brand);
+  background: var(--bnav-brand-soft);
+}
+.bnav-item.active::before {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 22px;
+  height: 3px;
+  border-radius: 0 0 3px 3px;
+  background: var(--bnav-brand);
+}
+
+/* Sign-out is intentionally distinct */
+.bnav-signout {
+  color: #d64541;
+  margin-left: 4px;
+}
+.bnav-signout:hover { background: rgba(214, 69, 65, 0.10); }
+.bnav-signout.active { background: transparent; }
+.bnav-signout.active::before { display: none; }
+
+/* Dark theme */
+html[data-theme="dark"] .bnav {
+  --bnav-brand: #9dbdf2;
+  --bnav-brand-soft: rgba(2, 42, 161, 0.22);
+  background: var(--card-bg, #1b1f27);
+  border-top-color: var(--card-border, #2a2f3a);
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.45);
+}
+html[data-theme="dark"] .bnav-item { color: var(--text-secondary, #9aa4b2); }
+html[data-theme="dark"] .bnav-signout { color: #ff6b6b; }
+html[data-theme="dark"] .bnav-signout:hover { background: rgba(255, 107, 107, 0.14); }

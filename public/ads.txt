@@ -1,0 +1,3 @@
+# Bluebell International School has no AdSense account configured. This file
+# deliberately carries no seller entries; add Bluebell's own line if the school
+# ever enables AdSense (see the handover list in README.md).

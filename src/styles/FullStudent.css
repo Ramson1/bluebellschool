@@ -1,0 +1,548 @@
+/* ===== Full Student Records page (FullStudent.jsx) — theme-aware ===== */
+
+.fs-page {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 26px 16px 48px;
+}
+
+/* Header */
+.fs-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.fs-title {
+  font-size: 25px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  color: var(--text-primary, #222);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.fs-sub {
+  font-size: 13px;
+  color: var(--text-secondary, #888);
+  margin: 4px 0 0;
+}
+
+.fs-pills {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.fs-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: var(--card-bg, #fff);
+  border: 1px solid var(--card-border, #f0f2f5);
+  box-shadow: 0 1px 4px var(--shadow-color, rgba(0, 0, 0, 0.06));
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary, #222);
+  white-space: nowrap;
+}
+
+.fs-pill .k {
+  color: var(--text-secondary, #888);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 10px;
+  letter-spacing: 0.8px;
+}
+
+/* Toolbar: search + export */
+.fs-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  background: var(--card-bg, #fff);
+  border: 1px solid var(--card-border, #f0f2f5);
+  border-radius: 13px;
+  padding: 12px 14px;
+  box-shadow: 0 2px 10px var(--shadow-color, rgba(0, 0, 0, 0.05));
+  margin-bottom: 16px;
+}
+
+.fs-search {
+  position: relative;
+  flex: 1 1 260px;
+  min-width: 220px;
+}
+
+.fs-search .fs-search-ic {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 16px;
+  color: var(--text-secondary, #888);
+  pointer-events: none;
+}
+
+.fs-search input {
+  width: 100%;
+  padding: 9px 12px 9px 36px;
+  border-radius: 10px;
+  border: 1px solid var(--card-border, #ced4da);
+  background: var(--input-bg, #fff);
+  color: var(--text-primary, #222);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.fs-search input:focus {
+  border-color: #011b97;
+  box-shadow: 0 0 0 3px rgba(1, 27, 151, 0.15);
+}
+
+/* Card shell */
+.fs-card {
+  background: var(--card-bg, #fff);
+  border: 1px solid var(--card-border, #f0f2f5);
+  border-radius: 14px;
+  box-shadow: 0 3px 14px var(--shadow-color, rgba(0, 0, 0, 0.06));
+  overflow: hidden;
+}
+
+.fs-card-head {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--card-border, #f0f2f5);
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--text-primary, #222);
+}
+
+.fs-card-head .grow {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Table */
+.fs-tablewrap {
+  overflow-x: auto;
+}
+
+.fs-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+  color: var(--text-primary, #222);
+}
+
+.fs-table th {
+  text-transform: uppercase;
+  font-size: 10.5px;
+  letter-spacing: 0.8px;
+  font-weight: 700;
+  color: var(--text-secondary, #888);
+  text-align: left;
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--card-border, #eee);
+  white-space: nowrap;
+}
+
+.fs-table td {
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--card-border, #f0f2f5);
+  vertical-align: middle;
+}
+
+.fs-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.fs-table tbody tr:hover td {
+  background: rgba(127, 127, 127, 0.06);
+}
+
+.fs-name {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.fs-muted {
+  color: var(--text-secondary, #888);
+  font-size: 12.5px;
+}
+
+.fs-empty {
+  text-align: center;
+  color: var(--text-secondary, #888);
+  padding: 30px 16px;
+  font-size: 14px;
+}
+
+.fs-empty .fs-empty-ic {
+  font-size: 28px;
+  display: block;
+  margin-bottom: 8px;
+  opacity: 0.55;
+}
+
+/* Passport avatar in the table */
+.fs-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  border: 1px solid var(--card-border, #e3e6ea);
+  cursor: pointer;
+  background: var(--container-bg, #f1f3f7);
+}
+
+/* Gender / status pills */
+.fs-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.fs-badge.male { background: rgba(28, 100, 210, 0.12); color: #1c64d2; }
+.fs-badge.female { background: rgba(214, 69, 80, 0.10); color: #d64550; }
+.fs-badge.neutral { background: rgba(127, 127, 127, 0.14); color: var(--text-secondary, #888); }
+
+html[data-theme="dark"] .fs-badge.male { background: rgba(66, 175, 248, 0.16); color: #42aff8; }
+html[data-theme="dark"] .fs-badge.female { background: rgba(255, 123, 133, 0.16); color: #ff7b85; }
+
+/* Row action buttons */
+.fs-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 9px;
+  padding: 6px 12px;
+  font-size: 12.5px;
+  font-weight: 600;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.fs-btn.edit {
+  background: rgba(1, 27, 151, 0.10);
+  color: #011b97;
+  border-color: rgba(1, 27, 151, 0.25);
+}
+
+.fs-btn.edit:hover { background: rgba(1, 27, 151, 0.2); }
+
+.fs-btn.del {
+  background: rgba(240, 83, 94, 0.08);
+  color: #d64550;
+  border-color: rgba(240, 83, 94, 0.25);
+}
+
+.fs-btn.del:hover { background: rgba(240, 83, 94, 0.2); }
+
+.fs-btn.sign-in {
+  background: rgba(13, 110, 195, 0.10);
+  color: #0d6ec3;
+  border-color: rgba(13, 110, 195, 0.25);
+}
+
+.fs-btn.sign-in:hover { background: rgba(13, 110, 195, 0.2); }
+.fs-btn.sign-in:disabled { opacity: 0.5; cursor: not-allowed; }
+
+html[data-theme="dark"] .fs-btn.sign-in { background: rgba(90, 165, 235, 0.16); color: #6cb0f0; border-color: rgba(90, 165, 235, 0.35); }
+
+html[data-theme="dark"] .fs-btn.edit { background: rgba(2, 42, 161, 0.16); color: #4a7fe0; border-color: rgba(2, 42, 161, 0.35); }
+html[data-theme="dark"] .fs-btn.del { color: #ff7b85; }
+
+/* Export button */
+.fs-export {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(120deg, #011b97, #022aa1);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 9px 16px;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(1, 27, 151, 0.35);
+  transition: filter 0.15s ease, transform 0.15s ease;
+  white-space: nowrap;
+}
+
+.fs-export:hover { filter: brightness(1.08); transform: translateY(-1px); }
+
+.fs-export:disabled {
+  background: rgba(127, 127, 127, 0.18);
+  color: var(--text-secondary, #888);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+/* ---------- Edit modal ---------- */
+.fs-modal-content {
+  background: var(--card-bg, #fff);
+  color: var(--text-primary, #222);
+  border: 1px solid var(--card-border, #e5e9f0);
+  border-radius: 16px;
+}
+
+.fs-modal-head {
+  background: linear-gradient(120deg, #011b97, #1f4fd8 55%, #022aa1);
+  color: #fff;
+  border-radius: 16px 16px 0 0;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.fs-modal-head .t {
+  font-size: 16.5px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.fs-modal-head .s {
+  font-size: 12px;
+  opacity: 0.85;
+  margin-top: 2px;
+}
+
+.fs-modal-head .btn-close {
+  filter: invert(1) grayscale(100%) brightness(200%);
+  opacity: 0.85;
+}
+
+.fs-modal-body {
+  padding: 20px;
+}
+
+/* Passport block inside modal */
+.fs-passport {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  border: 1px dashed var(--card-border, #ccd2da);
+  border-radius: 13px;
+  margin-bottom: 18px;
+  background: var(--container-bg, #f7f9fc);
+}
+
+.fs-passport img {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid var(--card-bg, #fff);
+  box-shadow: 0 2px 8px var(--shadow-color, rgba(0, 0, 0, 0.12));
+  background: var(--card-bg, #fff);
+}
+
+.fs-passport .lbl {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary, #222);
+  margin-bottom: 2px;
+}
+
+.fs-passport .hint {
+  font-size: 11.5px;
+  color: var(--text-secondary, #888);
+  margin-bottom: 8px;
+}
+
+.fs-passport-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.fs-mini-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--card-border, #ced4da);
+  background: var(--card-bg, #fff);
+  color: var(--text-primary, #222);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.fs-mini-btn:hover { border-color: #011b97; color: #011b97; }
+.fs-mini-btn.danger:hover { border-color: #d64550; color: #d64550; }
+
+/* Field grid: two columns on wide screens */
+.fs-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.fs-grid .full {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 560px) {
+  .fs-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.fs-field label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-secondary, #888);
+  margin-bottom: 6px;
+}
+
+.fs-field .form-control,
+.fs-field .form-select {
+  background: var(--input-bg, #fff);
+  color: var(--text-primary, #222);
+  border: 1px solid var(--card-border, #ced4da);
+  border-radius: 10px;
+  font-size: 14px;
+}
+
+.fs-field .form-control:focus,
+.fs-field .form-select:focus {
+  border-color: #011b97;
+  box-shadow: 0 0 0 3px rgba(1, 27, 151, 0.15);
+}
+
+.fs-field option {
+  background: var(--card-bg, #fff);
+  color: var(--text-primary, #222);
+}
+
+/* Dev-only token section divider inside modal */
+.fs-devbox {
+  margin-top: 16px;
+  padding: 14px;
+  border: 1px solid var(--card-border, #e5e9f0);
+  border-radius: 13px;
+  background: var(--container-bg, #f7f9fc);
+}
+
+.fs-devbox .cap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--text-secondary, #888);
+  margin-bottom: 12px;
+}
+
+.fs-modal-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--card-border, #f0f2f5);
+}
+
+/* Mobile-safe responsiveness: cap the dialog to the viewport so the header and
+   the Cancel/Save footer always stay on screen, and let only the body scroll.
+   Belt-and-braces alongside Bootstrap's modal-dialog-scrollable. */
+.fs-modal-content {
+  max-height: 92vh;
+}
+
+.fs-modal-body {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.fs-modal-head,
+.fs-modal-foot {
+  flex: 0 0 auto;
+}
+
+@media (max-width: 575.98px) {
+  .fs-modal-body {
+    padding: 16px;
+  }
+  .fs-modal-foot {
+    padding: 12px 16px;
+    flex-wrap: wrap;
+  }
+  .fs-modal-foot .fs-cancel,
+  .fs-modal-foot .fs-save {
+    flex: 1 1 45%;
+    justify-content: center;
+  }
+}
+
+.fs-save {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(120deg, #011b97, #022aa1);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 9px 18px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(1, 27, 151, 0.35);
+}
+
+.fs-save:hover { filter: brightness(1.08); }
+.fs-save:disabled { opacity: 0.65; cursor: wait; }
+
+.fs-cancel {
+  background: transparent;
+  border: 1px solid var(--card-border, #ced4da);
+  color: var(--text-primary, #222);
+  border-radius: 10px;
+  padding: 9px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.fs-cancel:hover { background: rgba(127, 127, 127, 0.08); }
+
+/* ---------- Live camera modal (stacks above the edit modal) ---------- */
+.fs-camera-modal {
+  z-index: 1070;
+}
+
+.fs-camera-video {
+  width: 100%;
+  max-width: 460px;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  background: #000;
+  border-radius: 12px;
+  display: inline-block;
+}

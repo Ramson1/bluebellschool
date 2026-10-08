@@ -1,0 +1,464 @@
+import "bootstrap/dist/css/bootstrap.min.css";
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { v4 as uuid } from "uuid";
+import { supabase } from "../supabaseClient.js";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import "../styles/NewPayment.css";
+import { PaystackButton } from 'react-paystack';
+import { Modal, Button } from 'react-bootstrap';
+import backgroundImage from "../assets/bgtest.png";
+
+const NewPaymentWithPaystack = () => {
+    const [user, setUser] = useState();
+    const navigate = useNavigate();
+
+    const formattedDate = new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+
+    const [newPayments, setNewPayments] = useState('');
+    const [currentTerm, setCurrentTerm] = useState('');
+    const [name, setName] = useState('');
+    const [newclass, setNewClass] = useState('');
+    const [newSex, setNewSex] = useState('');
+    const [newInvoiceNO, setNewInvoiceNO] = useState('');
+    const [newDate, setNewDate] = useState(formattedDate);
+    const [newAmountPaid, setNewAmountPaid] = useState('');
+    const [email, setEmail] = useState('');
+    const [studentsOptions, setStudentsOptions] = useState([]); // Initialize state for student options
+    const [loading, setLoading] = useState(false); // State for loading indicator    
+    const [userauth, setUserAuth] = useState([]); // State for userauth
+    const [showPaymentsModal, setShowPaymentsModal] = useState(false); // State to manage payments modal visibility
+    const [classFees, setClassFees] = useState({}); // State to store class fees
+
+    useEffect(() => {
+        const fetchUserAuth = async () => {
+            try {
+                const { data, error } = await supabase
+                    .from('jmis_userauth') // Assuming 'userauth' is the table name
+                    .select('*');
+                if (error) throw error;
+                setUserAuth(data); // Set userauth from Supabase
+            } catch (error) {
+                toast.error("Failed to fetch data. Please check your internet connection."); // Added alert for fetch failure
+            }
+        };
+        const getUserData = async () => {
+            await supabase.auth.getUser().then((value) => {
+                if (value.data?.user) {
+                    setUser(value.data.user);
+                }
+            }).catch(error => {
+                toast.error("Error fetching user data: " + error.message);
+            });
+        };
+
+        const fetchStudents = async () => {
+            try {
+                const { data, error } = await supabase
+                    .from('jmis_student') // Assuming 'students' is the table name
+                    .select('name'); // Adjust the field name as necessary
+                if (error) throw error;
+                const sortedStudents = data.map(student => student.name).sort();
+                setStudentsOptions(sortedStudents); // Set student names
+            } catch (error) {
+                toast.error('Error fetching students: ' + error.message);
+            }
+        };
+
+        const fetchClassFees = async () => {
+            try {
+                const { data, error } = await supabase
+                    .from('jmis_classfees') // Assuming 'classfees' is the table name
+                    .select('*')
+                    .single();
+                if (error) throw error;
+                setClassFees(data); // Set class fees from Supabase
+            } catch (error) {
+                toast.error('Error fetching class fees: ' + error.message);
+            }
+        };
+
+        InvoiceGenerator();
+        getUserData();
+        fetchStudents();
+        fetchUserAuth();
+        fetchClassFees();
+    }, []);
+
+    const InvoiceGenerator = () => {
+        const randomCode = Math.floor(100000 + Math.random() * 900000);
+        setNewInvoiceNO(randomCode);
+    };
+
+    const createPayments = async () => {
+        const receiptData = {
+            description: newPayments,
+            currentterm: currentTerm,
+            name: name,
+            class: newclass,
+            sex: newSex,
+            invoiceno: newInvoiceNO,
+            date: newDate,
+            amountpaid: newAmountPaid,
+            paymentdescription: 'PayStack Payment',
+            user_id: user?.identities[0]?.identity_data?.full_name ? user.identities[0].identity_data.full_name : user?.email, // Ensure user is defined
+        };
+
+        try {
+            const { data: existingPayments, error: fetchError } = await supabase
+                .from('jmis_paymentsinfo')
+                .select('*')
+                .eq('name', name)
+                .eq('description', newPayments)
+                .eq('class', newclass)
+                .eq('currentterm', currentTerm);
+
+            if (fetchError) {
+                toast.error('Error fetching existing payments: ' + fetchError.message);
+                return;
+            }
+
+            if (existingPayments.length > 0) {
+                // If the record exists and the term is the same, update the amount
+                const oldAmount = existingPayments[0].amountpaid;
+                const updatedAmount = parseFloat(oldAmount) + parseFloat(newAmountPaid);
+
+                const { error: updateError } = await supabase
+                    .from("jmis_paymentsinfo")
+                    .update({
+                        amountpaid: updatedAmount,
+                        date: newDate,
+                    })
+                    .eq("id", existingPayments[0].id);
+
+                if (updateError) {
+                    toast.error("Error updating payment: " + updateError.message);
+                } else {
+                    toast.success("Payment updated successfully!");
+                    printReceipt(receiptData); // Print after successful update
+                }
+            } else {
+                // If no record exists or term is different, create a new payment
+                const { data, error } = await supabase.from("jmis_paymentsinfo").insert([receiptData]);
+
+                if (error) {
+                    toast.error("Error creating payment: " + error.message);
+                } else {
+                    toast.success("Payment created successfully!");
+                    printReceipt(receiptData); // Print after successful creation
+                }
+            }
+        } catch (error) {
+            console.error('Error handling payment creation:', error);
+            toast.error('Error creating payment: ' + error.message);
+        }
+
+        // Reset form fields
+        setNewPayments('');
+        setCurrentTerm('');
+        setName('');
+        setNewClass('');
+        setNewSex('');
+        setNewInvoiceNO(newInvoiceNO);
+        setNewAmountPaid('');
+        setEmail('');
+        setNewDate(formattedDate);
+        // navigate('/apppayments'); 
+    };
+
+    const classOptions = [
+        ...Array.from({ length: 1 }, (_, i) => `Creche`),
+        ...Array.from({ length: 1 }, (_, i) => `PreNursery`),
+        ...Array.from({ length: 2 }, (_, i) => `Nursery ${i + 1}`),
+        ...Array.from({ length: 9 }, (_, i) => `Year ${i + 1}`),
+    ];
+
+    const sexOptions = ['Male', 'Female'];
+
+    const paymentOptions = ['School Fees', 'Club Fee', 'Nursery Uniform', 'Primary Uniform', 'PreNursery Textbook', 'Nursery Textbook', 'Primary Textbook', 'Nursery Exercise Book', 'Primary Exercise Book', 'Admission Form', 'Tuition Fee', 'Learning Resources', 'Lesson Fee', 'After School Care', 'Bus Fee', 'Excursion Fee', 'Party Fee'];
+
+    const currentTermOptions = ['1st Term', '2nd Term', '3rd Term'];
+
+    const formItems = [
+        { type: 'optiondropdown', label: 'PAYMENT TITLE', placeholder: 'Enter Payment Title', value: newPayments, setValue: setNewPayments, option: paymentOptions },
+        { type: 'termdropdown', label: 'CURRENT TERM', placeholder: 'Select Current Term', value: currentTerm, setValue: setCurrentTerm, option: currentTermOptions },
+        { type: 'studentsdropdown', label: 'NAME', placeholder: 'Select Student Name', value: name, setValue: setName, option: studentsOptions }, // Updated to use fetched students
+        { type: 'dropdown', label: 'CLASS', value: newclass, setValue: setNewClass, placeholder: 'Select Student Class', option: classOptions },
+        { type: 'sexDropdown', label: 'GENDER', value: newSex, setValue: setNewSex, placeholder: 'Select Student Gender', option: sexOptions },
+        { type: 'input', label: 'INVOICE NO', placeholder: 'Enter invoice/receipt number', value: newInvoiceNO, setValue: setNewInvoiceNO },
+        { type: 'display', label: 'DATE', placeholder: 'DATE', value: newDate, setValue: setNewDate },
+        { type: 'input', label: 'ENTER AMOUNT', placeholder: 'Enter amount to be paid!', value: newAmountPaid, setValue: setNewAmountPaid, mainType: 'number' },
+        { type: 'input', label: 'EMAIL', placeholder: 'Enter email', value: email, setValue: setEmail },
+    ];
+
+    const paystackConfig = {
+        reference: uuid(),
+        email: email,
+        amount: newAmountPaid * 100, // Paystack amount is in kobo
+        publicKey: 'no paystack link yet', // Replace with your Paystack public key
+    };
+
+    const handlePaystackSuccessAction = (reference) => {
+        console.log("Paystack payment successful:", reference);
+        // Payment successful, create payment in the database
+        createPayments();
+    };
+
+    const handlePaystackCloseAction = () => {
+        console.log("Paystack payment closed");
+        // Payment closed
+        toast.warn('Payment was not completed.');
+    };
+
+    const handleSubmit = (event) => {
+        event.preventDefault();
+        if (newPayments === "" || currentTerm === "" || name === "" || newclass === "" || newSex === "" || newAmountPaid === "" || email === "") {
+            toast.error("Please fill all the fields");
+            return;
+        }
+        // Trigger Paystack payment
+    };
+
+    let printWindowRef = null; // To track the print window instance
+
+    const printReceipt = (receiptData) => {
+        console.log("printReceipt function called");
+        console.log("Receipt Data:", receiptData);
+
+        // Check if there's already an open print window
+        if (printWindowRef && !printWindowRef.closed) {
+            printWindowRef.focus();
+            return;
+        }
+
+        // Open a new print window
+        printWindowRef = window.open("", "_blank");
+        if (printWindowRef) {
+            // Write the receipt HTML content and styles to the new window
+            printWindowRef.document.write(`
+                <html>
+                <head>
+                    <title>Receipt</title>
+                    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" />
+                    <style>
+                        body {
+                            font-family: Arial, sans-serif;
+                            margin: 0;
+                            padding: 20px;
+                        }
+                        .receipt {
+                            margin: 20px;
+                            padding: 20px;
+                            border: 1px solid #ccc;
+                            border-radius: 5px;
+                            background-image: url('${backgroundImage}');
+                            background-size: cover;
+                            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Shadow effect */
+                        }
+                        .receipt h2 {
+                            text-align: center;
+                            margin-top: 130px;
+                            font-weight: 900;
+                            color: green;
+                        }
+                        .form-group {
+                            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+                            padding: 20px;
+                            padding-right: 70px
+                        }
+                        .receipt h5 {
+                            margin: 5px 0;
+                        }
+                        .receipt .header {
+                            font-weight: bold;
+                            margin-top: 15px;
+                            margin-bottom: 15px;
+                        }
+                        .receipt .footer {
+                            margin-top: 20px;
+                            text-align: center;
+                            background-color: rgb(3, 148, 25);
+                            padding: 10px;
+                            font-size: 20px;
+                            color: white;
+                            font-weight: bold;
+                        }
+                        .receipt-item {
+                            display: flex;
+                            gap: 20px;
+                            align-items: center;
+                            padding: 10px;
+                            border: 1px solid #ccc;
+                            border-radius: 5px;
+                            margin-bottom: 10px;
+                            background-color: #f9f9f9;
+                            width: 80%;
+                        }
+                        .receipt-item span {
+                            font-weight: bold;
+                            margin-left: 20px
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="receipt">
+                        <h2 class="mb-4">Receipt</h2>
+                        <div class="form-group">
+                            <div class="receipt-item">
+                                <span>Name:</span>
+                                <span>${receiptData.name}</span>
+                            </div>
+                            <div class="receipt-item">
+                                <span>Description:</span>
+                                <span>${receiptData.description}</span>
+                            </div>
+                            <div class="receipt-item">
+                                <span>Term:</span>
+                                <span>${receiptData.currentterm}</span>
+                            </div>
+                            <div class="receipt-item">
+                                <span>Invoice No:</span>
+                                <span>${receiptData.invoiceno}</span>
+                            </div>
+                            <div class="receipt-item">
+                                <span>Class:</span>
+                                <span>${receiptData.class}</span>
+                            </div>
+                            <div class="receipt-item">
+                                <span>Amount Paid:</span>
+                                <span>${receiptData.amountpaid}</span>
+                            </div>
+                            <div class="receipt-item">
+                                <span>Date:</span>
+                                <span>${receiptData.date}</span>
+                            </div>
+                            <div class="receipt-item">
+                                <span>Payment Description:</span>
+                                <span>${receiptData.paymentdescription}</span>
+                            </div>
+                        </div>
+                        <div class="footer">Thank you for doing business!</div>
+                    </div>
+                    <img src="${backgroundImage}" onload="window.print(); window.close();" style="display:none;" />
+                </body>
+                </html>
+            `);
+            printWindowRef.document.close();
+        }
+    };
+
+    const customLabels = {
+        creche: "Creche School Fee",
+        daycare: "Daycare School Fee",
+        nursery1: "Nursery 1 School Fee",
+        nursery2: "Nursery 2 School Fee",
+        year1: "Year 1 School Fee",
+        year2: "Year 2 School Fee",
+        year3: "Year 3 School Fee",
+        year4: "Year 4 School Fee",
+        year5: "Year 5 School Fee",
+        clubFee: "Club Fee",
+        yearuniform: "All Year Classes Uniform",
+        partyfee: "Party Fee",
+        nursery1textbook: "Nursery 1 Textbook",
+        nurseryexercisebook: "All Nursery classes Exercise Book",
+        yearexercisebook: "All Year classes Exercise Book",
+        excursionfees: "Excursion Fees",
+        prenurseryuniform: "Pre-Nursery Uniform",
+        prenurserytextbook: "Pre-Nursery Textbook",
+        prenurseryexercisebook: "Pre-Nursery Exercise Book",
+        nurseryuniform: "Nursery Uniform",
+        nursery2textbook: "Nursery 2 Textbook",
+        year1textbook: "Year 1 Textbook",
+        year2textbook: "Year 2 Textbook",
+        year3textbook: "Year 3 Textbook",
+        year4textbook: "Year 4 Textbook",
+        year5textbook: "Year 5 Textbook",
+        admissionForm: "Admission Form",
+        tuitionFee: "Tuition Fee",
+        learningResources: "Learning Resources",
+        lessonFee: "Lesson Fee",
+        afterSchoolCare: "After School Care",
+        busFee: "Bus Fee"
+    };
+
+    return (
+        <div>
+                <div>
+                    <ToastContainer />
+                    <div className="container mb-5 shadow-box">
+                        {/* Payment Form Header */}
+                        <h1 className="mb-4 text-center elegant-heading">Payment Form</h1>
+                        <h4 className="mb-4 text-center" style={{color: 'red'}}>Use Chrome Browser for Payments!</h4>
+                        <Button variant="info" onClick={() => setShowPaymentsModal(true)} className="mb-4 text-white" style={{fontWeight: '600'}}>
+                            Check Payments Prices
+                        </Button>
+
+                        {/* Form Design */}
+                        <form className="payment-form" onSubmit={handleSubmit}>
+                            {formItems.map((item, index) => (
+                                <div className="form-group mb-4" key={index}>
+                                    <label htmlFor={`input-${index}`} className="form-label elegant-label">{item.label}</label>
+                                    <input
+                                        type={item.mainType}
+                                        list={`options-${index}`}
+                                        id={`input-${index}`}
+                                        className="form-control elegant-input shadow-input"
+                                        placeholder={item.placeholder}
+                                        value={item.value}
+                                        onChange={(e) => item.setValue(e.target.value)}
+                                    />
+                                    <datalist id={`options-${index}`}>
+                                        {item.option &&
+                                            item.option.map((op, idx) => <option key={idx} value={op} />)}
+                                    </datalist>
+                                </div>
+                            ))}
+
+                            {/* Paystack Payment Button */}
+                            <PaystackButton
+                                className="btn btn-primary btn-lg elegant-button shadow-button"
+                                {...paystackConfig}
+                                text="Pay with Paystack"
+                                onSuccess={handlePaystackSuccessAction}
+                                onClose={handlePaystackCloseAction}
+                                disabled={!newPayments || !currentTerm || !name || !newclass || !newSex || !newAmountPaid || !email}
+                            />
+                        </form>
+                    </div>
+                </div>
+
+                {/* Payments Modal */}
+                <Modal show={showPaymentsModal} onHide={() => setShowPaymentsModal(false)}>
+                    <Modal.Header closeButton>
+                        <Modal.Title>Termly Payments</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>
+                        {Object.keys(classFees).length > 0 ? (
+                            <ul className="list-group">
+                            {Object.entries(classFees)
+                                .filter(([key]) => key !== 'id' && key !== 'created_at')
+                                .map(([key, value], index) => (
+                                    value && (
+                                        <li key={index} className="list-group-item">
+                                            <strong>{customLabels[key]}:</strong> {value}
+                                        </li>
+                                    )
+                                ))}
+                            </ul>
+                        ) : (
+                            <p>No class fees found.</p>
+                        )}
+                    </Modal.Body>
+                    <Modal.Footer>
+                        <Button variant="secondary" onClick={() => setShowPaymentsModal(false)}>
+                            Close
+                        </Button>
+                    </Modal.Footer>
+                </Modal>
+        </div>
+    );
+};
+
+export default NewPaymentWithPaystack;

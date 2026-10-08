@@ -1,0 +1,63 @@
+-- SQL Documentation: CBT Score Storage in jmis_result
+-- This file documents how CBT exam scores are stored in the database.
+-- It is documentation only: nothing here needs to be run.
+
+-- Marking scheme (the school's own forms), per subject per term
+--   Test (mid-term)  : 30 marks
+--   Project          : 10 marks
+--   Examination      : 60 marks
+--   Total            : 100 marks  -> grade from the 100-point table
+--                                     (>=96 A+, >=86 A, >=80 B+, >=70 B,
+--                                      >=66 C+, >=56 C, >=46 D, below that E)
+-- A mid-term CBT paper is scored out of 30 on its own.
+
+-- The jmis_result table stores subjects as JSONB arrays (term1Subjects,
+-- term2Subjects, term3Subjects). Each entry in one of those arrays uses these
+-- fields, which are the names the application actually writes:
+-- {
+--   "subjectName": "Mathematics",
+--   "test":        "",   -- Test column, maximum 30 marks
+--   "project":     "",   -- Project column, maximum 10 marks
+--   "examination": "",   -- Examination column, maximum 60 marks
+--   "total":       0,     -- test + project + examination, each capped first
+--   "grade":       "",
+--   "remark":      "",
+--   "cbtKey":      "",    -- idempotency key of the CBT attempt that wrote this
+--   "cbt": {              -- audit trail of that attempt, so the marks can be
+--     "correct": 0,       -- recounted from the paper at any time later
+--     "questionCount": 0,
+--     "paperMax": 0,
+--     "stored": 0,
+--     "section": "test" | "examination",
+--     "sessionType": "objective",
+--     "submittedAt": ""
+--   }
+-- }
+-- Earlier drafts of this document named the two score fields 'ca1' and 'exam'.
+-- Those fields are not written by the application; 'test' and 'examination' are,
+-- and they are what every reporting page reads.
+
+-- Routing and scaling (utils/cbtScoring.js, used by QuizComponent.jsx)
+-- The purpose of a paper is trimmed and lowercased before it is compared:
+--   purpose = 'exam'                       -> writes 'examination', capped at 60
+--   purpose = 'midterm' or 'test'          -> writes 'test',        capped at 30
+--   purpose = 'practice', empty, anything else -> nothing is stored
+-- A paper's own marks are the teacher-declared "Maximum score" on the exam row
+-- (jmis_cbtQuestions.maxScore, see jmis_cbt_max_score.sql); when it is not set,
+-- the paper is worth one mark per question. The answers are recounted against the
+-- questions that are actually stored for that paper and then scaled:
+--
+--   marks = min( round(correct / questionCount * paperMax), sectionMax )
+--
+-- so full marks land exactly on the paper's maximum and a percentage is kept as
+-- a percentage, but no CBT sitting can ever put more into a column than that
+-- column can hold. If a teacher declares a maximum above the section (for example
+-- an 80-mark examination paper), the editor warns and the write still clamps to
+-- 60 — 'total' can never exceed 100.
+
+-- Each CBT attempt also leaves a row in jmis_cbt_results carrying the raw
+-- answers, the question count, the paper maximum and the stable submissionKey.
+-- That key ("cbt:objective:<studentId>:<paperId>:<subject>:<term>:<purpose>") is
+-- the dedupe marker: it is stamped as 'cbtKey' on the subject entry above and
+-- protected by a unique partial index, so a retry or an offline re-upload of the
+-- same attempt records the marks once.

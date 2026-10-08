@@ -1,0 +1,51 @@
+.carousel-inner img {
+  max-height: 500px;
+  width: 100vw;
+  object-fit: cover;
+}
+
+/* herostyles.css */
+.carousel .carousel-control-prev-icon,
+.carousel .carousel-control-next-icon {
+  background-color: #000;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  opacity: 0.8;
+  background-size: 70%;
+  background-position: center;
+  padding: 10px;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.carousel-caption {
+  background-color: rgba(0, 0, 0, 0.548);
+  padding: 1rem;
+  border-radius: 25px;
+  padding-bottom: 20px;
+  margin-bottom: 20px;
+}
+
+.carousel-caption h3{
+  color: yellow;
+}
+
+.carousel img {
+  width: 100%;
+  height: 500px;
+}
+
+.carousel {
+  max-height: 90vh;
+  overflow: hidden;
+}
+
+.hero .carousel-indicators [data-bs-target] {
+  background-color: yellow;
+}
+@media (max-width: 768px) {
+  .hero .carousel-indicators [data-bs-target] {
+  margin-bottom: 30px;
+}
+}

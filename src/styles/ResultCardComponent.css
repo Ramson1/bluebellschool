@@ -1,0 +1,406 @@
+/* ResultCardComponent.css */
+body{
+  padding-top: 0;
+}
+/* General Styles */
+.result-card-container {
+  width: 90%;
+  margin: auto;
+  padding: 2em;
+  border: 1px solid #000;
+  font-family: Arial, sans-serif;
+}
+
+/* The result card is a printable white "paper" document and must look the
+   same in both themes. Its cells rely on inherited body colour, so in dark
+   mode they would go light-on-white and vanish; pin the whole sheet to a
+   light surface (mirrors LessonPlanDoc.css). Print @media below still wins. */
+html[data-theme="dark"] .result-doc {
+  background: #fff;
+  color: #111;
+}
+html[data-theme="dark"] .result-doc .section-title,
+html[data-theme="dark"] .result-doc h1,
+html[data-theme="dark"] .result-doc h5,
+html[data-theme="dark"] .result-doc h6,
+html[data-theme="dark"] .result-doc strong {
+  color: #111;
+}
+
+/* Header Section */
+.school-info h6 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+/* Compact styling with smaller text size, line height, minimized height, and rounded borders */
+.compact-section {
+  margin-bottom: 0.5rem;
+  padding: 0.8rem; /* Reduced padding for compactness */
+  border-radius: 12px; /* Rounded borders for a modern look */
+  box-shadow: 0px 3px 8px rgba(0, 0, 0, 0.08); /* Subtle shadow effect */
+  background-color: #fafafa; /* Slightly lighter background color for compact design */
+}
+
+.compact-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  background-color: #fff; /* Maintain a clean white table background */
+}
+
+.compact-table td {
+  padding: 6px 10px; /* Reduced padding for smaller row height */
+  border: 1px solid #e3e3e3; /* Light border to maintain clarity */
+  text-align: left;
+  font-size: 0.75rem; /* Smaller font size for compact design */
+  line-height: 0.8; /* Reduced line height for denser content */
+  color: #333; /* Keep text readable with dark color */
+  word-wrap: break-word;
+}
+
+.compact-table strong {
+  font-weight: 600;
+  color: #2c3e50; /* Slight text color emphasis */
+}
+
+.compact-section tr:nth-child(even) {
+  background-color: #f5f7fb; /* Alternate row colors for ease of scanning */
+}
+
+.compact-section tr:first-child td {
+  font-size: 0.75rem; /* Top rows slightly larger for hierarchy */
+  color: #2d89ef;
+  font-weight: bold;
+}
+
+.compact-section tr:nth-child(2) td {
+  font-size: 0.75rem; /* Top rows slightly larger for hierarchy */
+  color: #2d89ef;
+  font-weight: bold;
+}
+
+.compact-section tr:last-child td {
+  font-size: 0.75rem; /* Top rows slightly larger for hierarchy */
+  color: #2d89ef;
+  font-weight: bold;
+}
+
+@media (max-width: 768px) {
+  /* Responsive design for smaller screens */
+  .compact-table td {
+    font-size: 0.75rem;
+    padding: 3px 5px; /* Further reduced padding for smaller devices */
+    line-height: 0.8;
+  }
+}
+@media (max-width: 480px) {
+  /* Responsive design for smaller screens */
+  .compact-table td {
+    line-height: 1.3;
+  }
+}
+
+/* RESULT SECTION */
+/* Redesigned the result section with compact, responsive table design and conditional styling */
+.result-section {
+  /* margin: 2rem auto; */
+  padding: 0.5rem;
+  border-radius: 12px; /* Rounded corners for a modern appearance */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Soft shadow for an elevated look */
+  background-color: #f9f9f9; /* Slightly off-white background */
+  width: 100%; /* Centralize the section visually */
+  /* text-align: center; */
+}
+
+.title {
+  font-size: 0.8rem;
+  margin-bottom: 0.5rem;
+  color: #8b0b05; /* Darker tone for the title */
+  font-weight: bold;
+  text-align: center;
+}
+
+.result-table {
+  width: 100%;
+  border-collapse: collapse; /* Remove gaps between table cells */
+  background: #fff; /* White table background for readability */
+  border: 2px solid #000;
+}
+.result-table th{
+  text-align: center;
+  /* line-height: 1.7 */
+}
+.result-table th,
+.result-table td {
+  padding: 0.8rem;
+  border: 1px solid #ddd; /* Subtle border for distinction */
+  /* text-align: left;  */
+  font-size: 0.90rem; /* Slightly compact font size */
+  line-height: 0.4;
+  font-weight: bold;
+  /* letter-spacing: 1px; */
+}
+
+.result-table td{
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100px;
+}
+
+.result-table thead th {
+  background-color: #021988; /* Soft blue background for table header */
+  font-weight: bold;
+  color: #ffffff; /* Darker tone for the title */
+  font-size: 0.75rem;
+  line-height: 0.9;
+}
+
+.result-table tbody tr:nth-child(even) {
+  background-color: #f8f9fc; /* Alternate row colors */
+}
+
+.result-table tbody tr:nth-child(odd) {
+  background-color: #fff; /* White for alternating rows */
+}
+
+/* Conditional styling for scores */
+.good-score {
+  color: #4183d7; /* Blue for good scores */
+  font-weight: bold;
+}
+
+.average-score {
+  color: #e67e22; /* Orange for average scores */
+  font-weight: bold;
+}
+
+.low-score {
+  color: #c0392b; /* Red for low scores */
+  font-weight: bold;
+}
+
+/* Conditional styling for grades */
+.good-grade {
+  color: #27ae60; /* Green for excellent grades */
+  font-weight: bold;
+}
+
+.average-grade {
+  color: #e67e22; /* Orange for average grades */
+  font-weight: bold;
+}
+
+.low-grade {
+  color: #c0392b; /* Red for poor grades */
+  font-weight: bold;
+}
+
+@media (max-width: 768px) {
+  .result-table th,
+  .result-table td {
+    padding: 0.1rem; /* Adjust padding for smaller screens */
+    font-size: 0.7rem; /* Reduce font size for smaller screens */
+    line-height: 0.01;
+    font-weight: 700;
+  }
+}
+@media (max-width: 480px) {
+  .result-table thead tr th{
+    line-height: 1.3;
+  }
+  .result-table td {
+    line-height: 1;
+  }
+}
+
+/* Table Styles */
+.result-table,
+.traits-table,
+.skills-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1em;
+}
+.result-table th,
+.result-table td,
+.traits-table th,
+.traits-table td,
+.skills-table th,
+.skills-table td {
+  border: 1px solid #ccc;
+  padding: 8px;
+  /* text-align: center; */
+}
+.result-table th,
+.traits-table th,
+.skills-table th {
+  background-color: #f2f2f2;
+}
+
+/* Redesigned styles for Traits and Skills section with shadow and modern layout */
+.traits-skills-section {
+  padding: 0.5rem;
+  width: 100%;
+  margin: auto;
+}
+
+.traits-card {
+  background-color: #ffffff;
+  padding: 0rem 0.5rem;
+  border-radius: 10px; /* Rounded corners for modern aesthetics */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Subtle shadow effect */
+  margin-bottom: 0.1rem;
+  height: 330px;
+}
+.align{
+  justify-items: center;
+}
+
+.section-title {
+  font-size: 0.8rem;
+  color: #2d89ef; /* Blue color for section titles */
+  text-align: center;
+  /* margin: 0.3rem; */
+  padding-top: 0.3rem;
+  font-weight: bold;
+}
+
+.redesigned-table {
+  width: 100%;
+  border-collapse: collapse; /* Remove gaps between table cells */
+}
+
+.redesigned-table th,
+.redesigned-table td {
+  border: 1px solid #e0e0e0; /* Light gray borders between cells */
+  text-align: left;
+  color: #555; /* Slightly darker text color */
+  font-size: 10px;
+}
+
+.redesigned-table td {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100px;
+}
+
+.redesigned-table thead th {
+  background-color: #eef5ff; /* Light blue table header */
+  color: #333; /* Darker text */
+  font-weight: bold;
+}
+
+.redesigned-table tbody tr:nth-child(even) {
+  background-color: #f9f9f9; /* Alternate row coloring */
+}
+
+.redesigned-table tbody tr:nth-child(odd) {
+  background-color: #ffffff;
+}
+@media (max-width: 768px) {
+  .redesigned-table th,
+  .redesigned-table td {
+    font-size: 12px;
+    line-height: 0.6;
+  }
+  .key-meaning td {
+    line-height: 0.9;
+  }
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 10px;
+  font-size: 15px;
+  /* gap: 35px; */
+  padding-right: 20px;
+}
+.footer strong {
+  color: #2d89ef;
+}
+@media (max-width: 768px) {
+  .footer {
+    line-height: 0.5;
+    font-size: 13px;
+  }
+}
+@media (max-width: 480px) {
+  .footer {
+    display: inline-block;
+  }
+}
+
+/* Print Styles */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  
+  .container-fluid,
+  .container-fluid * {
+    visibility: visible;
+  }
+  
+  .container-fluid {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    font-size: 12px !important;
+    line-height: 1.2;
+  }
+  
+  /* Ensure all elements are visible in print */
+  .result-table,
+  .redesigned-table {
+    font-size: 10px !important;
+    line-height: 1;
+  }
+  
+  .compact-table {
+    font-size: 10px !important;
+    line-height: 1;
+  }
+  
+  /* Hide print button in print view */
+  .print-button-container {
+    display: none !important;
+  }
+  
+  /* Ensure colors are preserved in print */
+  .good-score,
+  .average-score,
+  .low-score,
+  .good-grade,
+  .average-grade,
+  .low-grade {
+    -webkit-print-color-adjust: exact;
+    color-adjust: exact;
+  }
+  
+  /* Ensure table borders are visible in print */
+  .result-table,
+  .result-table th,
+  .result-table td,
+  .redesigned-table,
+  .redesigned-table th,
+  .redesigned-table td {
+    border: 1px solid #000 !important;
+  }
+  
+  /* Truncate text with ellipsis in print view */
+  .result-table td,
+  .redesigned-table td {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100px; /* Adjust as needed */
+  }
+}

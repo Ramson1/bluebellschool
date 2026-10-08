@@ -1,0 +1,117 @@
+/* =====================================================================
+   Admin login — custom authenticated screen.
+   Two-panel: brand showcase (desktop) + centered glass form card.
+   Brand green accent (#022aa1) matches the dashboard.
+   ===================================================================== */
+
+:root {
+  --adm-brand: #022aa1;
+  --adm-brand-600: #03289b;
+  --adm-brand-700: #04248b;
+  --adm-ink: #0f172a;
+  --adm-muted: #6b7280;
+  --adm-line: #e5e7eb;
+  --adm-ring: rgba(2, 42, 161, 0.18);
+}
+
+* { box-sizing: border-box; }
+
+.adm-login-root {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background:
+    radial-gradient(1100px 600px at 100% -10%, rgba(2, 42, 161,.12), transparent 60%),
+    radial-gradient(900px 500px at -10% 110%, rgba(2, 42, 161,.10), transparent 60%),
+    #f4f7f3;
+  color: var(--adm-ink);
+  font-family: "Segoe UI", system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* ---------------- Form panel ---------------- */
+.adm-login-main {
+  display: flex; align-items: center; justify-content: center;
+  width: 100%;
+}
+.adm-login-card {
+  width: 100%; max-width: 420px;
+  background: #fff;
+  border: 1px solid var(--adm-line);
+  border-radius: 22px;
+  padding: 36px 34px 30px;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, .10);
+  animation: adm-login-rise .5s ease both;
+}
+@keyframes adm-login-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+
+.adm-login-head { text-align: center; margin-bottom: 24px; }
+.adm-login-logo { width: 62px; height: 62px; border-radius: 16px; object-fit: cover; box-shadow: 0 8px 20px rgba(0,0,0,.12); }
+.adm-login-head h1 { font-size: 1.5rem; font-weight: 800; margin: 14px 0 2px; }
+.adm-login-head p { margin: 0; color: var(--adm-muted); font-size: .95rem; }
+
+.adm-login-field { display: block; margin-bottom: 16px; }
+.adm-login-label { display: block; font-size: .82rem; font-weight: 700; color: #374151; margin-bottom: 7px; letter-spacing: .2px; }
+.adm-login-control {
+  display: flex; align-items: center; gap: 10px;
+  border: 1.5px solid var(--adm-line);
+  border-radius: 12px;
+  padding: 0 12px;
+  background: #fbfcfb;
+  transition: border-color .15s ease, box-shadow .15s ease, background .15s ease;
+}
+.adm-login-control:focus-within {
+  border-color: var(--adm-brand);
+  background: #fff;
+  box-shadow: 0 0 0 4px var(--adm-ring);
+}
+.adm-login-ic { font-size: 1.15rem; color: #9aa4b2; flex: none; }
+.adm-login-control input {
+  flex: 1; min-width: 0;
+  border: 0; outline: 0; background: transparent;
+  padding: 12px 0; font-size: .98rem; color: var(--adm-ink);
+}
+.adm-login-control input::placeholder { color: #b6bcc6; }
+
+.adm-login-eye {
+  flex: none; border: 0; background: transparent; cursor: pointer;
+  color: #6b7280; font-size: 1.2rem; padding: 6px; border-radius: 8px;
+  display: inline-flex; align-items: center; transition: background .15s ease, color .15s ease;
+}
+.adm-login-eye:hover { background: #eef3ec; color: var(--adm-brand); }
+
+.adm-login-submit {
+  margin-top: 6px; width: 100%;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  border: 0; cursor: pointer;
+  color: #fff; font-size: 1rem; font-weight: 700;
+  padding: 13px 16px; border-radius: 12px;
+  background: linear-gradient(135deg, var(--adm-brand) 0%, var(--adm-brand-600) 100%);
+  box-shadow: 0 10px 22px rgba(2, 42, 161, .32);
+  transition: transform .06s ease, box-shadow .15s ease, filter .15s ease;
+}
+.adm-login-submit:hover { filter: brightness(1.03); box-shadow: 0 12px 26px rgba(2, 42, 161,.38); }
+.adm-login-submit:active { transform: translateY(1px); }
+.adm-login-submit:disabled { opacity: .65; cursor: not-allowed; }
+
+.adm-login-divider { display: flex; align-items: center; gap: 12px; margin: 18px 0; color: #9aa4b2; font-size: .82rem; }
+.adm-login-divider::before, .adm-login-divider::after { content: ""; flex: 1; height: 1px; background: var(--adm-line); }
+
+.adm-login-google {
+  width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  border: 1.5px solid var(--adm-line); background: #fff; color: #374151;
+  font-size: .98rem; font-weight: 600; padding: 12px 16px; border-radius: 12px; cursor: pointer;
+  transition: background .15s ease, border-color .15s ease, box-shadow .15s ease;
+}
+.adm-login-google:hover { background: #f7f9f7; border-color: #d7dde5; box-shadow: 0 4px 12px rgba(15,23,42,.06); }
+.adm-login-google:disabled { opacity: .65; cursor: not-allowed; }
+.adm-login-google svg { font-size: 1.2rem; color: #ea4335; }
+
+.adm-login-note { margin: 20px 0 0; text-align: center; font-size: .8rem; line-height: 1.5; color: var(--adm-muted); }
+
+/* ---------------- Responsive ---------------- */
+@media (max-width: 420px) {
+  .adm-login-card { padding: 28px 20px; border-radius: 18px; }
+}
