@@ -120,6 +120,7 @@ export const Home = () => {
   const [pay, setPay] = useState("");
   const [succ, setSucc] = useState([]);
   const [totalStudents, setTotalStudents] = useState(0);
+  const [staffAccountsCount, setStaffAccountsCount] = useState(0);
   const [attendance, setAttendance] = useState({ studentsToday: 0, staffToday: 0, studentsTerm: 0, staffTerm: 0 });
   const [recents, setRecents] = useState({ attendance: [], students: [], cbtResults: [], cbtQuestions: [] });
   const [enquiryStats, setEnquiryStats] = useState({ newCount: 0, overdue: 0, recent: [] });
@@ -335,7 +336,19 @@ export const Home = () => {
         toast.error("Failed to fetch data. Please check your internet connection.");
       }
     };
+    const getStaffAccounts = async () => {
+      try {
+        const { count, error } = await supabase
+          .from("bluebell_staff")
+          .select("*", { count: "exact", head: true });
+        if (error) throw error;
+        setStaffAccountsCount(count || 0);
+      } catch (error) {
+        console.error("Failed to fetch staff count.", error);
+      }
+    };
     getTotalStudents();
+    getStaffAccounts();
   }, []);
 
   // Check if the current user is a teacher
@@ -401,7 +414,6 @@ export const Home = () => {
     user.identities && user.identities[0]?.identity_data?.full_name
       ? user.identities[0].identity_data.full_name
       : user.email;
-  const staffAccounts = Math.max(teacherAuth.length - 2, 0);
   const presentPct = totalStudents > 0 ? Math.min(100, Math.round((attendance.studentsToday / totalStudents) * 100)) : 0;
   const todayLabel = new Date().toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" });
 
@@ -442,7 +454,7 @@ export const Home = () => {
           <StatCard
             icon={<RiTeamLine size={24} />}
             label="Staff"
-            value={staffAccounts}
+            value={staffAccountsCount}
             sub="Staff accounts"
             tone="#36b9cc"
             chipBg="#e2f7fa"

@@ -45,6 +45,36 @@ import { CLASS_OPTIONS, canonClass } from "../utils/classOptions";
 
 const ALL_SUBJECTS = Array.from(new Set(Object.values(schoolSubjects).flat())).sort();
 
+// Designation is a fixed pick-list (no free text) so records stay comparable
+// across the directory, filters and reports. Legacy values that predate this
+// list are preserved at edit time via a fallback option in the field below.
+const DESIGNATIONS = [
+  "Teacher",
+  "Senior Teacher",
+  "Subject Teacher",
+  "Form Teacher",
+  "Instructor",
+  "Head of Department",
+  "Vice Principal",
+  "Principal",
+  "Bursar",
+  "Accountant",
+  "Secretary",
+  "Administrative Officer",
+  "Registrar",
+  "Librarian",
+  "Laboratory Technologist",
+  "ICT Technician",
+  "Nurse",
+  "Guidance Counsellor",
+  "Security Officer",
+  "Minder",
+  "Cleaner",
+  "Gardener",
+  "Driver",
+  "Cook",
+];
+
 const picUrl = (file) => {
   if (!file) return "/logo.png";
   if (file.startsWith("http")) return file;
@@ -81,13 +111,26 @@ export default function StaffAccounts() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState(null); // staff row when editing
   const [form, setForm] = useState(emptyForm);
-  const [assignDraft, setAssignDraft] = useState({ class: "", subject: "", formTeacher: false });
+  const [assignDraft, setAssignDraft] = useState({ classes: [], subjects: [], students: [] });
+  // School-wide roster (id/name/class) used by the per-subject cohort picker.
+  // Loaded lazily the first time an Academic modal opens.
+  const [allStudents, setAllStudents] = useState([]);
+  const [studentsLoaded, setStudentsLoaded] = useState(false);
+  // key of the assignment whose cohort panel is currently expanded (or null).
+  const [cohortKey, setCohortKey] = useState(null);
+  // Search text + scope toggle inside the open cohort panel.
+  const [cohortSearch, setCohortSearch] = useState("");
+  const [cohortAllSchool, setCohortAllSchool] = useState(false);
   const [picFile, setPicFile] = useState(null);
   const [dragOver, setDragOver] = useState(false);
   const [saving, setSaving] = useState(false);
 
   // one-time password modal
   const [pwModal, setPwModal] = useState({ show: false, password: "", title: "" });
+
+  // Full-screen passport viewer: clicking a staff thumbnail in the directory
+  // enlarges it over the page with a close button at the top right.
+  const [picViewer, setPicViewer] = useState({ open: false, src: "", name: "" });
 
   // Developer-only: the password issued to each staff member, keyed by staff id.
   // A staff member with no entry has changed their own password, so we no longer
@@ -237,29 +280,40 @@ export default function StaffAccounts() {
   const openCreate = () => {
     setEditing(null);
     setForm({ ...emptyForm, assignments: [] });
-    setAssignDraft({ class: "", subject: "", formTeacher: false });
+    setAssignDraft({ classes: [], subjects: [], students: [] });
+    setCohortKey(null);
+    setCohortSearch("");
+    setCohortAllSchool(false);
+    loadStudents();
     setPicFile(null);
     setFormOpen(true);
   };
 
   const openEdit = (row) => {
     setEditing(row);
-    // Seed the inline editor from this staff member's session-scoped
-    // bluebell_staff_assignments rows so the diff on save only touches real changes.
-    const seeded = (assignmentsByStaff[row.id] || [])
-      .filter((a) => !a.academic_session || !session || a.academic_session === session)
+    // Seed from session-scoped bluebell_staff_assignments rows. Form teacher lives in
+    // the class_assigned field (a class_teacher row); subject_teacher rows feed
+    // the multi-select editor. Subject rows for the form-teacher class are dropped
+    // since a form teacher already covers every subject in that class.
+    const rows = (assignmentsByStaff[row.id] || [])
+      .filter((a) => !a.academic_session || !session || a.academic_session === session);
+    const ctRow = rows.find((a) => a.assignment_type === "class_teacher");
+    const formCls = canonClass(ctRow?.class) || canonClass(row.class_assigned) || "";
+    const seeded = rows
+      .filter((a) => a.assignment_type === "subject_teacher" && canonClass(a.class) !== formCls)
       .map((a) => ({
         key: a.id || `${a.class}-${a.subject}`,
         id: a.id,
         class: canonClass(a.class) || a.class,
         subject: a.subject ?? null,
-        assignment_type: a.assignment_type,
+        student_ids: Array.isArray(a.student_ids) ? a.student_ids : [],
+        assignment_type: "subject_teacher",
       }));
     setForm({
       name: row.name || "",
       sex: row.sex || "",
       address: row.address || "",
-      class_assigned: row.class_assigned || "",
+      class_assigned: formCls,
       designation: row.designation || "",
       department: row.department || "Academic",
       subjects: Array.isArray(row.subjects) ? row.subjects : [],
@@ -269,9 +323,30 @@ export default function StaffAccounts() {
       profile_pic: row.profile_pic || "",
       date_of_appointment: row.date_of_appointment || "",
     });
-    setAssignDraft({ class: "", subject: "", formTeacher: false });
+    setAssignDraft({ classes: [], subjects: [], students: [] });
+    setCohortKey(null);
+    setCohortSearch("");
+    setCohortAllSchool(false);
+    loadStudents();
     setPicFile(null);
     setFormOpen(true);
+  };
+
+  // Lazily pull the school-wide roster once; powers the per-subject cohort picker.
+  const loadStudents = async () => {
+    if (studentsLoaded) return;
+    try {
+      const { data, error } = await supabase
+        .from("bluebell_student")
+        .select("id, name, class")
+        .order("name", { ascending: true });
+      if (error) throw error;
+      setAllStudents(data || []);
+      setStudentsLoaded(true);
+    } catch (e) {
+      console.error(e);
+      toast.warn("Could not load the student roster for cohort picking: " + e.message);
+    }
   };
 
   const normSub = (v) => String(v || "").toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -280,49 +355,72 @@ export default function StaffAccounts() {
       ? `CT|${canonClass(a.class)}`
       : `ST|${canonClass(a.class)}|${normSub(a.subject)}`;
 
-  // Subjects offered follow the class picked in the adder, so a Year 7 pick
+  // Subjects offered follow the class(es) picked in the adder, so a Year 7 pick
   // never lists Creche-only subjects; unknown/legacy labels fall back to all.
   const assignSubjects = useMemo(() => {
-    const list = subjectsForClass(assignDraft.class);
-    return list.length ? list : ALL_SUBJECTS;
-  }, [assignDraft.class]);
+    const cls = assignDraft.classes || [];
+    if (!cls.length) return ALL_SUBJECTS;
+    const set = new Set();
+    cls.forEach((c) => subjectsForClass(c).forEach((s) => set.add(s)));
+    return set.size ? Array.from(set).sort() : ALL_SUBJECTS;
+  }, [assignDraft.classes]);
 
-  const addAssignment = () => {
-    const cls = canonClass(assignDraft.class);
-    if (!cls) { toast.error("Select a class first."); return; }
-    if (!assignDraft.formTeacher && !assignDraft.subject) {
-      toast.error("Select a subject (or tick Form teacher).");
-      return;
-    }
-    const entry = assignDraft.formTeacher
-      ? { key: `k-${Date.now()}`, class: cls, subject: null, assignment_type: "class_teacher" }
-      : { key: `k-${Date.now()}`, class: cls, subject: assignDraft.subject, assignment_type: "subject_teacher" };
+  // Build the cross product of the selected classes × selected subjects as
+  // subject_teacher rows. This covers multiple subjects for one class, one
+  // subject across multiple classes, and a single class + single subject at once.
+  const addAssignments = () => {
+    const cls = (assignDraft.classes || []).map(canonClass).filter(Boolean);
+    const subs = assignDraft.subjects || [];
+    if (!cls.length) { toast.error("Select at least one class."); return; }
+    if (!subs.length) { toast.error("Select at least one subject."); return; }
+    const formCls = canonClass(form.class_assigned);
     setForm((f) => {
       const list = f.assignments || [];
-      if (list.some((a) => keyOf(a) === keyOf(entry))) {
-        toast.info("That assignment is already listed.");
+      const keys = new Set(list.map((a) => keyOf(a)));
+      const additions = [];
+      for (const c of cls) {
+        // A form teacher already covers every subject in their class — skip it.
+        if (formCls && c === formCls) continue;
+        for (const s of subs) {
+          const entry = { key: `k-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, class: c, subject: s, assignment_type: "subject_teacher" };
+          const k = keyOf(entry);
+          if (keys.has(k)) continue;
+          keys.add(k);
+          additions.push(entry);
+        }
+      }
+      if (!additions.length) {
+        toast.info(formCls && cls.every((c) => c === formCls)
+          ? `${formCls} is covered by the form teacher — pick a different class.`
+          : "Those class/subject assignments are already listed.");
         return f;
       }
-      // A form teacher owns every subject in the class: adding one drops the
-      // now-redundant subject rows for the same class, and a subject row is
-      // refused where the class is already covered by a form teacher.
-      if (entry.assignment_type === "class_teacher") {
-        const next = list.filter(
-          (a) => !(canonClass(a.class) === cls && a.assignment_type === "subject_teacher")
-        );
-        return { ...f, assignments: [...next, entry] };
-      }
-      if (list.some((a) => a.assignment_type === "class_teacher" && canonClass(a.class) === cls)) {
-        toast.info(`${cls} is already a form-teacher class — it covers all subjects.`);
-        return f;
-      }
-      return { ...f, assignments: [...list, entry] };
+      return { ...f, assignments: [...list, ...additions] };
     });
-    setAssignDraft((d) => ({ ...d, subject: "", formTeacher: false }));
+    setAssignDraft((d) => ({ ...d, subjects: [], students: [] }));
   };
 
   const removeAssignment = (key) =>
     setForm((f) => ({ ...f, assignments: (f.assignments || []).filter((a) => a.key !== key) }));
+
+  // Attach/detach a single student to one subject assignment's cohort (its
+  // student_ids array). Empty cohort means "all students in the class".
+  const toggleCohortStudent = (key, id) =>
+    setForm((f) => ({
+      ...f,
+      assignments: (f.assignments || []).map((a) => {
+        if (a.key !== key) return a;
+        const set = new Set(a.student_ids || []);
+        set.has(id) ? set.delete(id) : set.add(id);
+        return { ...a, student_ids: Array.from(set) };
+      }),
+    }));
+
+  const clearCohort = (key) =>
+    setForm((f) => ({
+      ...f,
+      assignments: (f.assignments || []).map((a) => (a.key === key ? { ...a, student_ids: [] } : a)),
+    }));
 
   const doSave = async () => {
     setSaving(true);
@@ -336,15 +434,24 @@ export default function StaffAccounts() {
       // class_assigned columns are kept as a derived snapshot for the directory
       // display and the staff portal's legacy fallback.
       const isAcademic = form.department === "Academic";
-      const assignments = isAcademic ? (form.assignments || []) : [];
-      const derivedSubjects = [...new Set(assignments.filter((a) => a.subject).map((a) => a.subject))];
-      const ctClass = assignments.find((a) => a.assignment_type === "class_teacher")?.class || "";
+      const formCls = canonClass(form.class_assigned);
+      // Form teacher is expressed via class_assigned (a single class_teacher row).
+      // subject_teacher rows come from the editor list; any subject row belonging
+      // to the form-teacher class is redundant and dropped here.
+      const subjectRows = isAcademic ? (form.assignments || []).filter((a) => canonClass(a.class) !== formCls) : [];
+      const payloadAssignments = isAcademic
+        ? [
+            ...(formCls ? [{ class: formCls, subject: null, assignment_type: "class_teacher" }] : []),
+            ...subjectRows.map((a) => ({ class: canonClass(a.class), subject: a.subject, assignment_type: "subject_teacher", student_ids: a.student_ids || [] })),
+          ]
+        : [];
+      const derivedSubjects = [...new Set(subjectRows.map((a) => a.subject).filter(Boolean))];
       const profileFields = { ...form };
       delete profileFields.assignments;
       const profile = {
         ...profileFields,
         subjects: derivedSubjects,
-        class_assigned: form.class_assigned || ctClass || "",
+        class_assigned: formCls || "",
         profile_pic: picPath,
       };
 
@@ -386,21 +493,21 @@ export default function StaffAccounts() {
         if (!assignmentsOk) {
           toast.warn("Assignments could not be loaded, so class/subject changes were NOT saved. Close this modal and press Reload (or refresh) then try again.");
         } else {
-          const res = await api("/api/staff-assignments", "POST", { staffId, session, assignments });
+          const res = await api("/api/staff-assignments", "POST", { staffId, session, assignments: payloadAssignments });
           if ((res.errors || []).length) {
             toast.warn(`Saved, but ${res.errors.length} assignment change(s) failed: ${(res.errors || []).slice(0, 2).join(" · ")}`);
           } else {
-            if ((res.added || 0) + (res.removed || 0) > 0) {
+            if ((res.added || 0) + (res.removed || 0) + (res.updated || 0) > 0) {
               logAction(supabase, {
                 email, role: actorRole, action: "staff_assignments_sync", targetTable: "bluebell_staff_assignments",
-                recordId: staffId, details: { added: res.added, removed: res.removed },
+                recordId: staffId, details: { added: res.added, removed: res.removed, updated: res.updated },
               });
             }
             // Explicit confirmation — if this toast never appears after a save,
             // the tab is running stale code and needs a hard refresh.
             toast.success(
-              (res.added || 0) + (res.removed || 0) > 0
-                ? `Class/subject assignments saved (${res.added} added, ${res.removed} removed).`
+              (res.added || 0) + (res.removed || 0) + (res.updated || 0) > 0
+                ? `Class/subject assignments saved (${res.added} added, ${res.removed} removed${res.updated ? `, ${res.updated} cohort(s) updated` : ""}).`
                 : "Class/subject assignments already up to date."
             );
           }
@@ -581,7 +688,10 @@ export default function StaffAccounts() {
       const c = canonClass(r.class) || r.class || "—";
       (byCls[c] ||= { form: false, subjects: [] });
       if (r.assignment_type === "class_teacher") byCls[c].form = true;
-      else if (r.subject) byCls[c].subjects.push(r.subject);
+      else if (r.subject) {
+        const n = Array.isArray(r.student_ids) ? r.student_ids.length : 0;
+        byCls[c].subjects.push(n ? `${r.subject} (${n})` : r.subject);
+      }
     });
     return (
       <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
@@ -721,7 +831,9 @@ export default function StaffAccounts() {
                           <img
                             src={picUrl(s.profile_pic)}
                             alt={s.name}
-                            style={{ width: 34, height: 34, borderRadius: "50%", objectFit: "cover", background: "var(--container-bg, #f1f5f9)" }}
+                            title={s.profile_pic ? "Click to view passport photo" : undefined}
+                            onClick={() => s.profile_pic && setPicViewer({ open: true, src: picUrl(s.profile_pic), name: s.name || "" })}
+                            style={{ width: 34, height: 34, borderRadius: "50%", objectFit: "cover", background: "var(--container-bg, #f1f5f9)", cursor: s.profile_pic ? "zoom-in" : "default" }}
                           />
                         </td>
                         <td>
@@ -734,10 +846,10 @@ export default function StaffAccounts() {
                             {s.department || "Academic"}
                           </span>
                         </td>
-                        <td>{assignmentCell(s)}</td>
                         <td style={{ whiteSpace: "nowrap" }}>
                           {s.date_of_appointment ? new Date(s.date_of_appointment).toLocaleDateString() : <span className="ap-hint">not set</span>}
                         </td>
+                        <td>{assignmentCell(s)}</td>
                         <td>
                           <div style={{ fontSize: "0.85rem" }}>{s.email || "—"}</div>
                           <div className="ap-hint">{s.phone || ""}</div>
@@ -812,7 +924,7 @@ export default function StaffAccounts() {
       </div>
 
       {/* Create / edit modal */}
-      <Modal show={formOpen} onHide={() => setFormOpen(false)} centered dialogClassName="ap-modal-lg" contentClassName="ap-modal-content">
+      <Modal show={formOpen} onHide={() => setFormOpen(false)} centered dialogClassName="ap-modal-xl" contentClassName="ap-modal-content">
         <Modal.Header className="ap-modal-head" closeButton closeVariant="white">
           <Modal.Title style={{ fontSize: "1.05rem", fontWeight: 800 }}>
             {editing ? `Edit ${editing.name}` : "New Staff Account"}
@@ -839,7 +951,20 @@ export default function StaffAccounts() {
             </div>
             <div className="ap-field">
               <label className="ap-label">Designation</label>
-              <input className="ap-input" value={form.designation} onChange={(e) => setForm({ ...form, designation: e.target.value })} placeholder="e.g. Class Teacher, Bursar, Security" />
+              <select
+                className="ap-input"
+                value={form.designation}
+                onChange={(e) => setForm({ ...form, designation: e.target.value })}
+              >
+                <option value="">Select designation…</option>
+                {DESIGNATIONS.map((d) => <option key={d} value={d}>{d}</option>)}
+                {/* Preserve an existing value that predates this list so it is
+                    never silently dropped when editing an old record. */}
+                {form.designation && !DESIGNATIONS.includes(form.designation) && (
+                  <option value={form.designation}>{form.designation} (legacy)</option>
+                )}
+              </select>
+              <span className="ap-hint">Choose from the list — type is disabled to keep records consistent.</span>
             </div>
             <div className="ap-field">
               <label className="ap-label">Department</label>
@@ -859,7 +984,7 @@ export default function StaffAccounts() {
                 <option value="">No specific class</option>
                 {CLASS_OPTIONS.map((c) => <option key={c} value={c}>{c}</option>)}
               </select>
-              <span className="ap-hint">Optional, informational — the authoritative class/subject access is set in &quot;Class &amp; Subjects&quot; below.</span>
+              <span className="ap-hint">Sets this staff member as the <b>Form Teacher</b> of the chosen class (covers every subject there). Use &quot;Class &amp; Subjects&quot; below for individual subjects in OTHER classes.</span>
             </div>
             <div className="ap-field">
               <label className="ap-label">Email *</label>
@@ -878,48 +1003,86 @@ export default function StaffAccounts() {
               <label className="ap-label">Class &amp; Subjects</label>
               {form.department === "Academic" ? (
                 <>
-                  <div className="sa-ac-adder">
-                    <div>
-                      <span className="ap-field-label">Class</span>
-                      <select className="ap-input" value={assignDraft.class} onChange={(e) => setAssignDraft((d) => ({ ...d, class: e.target.value, subject: "" }))}>
-                        <option value="">Select class…</option>
-                        {CLASS_OPTIONS.map((c) => <option key={c} value={c}>{c}</option>)}
-                      </select>
+                  <div>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))", gap: 16 }}>
+                      <div style={{ border: "1px solid var(--card-border,#e5e7eb)", borderRadius: 12, padding: 10, background: "var(--container-bg,#f8fafc)" }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                          <span className="ap-field-label" style={{ margin: 0 }}>Classes</span>
+                          <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#011b97", background: "rgba(1, 27, 151,.12)", padding: "2px 9px", borderRadius: 999 }}>{assignDraft.classes.length} selected</span>
+                        </div>
+                        <div style={{ display: "grid", gap: 8, maxHeight: 460, overflowY: "auto", paddingRight: 4 }}>
+                          {CLASS_OPTIONS.filter((c) => canonClass(c) !== canonClass(form.class_assigned)).map((c) => {
+                            const on = assignDraft.classes.includes(c);
+                            return (
+                              <button key={c} type="button" title={on ? `Remove ${c}` : `Select ${c}`} onClick={() => setAssignDraft((d) => ({ ...d, classes: on ? d.classes.filter((x) => x !== c) : [...d.classes, c], subjects: [] }))}
+                                style={{ textAlign: "left", padding: "12px 14px", borderRadius: 10, fontSize: "1rem", fontWeight: on ? 800 : 600, cursor: "pointer", background: on ? "rgba(1, 27, 151,.16)" : "transparent", border: `2px solid ${on ? "#011b97" : "var(--card-border,#e5e7eb)"}`, color: on ? "#011b97" : "inherit", display: "flex", alignItems: "center", gap: 10 }}>
+                                <span style={{ width: 15, textAlign: "center" }}>{on ? "\u2713" : ""}</span>{c}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        <span className="ap-hint" style={{ marginTop: 6, display: "block" }}>Tap one or more classes — your picks stay highlighted while you select subjects.</span>
+                      </div>
+                      <div style={{ border: "1px solid var(--card-border,#e5e7eb)", borderRadius: 12, padding: 10, background: "var(--container-bg,#f8fafc)", opacity: assignDraft.classes.length ? 1 : 0.6 }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                          <span className="ap-field-label" style={{ margin: 0 }}>Subjects</span>
+                          <span style={{ fontSize: "0.75rem", fontWeight: 700, color: "#011b97", background: "rgba(1, 27, 151,.12)", padding: "2px 9px", borderRadius: 999 }}>{assignDraft.subjects.length} selected</span>
+                        </div>
+                        {assignDraft.classes.length > 0 && (
+                          <div style={{ marginBottom: 8, fontSize: "0.82rem", color: "#011b97", background: "rgba(1, 27, 151,.08)", border: "1px dashed rgba(1, 27, 151,.4)", borderRadius: 8, padding: "6px 10px" }}>
+                            <b>Assigning to:</b> {assignDraft.classes.join(", ")}
+                          </div>
+                        )}
+                        <div style={{ display: "grid", gap: 8, maxHeight: 460, overflowY: "auto", paddingRight: 4 }}>
+                          {assignSubjects.map((s) => {
+                            const on = assignDraft.subjects.includes(s);
+                            return (
+                              <button key={s} type="button" disabled={!assignDraft.classes.length} title={on ? `Remove ${s}` : `Select ${s}`} onClick={() => setAssignDraft((d) => ({ ...d, subjects: on ? d.subjects.filter((x) => x !== s) : [...d.subjects, s] }))}
+                                style={{ textAlign: "left", padding: "12px 14px", borderRadius: 10, fontSize: "1rem", fontWeight: on ? 800 : 600, cursor: assignDraft.classes.length ? "pointer" : "not-allowed", background: on ? "rgba(1, 27, 151,.16)" : "transparent", border: `2px solid ${on ? "#011b97" : "var(--card-border,#e5e7eb)"}`, color: on ? "#011b97" : "inherit", display: "flex", alignItems: "center", gap: 10 }}>
+                                <span style={{ width: 15, textAlign: "center" }}>{on ? "\u2713" : ""}</span>{s}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        <span className="ap-hint" style={{ marginTop: 6, display: "block" }}>{assignDraft.classes.length ? "Tap one or more subjects to assign." : "Pick a class first to load its subjects."}</span>
+                      </div>
                     </div>
-                    <div>
-                      <span className="ap-field-label">Subject</span>
-                      <select className="ap-input" value={assignDraft.subject} disabled={assignDraft.formTeacher || !assignDraft.class} onChange={(e) => setAssignDraft((d) => ({ ...d, subject: e.target.value }))}>
-                        <option value="">{assignDraft.formTeacher ? "All subjects (form teacher)" : assignDraft.class ? "Select subject…" : "Pick a class first"}</option>
-                        {!assignDraft.formTeacher && assignSubjects.map((s) => <option key={s} value={s}>{s}</option>)}
-                      </select>
-                    </div>
-                    <label className="sa-switch" style={{ marginBottom: 6 }} title="A form teacher covers every subject in the class — no subject pick needed">
-                      <input
-                        type="checkbox"
-                        className="sa-switch-input"
-                        checked={assignDraft.formTeacher}
-                        onChange={(e) => setAssignDraft((d) => ({ ...d, formTeacher: e.target.checked, subject: e.target.checked ? "" : d.subject }))}
-                      />
-                      <span className="sa-switch-track"><span className="sa-switch-thumb" /></span>
-                      <span className={"sa-switch-state" + (assignDraft.formTeacher ? " on" : "")}>
-                        {assignDraft.formTeacher ? "Form teacher" : "Subject teacher"}
-                      </span>
-                    </label>
-                    <button type="button" className="ap-btn primary" onClick={addAssignment} style={{ marginBottom: 2 }}>
-                      <RiAddLine /> Add assignment
+                    <button type="button" className="ap-btn primary" onClick={addAssignments} style={{ marginTop: 10 }}>
+                      <RiAddLine /> Add class x subject(s)
                     </button>
                   </div>
                   <div className="sa-ac-chips">
+                    {canonClass(form.class_assigned) && (
+                      <span className="sa-ac-chip form">
+                        <RiShieldStarLine />
+                        <b>{form.class_assigned}</b>
+                        <span>Form teacher · all subjects</span>
+                        <button type="button" className="x" title={`Clear form teacher for ${form.class_assigned}`} onClick={() => setForm((f) => ({ ...f, class_assigned: "" }))}>
+                          <RiCloseLine />
+                        </button>
+                      </span>
+                    )}
                     {(form.assignments || []).length === 0 ? (
-                      <span className="ap-hint">No class/subject assignments yet — pick a class and subject above and press Add.</span>
+                      !canonClass(form.class_assigned) && (
+                        <span className="ap-hint">No class/subject assignments yet — pick class(es) and subject(s) above and press Add.</span>
+                      )
                     ) : (form.assignments || []).map((a) => {
-                      const isForm = a.assignment_type === "class_teacher";
+                      const cohort = a.student_ids || [];
+                      const active = cohortKey === a.key;
                       return (
-                        <span key={a.key} className={"sa-ac-chip" + (isForm ? " form" : "")}>
-                          {isForm && <RiShieldStarLine />}
+                        <span key={a.key} className={"sa-ac-chip" + (active ? " form" : "")}>
                           <b>{a.class}</b>
-                          <span>{isForm ? "Form teacher · all subjects" : a.subject}</span>
-                          <button type="button" className="x" title={isForm ? `Remove form teacher for ${a.class}` : `Remove ${a.subject} · ${a.class}`} onClick={() => removeAssignment(a.key)}>
+                          <span>{a.subject}</span>
+                          <button
+                            type="button"
+                            className="x"
+                            style={{ width: "auto", padding: "0 7px", gap: 3, background: cohort.length ? "rgba(1, 27, 151,.14)" : "transparent", color: "#011b97" }}
+                            title={cohort.length ? `${cohort.length} student(s) \u2014 tap to edit cohort` : "Tap to pick specific students for this subject"}
+                            onClick={() => { setCohortAllSchool(false); setCohortSearch(""); setCohortKey(active ? null : a.key); }}
+                          >
+                            <RiTeamLine /> {cohort.length || "all"}
+                          </button>
+                          <button type="button" className="x" title={`Remove ${a.subject} \u00b7 ${a.class}`} onClick={() => removeAssignment(a.key)}>
                             <RiCloseLine />
                           </button>
                         </span>
@@ -927,8 +1090,47 @@ export default function StaffAccounts() {
                     })}
                   </div>
                   <span className="ap-hint" style={{ marginTop: 6, display: "block" }}>
-                    Each assignment binds a subject to a specific class — different classes can share a subject with different teachers. A <b>Form teacher</b> covers every subject in that class.
+                    Add several subjects for one class at once, or one subject across several classes. The <b>form-teacher</b> class (set above) already covers every subject there, so it is excluded from the class list. Tapping <b>all</b> on a chip narrows that subject to a named cohort of specific students.
                   </span>
+                  {(() => {
+                    const a = (form.assignments || []).find((x) => x.key === cohortKey);
+                    if (!a) return null;
+                    const selected = new Set(a.student_ids || []);
+                    const classStudents = allStudents.filter((s) => canonClass(s.class) === canonClass(a.class));
+                    const pool = cohortAllSchool ? allStudents : (classStudents.length ? classStudents : allStudents);
+                    const q = cohortSearch.toLowerCase();
+                    const shown = pool.filter((s) => !q || (s.name || "").toLowerCase().includes(q) || (canonClass(s.class) || "").toLowerCase().includes(q));
+                    const addShown = () => {
+                      const ids = new Set([...(a.student_ids || []), ...shown.map((s) => s.id)]);
+                      setForm((f) => ({ ...f, assignments: (f.assignments || []).map((x) => x.key === a.key ? { ...x, student_ids: Array.from(ids) } : x) }));
+                    };
+                    return (
+                      <div className="sa-ac-adder" style={{ flexDirection: "column", alignItems: "stretch", marginTop: 8 }}>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center", marginBottom: 8 }}>
+                          <b style={{ fontSize: "0.85rem" }}>{a.subject}{" · "}{a.class}</b>
+                          <span className="ap-hint">{selected.size} selected</span>
+                          <label style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 6, fontSize: "0.8rem" }}>
+                            <input type="checkbox" checked={cohortAllSchool} onChange={(e) => setCohortAllSchool(e.target.checked)} />
+                            Search whole school
+                          </label>
+                          <button type="button" className="ap-btn sm ghost" onClick={addShown}>Add shown</button>
+                          <button type="button" className="ap-btn sm ghost" onClick={() => clearCohort(a.key)}>Clear</button>
+                        </div>
+                        <input className="ap-input" placeholder="Search students by name or class..." value={cohortSearch} onChange={(e) => setCohortSearch(e.target.value)} />
+                        <div style={{ maxHeight: 200, overflowY: "auto", border: "1px solid var(--card-border,#e5e7eb)", borderRadius: 10, padding: 6, display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(190px,1fr))", gap: 2, marginTop: 8 }}>
+                          {shown.length === 0 ? (
+                            <span className="ap-hint">No students match the search.</span>
+                          ) : shown.map((s) => (
+                            <label key={s.id} style={{ display: "flex", alignItems: "center", gap: 7, padding: "4px 6px", borderRadius: 8, cursor: "pointer" }}>
+                              <input type="checkbox" checked={selected.has(s.id)} onChange={() => toggleCohortStudent(a.key, s.id)} />
+                              <span style={{ fontSize: "0.82rem" }}>{s.name}</span>
+                              <span className="ap-hint" style={{ marginLeft: "auto", fontSize: "0.7rem" }}>{canonClass(s.class) || s.class}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </>
               ) : (
                 <span className="ap-hint">Subject/class assignment is only available for <b>Academic</b> staff.</span>
@@ -1014,6 +1216,27 @@ export default function StaffAccounts() {
           </>
         )}
       </Modal>
+
+      {/* Full-screen passport viewer */}
+      {picViewer.open && (
+        <div
+          onClick={() => setPicViewer({ open: false, src: "", name: "" })}
+          style={{ position: "fixed", inset: 0, zIndex: 100000, background: "rgba(0,0,0,.85)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}
+        >
+          <button
+            type="button"
+            title="Close"
+            onClick={(e) => { e.stopPropagation(); setPicViewer({ open: false, src: "", name: "" }); }}
+            style={{ position: "fixed", top: 16, right: 16, width: 44, height: 44, borderRadius: "50%", border: "none", background: "rgba(255,255,255,.15)", color: "#fff", fontSize: "1.4rem", display: "inline-flex", alignItems: "center", justifyContent: "center", cursor: "pointer", backdropFilter: "blur(4px)" }}
+          >
+            <RiCloseLine />
+          </button>
+          <div onClick={(e) => e.stopPropagation()} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 14, maxWidth: "90vw", maxHeight: "90vh" }}>
+            <img src={picViewer.src} alt={picViewer.name} style={{ maxWidth: "88vw", maxHeight: "78vh", objectFit: "contain", borderRadius: 14, boxShadow: "0 20px 60px rgba(0,0,0,.6)", background: "#fff" }} />
+            {picViewer.name && <span style={{ color: "#fff", fontWeight: 700, fontSize: "1.05rem" }}>{picViewer.name}</span>}
+          </div>
+        </div>
+      )}
     </>
   );
 }

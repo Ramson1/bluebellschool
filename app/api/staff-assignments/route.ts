@@ -35,10 +35,16 @@ function canonClass(value: unknown): string {
 }
 const normSub = (v: unknown) => String(v || '').toLowerCase().replace(/[^a-z0-9]/g, '');
 
+// Canonical, order-independent signature for a student list so we can tell
+// whether an existing row's cohort actually changed before issuing an UPDATE.
+const normIds = (v: unknown): string[] =>
+  Array.isArray(v) ? Array.from(new Set(v.map((x) => String(x)).filter(Boolean))).sort() : [];
+
 type Desired = {
   class?: string;
   subject?: string | null;
   assignment_type?: string;
+  student_ids?: string[];
 };
 
 const keyOf = (a: { assignment_type?: string; class?: string | null; subject?: string | null }) =>
@@ -58,9 +64,17 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Admin access required' }, { status: 401 });
     }
     const admin = serviceClient();
-    const { data, error } = await admin
+    let { data, error } = await admin
       .from('bluebell_staff_assignments')
-      .select('id, staff_id, class, subject, assignment_type, academic_session');
+      .select('id, staff_id, class, subject, assignment_type, academic_session, student_ids');
+    // Older databases may not yet have the student_ids column (see
+    // bluebell_staff_assignment_students.sql). Fall back to reading without it so
+    // the assignment list still loads instead of blanking the whole modal.
+    if (error) {
+      ({ data, error } = await admin
+        .from('bluebell_staff_assignments')
+        .select('id, staff_id, class, subject, assignment_type, academic_session'));
+    }
     if (error) {
       return NextResponse.json({ error: 'Failed to load assignments: ' + error.message }, { status: 500 });
     }
@@ -99,33 +113,61 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Staff member not found' }, { status: 404 });
     }
 
-    const { data: storedData, error: readErr } = await admin
+    let storedRes: any = await admin
       .from('bluebell_staff_assignments')
-      .select('id, class, subject, assignment_type, academic_session')
+      .select('id, class, subject, assignment_type, academic_session, student_ids')
       .eq('staff_id', staffId);
-    if (readErr) {
-      return NextResponse.json({ error: 'Failed to load assignments: ' + readErr.message }, { status: 500 });
+    // Same graceful fallback as GET: if student_ids is not provisioned yet we
+    // still diff against the rows we can read, so plain class/subject editing
+    // keeps working and only attaching students needs the migration.
+    if (storedRes.error) {
+      storedRes = await admin
+        .from('bluebell_staff_assignments')
+        .select('id, class, subject, assignment_type, academic_session')
+        .eq('staff_id', staffId);
     }
-    const stored = (storedData || []).filter((r: any) => inScope(r, session));
+    if (storedRes.error) {
+      return NextResponse.json({ error: 'Failed to load assignments: ' + storedRes.error.message }, { status: 500 });
+    }
+    const stored: any[] = (storedRes.data || []).filter((r: any) => inScope(r, session));
 
     const desiredKeyed = desired.map((d) => ({ ...d, _key: keyOf(d) }));
     const desiredKeys = new Set(desiredKeyed.map((d) => d._key));
-    const storedKeys = new Set(stored.map((r) => keyOf(r)));
+    const storedByKey: Map<string, any> = new Map(stored.map((r: any) => [keyOf(r), r]));
 
     const errors: string[] = [];
     let added = 0;
     let removed = 0;
+    let updated = 0;
 
     for (const d of desiredKeyed) {
-      if (storedKeys.has(d._key)) continue;
       const isForm = d.assignment_type === 'class_teacher';
-      const payload = {
+      // A form teacher owns the whole class, so a cohort never applies to it.
+      const cohort = isForm ? [] : normIds(d.student_ids);
+      const existing = storedByKey.get(d._key);
+      if (existing) {
+        // Row already present: only touch the DB when the cohort actually moved.
+        const curCohort = normIds(existing.student_ids);
+        if (JSON.stringify(curCohort) !== JSON.stringify(cohort)) {
+          const { error } = await admin
+            .from('bluebell_staff_assignments')
+            .update({ student_ids: cohort })
+            .eq('id', existing.id);
+          if (error) errors.push(`Update cohort · ${d.subject || 'Form teacher'} (${canonClass(d.class)}): ${error.message}`);
+          else updated++;
+        }
+        continue;
+      }
+      const payload: any = {
         staff_id: staffId,
         class: canonClass(d.class),
         subject: isForm ? null : d.subject || null,
         assignment_type: isForm ? 'class_teacher' : 'subject_teacher',
         academic_session: session || null,
       };
+      // Only send student_ids when a cohort exists, so installs that have not
+      // run the migration yet keep saving ordinary assignments unchanged.
+      if (cohort.length) payload.student_ids = cohort;
       const { error } = await admin.from('bluebell_staff_assignments').insert([payload]);
       if (error) errors.push(`${isForm ? 'Form teacher' : d.subject} · ${payload.class}: ${error.message}`);
       else added++;
@@ -138,7 +180,7 @@ export async function POST(request: Request) {
       else removed++;
     }
 
-    return NextResponse.json({ added, removed, errors });
+    return NextResponse.json({ added, removed, updated, errors });
   } catch (error: any) {
     console.error('staff-assignments POST error:', error);
     return NextResponse.json({ error: error.message || 'Request failed' }, { status: 500 });

@@ -8,6 +8,7 @@ import { Modal } from "react-bootstrap";
 import { sendEmailNotification } from "../api/emailNotificationService";
 import { logAction } from "../api/auditLog";
 import { DEV_EMAILS } from "../utils/authUtils";
+import { CLASS_OPTIONS, canonClass } from "../utils/classOptions";
 import {
   RiSearchLine,
   RiDownloadLine,
@@ -26,7 +27,7 @@ import "../styles/FullStudent.css";
 // EMAIL FUNCTIONALITY COMMENTED OUT FOR VERCEL DEPLOYMENT
 
 const PASSPORT_PLACEHOLDER = "placeholder.png";
-const passportUrl = "https://BLUEBELL_SUPABASE_REF_PLACEHOLDER.supabase.co/storage/v1/object/public/passport/";
+const passportUrl = "https://btnatydmfunhwgoeguus.supabase.co/storage/v1/object/public/passport/";
 
 const genderBadge = (sex) => {
   const s = (sex || "").toLowerCase();
@@ -541,7 +542,7 @@ Student Class: ${studentData.class}`;
       const doc = new Document({
         sections: [{
           children: [
-            new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Bluebell International School", bold: true, size: 28 })] }),
+            new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Jeshurun Montessori International School", bold: true, size: 28 })] }),
             new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Student Access Tokens — Name, Class & Token", size: 22 })] }),
             new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: `Generated ${new Date().toLocaleDateString()} · ${students.length} students`, italics: true, size: 18, color: "666666" })] }),
             new Paragraph({ spacing: { after: 120 }, children: [] }),
@@ -572,6 +573,21 @@ Student Class: ${studentData.class}`;
     (student.name || "").toLowerCase().includes(filter.toLowerCase()) || // Filter by name
     (student.class || "").toLowerCase().includes(filter.toLowerCase()) // Filter by class
   );
+  // Order by canonical class sequence (Creche → Year 12), then alphabetically
+  // by name. canonClass normalises messy stored variants ("YEAR 7", "PRE-NURSERY 2",
+  // "Year 2") so the ordering is stable regardless of how the row was saved.
+  const classRank = (cls) => {
+    const canonical = canonClass(cls);
+    const idx = canonical ? CLASS_OPTIONS.indexOf(canonical) : -1;
+    return idx >= 0 ? idx : CLASS_OPTIONS.length; // unknown/legacy sinks to the end
+  };
+  filtered.sort((a, b) => {
+    const ra = classRank(a.class), rb = classRank(b.class);
+    if (ra !== rb) return ra - rb;
+    const na = (a.name || "").toLowerCase(), nb = (b.name || "").toLowerCase();
+    if (na !== nb) return na < nb ? -1 : 1;
+    return 0;
+  });
 
   // Passport src shown in the editor, reflecting pending upload/remove
   const editorPassportSrc =

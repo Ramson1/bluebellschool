@@ -396,6 +396,20 @@ schoolSubjects.year10 = schoolSubjects.year9;
 schoolSubjects.year11 = schoolSubjects.year9;
 schoolSubjects.year12 = schoolSubjects.year9;
 
+// Coding & Robotics are offered across the whole school (Creche → Year 12), so
+// every class subject picker must surface them. Append to each distinct class
+// list (Set over the values dedupes the shared year10/11/12 === year9 reference
+// so they are added once, and keeps ALL_SUBJECTS consistent since it flattens
+// these same arrays). Specific-student enrolment is still controlled per class
+// via the staff assignment cohort picker (student_ids), which gates exams/tests
+// and result-card display.
+const ELECTIVE_SUBJECTS = ["Coding", "Robotics"];
+for (const list of [...new Set(Object.values(schoolSubjects))]) {
+  for (const sub of ELECTIVE_SUBJECTS) {
+    if (!list.includes(sub)) list.push(sub);
+  }
+}
+
 // Resolve the subjects actually taught in a class label. Every admin surface
 // that offers a subject picker (staff assignments, CBT, E-Notes…) must filter
 // through this instead of flattening schoolSubjects, so a Year 7 teacher is
