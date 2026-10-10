@@ -16,6 +16,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Bluebell International School",
+  icons: { apple: "/apple-touch-icon.png" },
   description: "Bluebell International School Management System",
 };
 
