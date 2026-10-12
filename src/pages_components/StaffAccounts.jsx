@@ -717,7 +717,8 @@ export default function StaffAccounts() {
           (s.staff_no || "").toLowerCase().includes(q) ||
           (s.email || "").toLowerCase().includes(q) ||
           (s.designation || "").toLowerCase().includes(q) ||
-          (s.class_assigned || "").toLowerCase().includes(q))
+          (s.class_assigned || "").toLowerCase().includes(q) ||
+          (s.sex || "").toLowerCase().includes(q))
     );
   }, [staff, search, statusFilter]);
 
@@ -814,6 +815,7 @@ export default function StaffAccounts() {
                       <th>#</th>
                       <th>Photo</th>
                       <th>Name / Staff No</th>
+                      <th>Sex</th>
                       <th>Role</th>
                       <th>Date of Appointment</th>
                       <th>Class &amp; Subjects</th>
@@ -840,6 +842,7 @@ export default function StaffAccounts() {
                           <div style={{ fontWeight: 700 }}>{s.name}</div>
                           <div className="ap-hint">{s.staff_no || "—"}</div>
                         </td>
+                        <td>{s.sex || "—"}</td>
                         <td>
                           <div>{s.designation || "—"}</div>
                           <span className={`ap-badge ${s.department === "Non-Academic" ? "neutral" : "info"}`}>
