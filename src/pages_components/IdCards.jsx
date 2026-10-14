@@ -328,7 +328,7 @@ const IdCards = () => {
         </div>
       </div>
       <div style={styles.backFooter}>
-        <img src="/logo.png" alt="logo" crossOrigin="anonymous" style={{ height: "5mm", background: "#fff", borderRadius: "50%", padding: "0.4mm", objectFit: "cover" }} />
+        <img src="/rhema.png" alt="Rhema Expert Solutions" crossOrigin="anonymous" style={{ height: "5mm", background: "#fff", borderRadius: "50%", padding: "0.4mm", objectFit: "cover" }} />
         <div style={{ fontSize: "1.8mm", lineHeight: 1.35 }}>
           <div>Developed by Rhema Expert Solutions</div>
           <div>{DEV_SUPPORT_EMAIL}</div>
@@ -378,7 +378,7 @@ const IdCards = () => {
         </div>
       </div>
       <div style={styles.backFooter}>
-        <img src="/logo.png" alt="logo" crossOrigin="anonymous" style={{ height: "5mm", background: "#fff", borderRadius: "50%", padding: "0.4mm", objectFit: "cover" }} />
+        <img src="/rhema.png" alt="Rhema Expert Solutions" crossOrigin="anonymous" style={{ height: "5mm", background: "#fff", borderRadius: "50%", padding: "0.4mm", objectFit: "cover" }} />
         <div style={{ fontSize: "1.8mm", lineHeight: 1.35 }}>
           <div>Developed by Rhema Expert Solutions</div>
           <div>{DEV_SUPPORT_EMAIL}</div>
