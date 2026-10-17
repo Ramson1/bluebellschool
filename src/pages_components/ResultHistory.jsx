@@ -160,7 +160,7 @@ export default function ResultHistory() {
     }
     window.location.href = `/resultCardComponent?selectedTerm=${encodeURIComponent(
       term.query
-    )}&resultType=general`;
+    )}&resultType=general&archive=1`;
   };
 
   const sessions = useMemo(

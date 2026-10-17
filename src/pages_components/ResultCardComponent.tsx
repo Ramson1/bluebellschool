@@ -139,6 +139,8 @@ const ResultCardComponent: React.FC<{ studentData?: ExtendedStudentData; passpor
   
   const selectedTerm = propSelectedTerm || (isRouterAvailable ? router?.query?.selectedTerm as string | undefined : undefined);
   const resultType = propResultType || (isRouterAvailable ? router?.query?.resultType as string | undefined : undefined);
+  // Archive view hides class-position and attendance stats (they are meaningless for archived/departed students).
+  const isArchive = isRouterAvailable && String(router?.query?.archive) === '1';
   
   // Log the received data for debugging
   console.log('Received data in ResultCardComponent:', {
@@ -770,21 +772,27 @@ const ResultCardComponent: React.FC<{ studentData?: ExtendedStudentData; passpor
                 <td>
                   <strong>No. of Students in Class: </strong>{studentList?.length}
                 </td>
-                <td>
-                  <strong>Position in Entire Class: </strong>{calculatePositionUsingSubjectScores()} Position
-                  {/* <strong style={{ color: 'green', fontWeight: 700 }}>Total Score:</strong> {isMidterm ? midtermTotal : overallScore?.overallTotal}, */}
-                </td>
+                {!isArchive && (
+                  <td>
+                    <strong>Position in Entire Class: </strong>{calculatePositionUsingSubjectScores()} Position
+                    {/* <strong style={{ color: 'green', fontWeight: 700 }}>Total Score:</strong> {isMidterm ? midtermTotal : overallScore?.overallTotal}, */}
+                  </td>
+                )}
               </tr>
               <tr>
-                <td>
-                  <strong>Days School Opened: </strong>{setting?.schoolOpened}
-                </td>
-                <td>
-                  <strong>Days Present: </strong>{overallScore?.daysPresent}
-                </td>
-                <td>
-                  <strong>Days Absent: </strong>{overallScore?.daysAbsent}
-                </td>
+                {!isArchive && (
+                  <>
+                    <td>
+                      <strong>Days School Opened: </strong>{setting?.schoolOpened}
+                    </td>
+                    <td>
+                      <strong>Days Present: </strong>{overallScore?.daysPresent}
+                    </td>
+                    <td>
+                      <strong>Days Absent: </strong>{overallScore?.daysAbsent}
+                    </td>
+                  </>
+                )}
                 <td style={{ color: 'green', fontWeight: 700 }}>
                   <strong style={{ paddingLeft: '5px', color: 'green', fontWeight: 700 }}>Total Score:</strong> {isMidterm ? midtermTotal : overallScore?.overallTotal},
                   <strong style={{ paddingLeft: '5px', color: 'green', fontWeight: 700 }}>Average: </strong>{normalizedTermResult && normalizedTermResult.length > 0 ? ((isMidterm ? midtermTotal : overallScore?.overallTotal) / normalizedTermResult.length).toFixed(2) : '0.00'},

@@ -292,16 +292,13 @@ const IdCards = () => {
   const CardFront = ({ s, innerRef }) => (
     <div style={styles.card} ref={innerRef}>
       <div style={styles.frontHeader}>
-        <img src="/logo.jpg" alt="logo" crossOrigin="anonymous" style={{ height: "7.5mm", borderRadius: "50%", objectFit: "cover", background: "#fff" }} />
+        <img src="/logo.png" alt="logo" crossOrigin="anonymous" style={{ height: "9mm", width: "auto", background: "#fff", padding: "0.4mm" }} />
         <div style={{ fontSize: "2.6mm", fontWeight: "bold", marginTop: "0.5mm", lineHeight: 1.2 }}>{SCHOOL_NAME}</div>
         <div style={{ fontSize: "2mm", marginTop: "0.4mm" }}>STUDENT ID CARD</div>
       </div>
       <div style={styles.body}>
-        <img
-          src={passportUrl(s.passport)}
-          alt={s.name}
-          crossOrigin="anonymous"
-          style={{ width: "22mm", height: "24mm", objectFit: "cover", borderRadius: "1.5mm", border: "0.4mm solid #011b97" }}
+        <div
+          style={{ width: "22mm", height: "24mm", backgroundColor: "#fff", backgroundImage: `url("${passportUrl(s.passport)}")`, backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat", borderRadius: "1.5mm", border: "0.4mm solid #011b97" }}
         />
         <AutoFitName text={s.name} />
         <div style={{ fontSize: "2.4mm" }}>Gender: {s.sex || "—"}</div>
@@ -342,16 +339,13 @@ const IdCards = () => {
   const StaffFront = ({ s, innerRef }) => (
     <div style={styles.card} ref={innerRef}>
       <div style={styles.frontHeader}>
-        <img src="/logo.jpg" alt="logo" crossOrigin="anonymous" style={{ height: "7.5mm", borderRadius: "50%", objectFit: "cover", background: "#fff" }} />
+        <img src="/logo.png" alt="logo" crossOrigin="anonymous" style={{ height: "9mm", width: "auto", background: "#fff", padding: "0.4mm" }} />
         <div style={{ fontSize: "2.6mm", fontWeight: "bold", marginTop: "0.5mm", lineHeight: 1.2 }}>{SCHOOL_NAME}</div>
         <div style={{ fontSize: "2mm", marginTop: "0.4mm" }}>STAFF ID CARD</div>
       </div>
       <div style={styles.body}>
-        <img
-          src={staffPicUrl(s.profile_pic)}
-          alt={s.name}
-          crossOrigin="anonymous"
-          style={{ width: "22mm", height: "24mm", objectFit: "cover", objectPosition: "center -8mm", borderRadius: "1.5mm", border: "0.4mm solid #011b97", background: "#fff" }}
+        <div
+          style={{ width: "22mm", height: "24mm", backgroundColor: "#fff", backgroundImage: `url("${staffPicUrl(s.profile_pic)}")`, backgroundSize: "cover", backgroundPosition: "center -8mm", backgroundRepeat: "no-repeat", borderRadius: "1.5mm", border: "0.4mm solid #011b97" }}
         />
         <AutoFitName text={s.name} />
         <div style={{ fontSize: "2.2mm", textAlign: "center" }}>{s.designation || "Staff"}</div>
@@ -406,7 +400,7 @@ const IdCards = () => {
         if (!nodes || !nodes.front || !nodes.back) continue;
         if (i > 0) doc.addPage([54, 85.6], "portrait");
         for (const [sideIdx, node] of [nodes.front, nodes.back].entries()) {
-          const canvas = await html2canvas(node, { scale: 3, useCORS: true, backgroundColor: "#ffffff" });
+          const canvas = await html2canvas(node, { scale: 4, useCORS: true, backgroundColor: "#ffffff" });
           const img = canvas.toDataURL("image/png");
           if (sideIdx === 1) doc.addPage([54, 85.6], "portrait");
           doc.addImage(img, "PNG", 0, 0, 54, 85.6);
