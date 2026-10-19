@@ -1,15 +1,18 @@
 -- =====================================================================
--- NEW TABLE: bluebell_assignment_submissions (student -> teacher submissions)
+-- TABLE: bluebell_assignment_submissions (student -> teacher submissions)
 -- Requirement 10: students submit their assignment / assessment / project
--- work (text and/or a file) to the teacher who set it; the teacher reviews
--- it in the staff portal (Submissions page).
+-- work as TEXT and/or one-or-more FILES and/or IMAGES (all at once) to the
+-- teacher who set it; the teacher reviews it in the staff portal
+-- (Submissions page).
 --
 -- Copy and paste this ENTIRE script into the Supabase SQL Editor and RUN.
--- It is additive / idempotent — safe to run more than once.
+-- It is additive / idempotent — safe to run more than once. It also upgrades
+-- an existing (single-file) table by adding the new `attachments` column.
 --
--- Files are stored in the EXISTING public "cbt" storage bucket under
--- submissions/ (same posture as academics uploads) — no new bucket or
--- storage policy is required here.
+-- Files/images are stored in the EXISTING public "cbt" storage bucket under
+-- submissions/ (falling back to "passport"). Students submit with the ANON
+-- key, so the storage INSERT policies at the bottom are REQUIRED for their
+-- uploads to succeed.
 -- =====================================================================
 
 CREATE TABLE IF NOT EXISTS bluebell_assignment_submissions (
@@ -20,11 +23,16 @@ CREATE TABLE IF NOT EXISTS bluebell_assignment_submissions (
   student_id      bigint,
   student_name    text NOT NULL,
   submission_text text,
-  file_url        text,
+  file_url        text,                   -- kept as a backward-compat mirror of attachments[0]
+  attachments     jsonb NOT NULL DEFAULT '[]'::jsonb, -- NEW: [{url,name,type,mime,size}]
   status          text DEFAULT 'submitted', -- 'submitted' | 'reviewed'
   submitted_at    timestamptz DEFAULT now(),
   updated_at      timestamptz DEFAULT now()
 );
+
+-- Upgrade an existing single-file table with the multi-attachment column.
+ALTER TABLE bluebell_assignment_submissions
+  ADD COLUMN IF NOT EXISTS attachments jsonb NOT NULL DEFAULT '[]'::jsonb;
 
 -- One submission per student per assignment — enables an idempotent upsert
 -- (re-submitting edits the same row instead of creating duplicates).
@@ -42,6 +50,16 @@ DROP POLICY IF EXISTS "submissions_anon_all"   ON bluebell_assignment_submission
 DROP POLICY IF EXISTS "submissions_authed_all" ON bluebell_assignment_submissions;
 CREATE POLICY "submissions_anon_all"   ON bluebell_assignment_submissions FOR ALL TO anon          USING (true) WITH CHECK (true);
 CREATE POLICY "submissions_authed_all" ON bluebell_assignment_submissions FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+-- Storage: allow ANON (student portal) + authenticated uploads into the public
+-- 'cbt' bucket (and the 'passport' fallback). Objects are read via public URLs,
+-- so no SELECT policy is needed as long as the bucket is public.
+DROP POLICY IF EXISTS "submissions_cbt_upload"      ON storage.objects;
+CREATE POLICY "submissions_cbt_upload" ON storage.objects
+  FOR INSERT TO anon, authenticated WITH CHECK (bucket_id = 'cbt');
+DROP POLICY IF EXISTS "submissions_passport_upload" ON storage.objects;
+CREATE POLICY "submissions_passport_upload" ON storage.objects
+  FOR INSERT TO anon, authenticated WITH CHECK (bucket_id = 'passport');
 
 -- Verify
 SELECT column_name, data_type
