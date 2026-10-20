@@ -74,6 +74,7 @@ DROP TABLE IF EXISTS bluebell_auditlogs CASCADE;
 CREATE TABLE bluebell_auditlogs (
   id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   email TEXT NOT NULL,
+  actor_name TEXT,                      -- human-readable snapshot of the actor (staff name)
   role TEXT,
   action TEXT NOT NULL,                 -- e.g. 'student_add', 'result_update'
   target_table TEXT,

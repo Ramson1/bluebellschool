@@ -132,7 +132,7 @@ const AuditLogs = () => {
       <Table striped bordered hover size="sm" responsive>
         <thead>
           <tr>
-            <th>Time</th><th>Email</th><th>Role</th><th>Action</th><th>Table</th><th>Record</th><th></th>
+            <th>Time</th><th>User</th><th>Role</th><th>Action</th><th>Table</th><th>Record</th><th></th>
           </tr>
         </thead>
         <tbody>
@@ -140,7 +140,7 @@ const AuditLogs = () => {
             <React.Fragment key={l.id}>
               <tr>
                 <td>{new Date(l.created_at).toLocaleString()}</td>
-                <td>{l.email}</td>
+                <td>{l.actor_name || (staffOptions.find((s) => s.email === l.email) || {}).name || l.email}</td>
                 <td><Badge bg="secondary">{l.role}</Badge></td>
                 <td><Badge bg="primary">{l.action}</Badge></td>
                 <td>{l.target_table}</td>
