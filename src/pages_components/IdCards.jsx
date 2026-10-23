@@ -298,8 +298,14 @@ const IdCards = () => {
       </div>
       <div style={styles.body}>
         <div
-          style={{ width: "22mm", height: "24mm", backgroundColor: "#fff", backgroundImage: `url("${passportUrl(s.passport)}")`, backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat", borderRadius: "1.5mm", border: "0.4mm solid #011b97" }}
-        />
+          style={{ width: "22mm", height: "24mm", backgroundColor: "#fff", overflow: "hidden", borderRadius: "50%", border: "0.4mm solid #011b97" }}
+        >
+          {/* Oversized (140%) layer scaled by the same factor: true zoom so the
+              face fills the round frame instead of the whole torso showing */}
+          <div
+            style={{ position: "relative", left: "-20%", top: "-20%", width: "140%", height: "140%", backgroundImage: `url("${passportUrl(s.passport)}")`, backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat", transform: "scale(1.4)" }}
+          />
+        </div>
         <AutoFitName text={s.name} />
         <div style={{ fontSize: "2.4mm" }}>Gender: {s.sex || "—"}</div>
         <div style={{ marginTop: "auto", display: "flex", alignItems: "center", gap: "1.5mm", width: "100%", justifyContent: "center" }}>
@@ -345,7 +351,7 @@ const IdCards = () => {
       </div>
       <div style={styles.body}>
         <div
-          style={{ width: "22mm", height: "24mm", backgroundColor: "#fff", backgroundImage: `url("${staffPicUrl(s.profile_pic)}")`, backgroundSize: "cover", backgroundPosition: "center -8mm", backgroundRepeat: "no-repeat", borderRadius: "1.5mm", border: "0.4mm solid #011b97" }}
+          style={{ width: "22mm", height: "24mm", backgroundColor: "#fff", backgroundImage: `url("${staffPicUrl(s.profile_pic)}")`, backgroundSize: "cover", backgroundPosition: "center -8mm", backgroundRepeat: "no-repeat", borderRadius: "50%", border: "0.4mm solid #011b97" }}
         />
         <AutoFitName text={s.name} />
         <div style={{ fontSize: "2.2mm", textAlign: "center" }}>{s.designation || "Staff"}</div>
