@@ -303,7 +303,7 @@ const IdCards = () => {
           {/* Oversized (140%) layer scaled by the same factor: true zoom so the
               face fills the round frame instead of the whole torso showing */}
           <div
-            style={{ position: "relative", left: "-20%", top: "-20%", width: "140%", height: "140%", backgroundImage: `url("${passportUrl(s.passport)}")`, backgroundSize: "cover", backgroundPosition: "center", backgroundRepeat: "no-repeat", transform: "scale(1.4)" }}
+            style={{ position: "relative", left: "-20%", top: "-20%", width: "140%", height: "140%", backgroundImage: `url("${passportUrl(s.passport)}")`, backgroundSize: "cover", backgroundPosition: "center 52%", backgroundRepeat: "no-repeat", transform: "scale(1.3)" }}
           />
         </div>
         <AutoFitName text={s.name} />
