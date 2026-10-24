@@ -20,10 +20,10 @@
 export const FRAME_W_MM = 22;
 export const FRAME_H_MM = 24;
 
-// Where the face sits inside that window: 47% down leaves a little headroom
-// above the crown and chin/shoulders below, which is the "head down to
-// shoulder level" crop. Raise this to move every face further down the window.
-const FACE_ANCHOR_Y = 0.47;
+// Where the face sits inside that window: 56% down leaves clear headroom above
+// the crown and chin/shoulders below, which is the "head down to shoulder
+// level" crop. Raise this to move every face further down the window.
+const FACE_ANCHOR_Y = 0.56;
 const FACE_ANCHOR_X = 0.5;
 
 // Safety limits so a bad detection can never blank the frame.
