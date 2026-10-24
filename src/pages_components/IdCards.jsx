@@ -6,6 +6,16 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { Container, Row, Col, Card, Button, Form, Spinner, Modal, Nav } from "react-bootstrap";
 import { fetchAuthRoles, isDev, isAdmin } from "../utils/authUtils";
+import {
+  computeBox,
+  detectFrame,
+  isFrameFresh,
+  loadFrameJson,
+  peekIntrinsic,
+  readIntrinsic,
+  DEFAULT_FRAME,
+  PLACEHOLDER_URL,
+} from "../utils/passportFraming";
 
 const SCHOOL_NAME = "Bluebell International School";
 const PAGE_SIZE = 100; // students fetched per backend chunk
@@ -63,6 +73,74 @@ function AutoFitName({ text, maxMm = 3, minMm = 1.7 }) {
       }}
     >
       {text}
+    </div>
+  );
+}
+
+// Border colour of the circular passport window (per-build theme).
+const FRAME_BORDER = "#011b97";
+
+// The circular passport window on a card face.
+//
+// The crop is derived from the photo's own intrinsic size plus a per-photo face
+// anchor, rather than one shared background-size/background-position: a
+// percentage background-size scales by width only, so photos with different
+// aspect ratios end up with different (sometimes zero) vertical overflow, and a
+// global vertical position silently does nothing for those. Here the drawn box
+// is always >= the window, so the anchor always has something to pan.
+//
+// Everything is in mm with no CSS transform, so the grid thumbnail, the
+// full-size card and the html2canvas PDF export all render the same crop.
+function PassportFrame({ url, frame }) {
+  const [dims, setDims] = useState(() => peekIntrinsic(url));
+
+  useEffect(() => {
+    if (!url || url === PLACEHOLDER_URL || dims) return undefined;
+    let alive = true;
+    readIntrinsic(url).then((d) => {
+      if (alive && d) setDims(d);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [url, dims]);
+
+  const shell = {
+    position: "relative",
+    width: "22mm",
+    height: "24mm",
+    backgroundColor: "#fff",
+    overflow: "hidden",
+    borderRadius: "50%",
+    border: `0.4mm solid ${FRAME_BORDER}`,
+  };
+
+  // No photo on the record: show the school logo, unscaled as before.
+  if (!url || url === PLACEHOLDER_URL) {
+    return <div style={{ ...shell, backgroundImage: `url("${PLACEHOLDER_URL}")`, backgroundSize: "cover", backgroundPosition: "center" }} />;
+  }
+
+  // First paint before the size is known: plain cover keeps the photo visible,
+  // then the exact box lands as soon as it decodes.
+  const box = computeBox(dims ? dims.iw : 0, dims ? dims.ih : 0, frame || DEFAULT_FRAME);
+  if (!box) {
+    return <div style={{ ...shell, backgroundImage: `url("${url}")`, backgroundSize: "cover", backgroundPosition: "center 30%" }} />;
+  }
+
+  return (
+    <div style={shell}>
+      <div
+        style={{
+          position: "absolute",
+          left: `${box.left}mm`,
+          top: `${box.top}mm`,
+          width: `${box.dw}mm`,
+          height: `${box.dh}mm`,
+          backgroundImage: `url("${url}")`,
+          backgroundSize: "100% 100%",
+          backgroundRepeat: "no-repeat",
+        }}
+      />
     </div>
   );
 }
@@ -165,6 +243,11 @@ const IdCards = () => {
   // id -> QR data URL (separate maps so student and staff ids never collide)
   const [qrMap, setQrMap] = useState({});
   const [staffQrMap, setStaffQrMap] = useState({});
+  // "kind:id" -> computed passport frame, merged over the stored column so a
+  // freshly detected card re-frames immediately without a refetch.
+  const [frameMap, setFrameMap] = useState({});
+  const framingQueued = useRef(new Set()); // "kind:id" currently being analysed
+  const [reframing, setReframing] = useState(false);
   const [selected, setSelected] = useState({}); // student id -> true
   const [preview, setPreview] = useState(null); // student for full-screen preview
   const [busyPdf, setBusyPdf] = useState(false);
@@ -235,7 +318,7 @@ const IdCards = () => {
     try {
       const { data, error } = await supabase
         .from("bluebell_staff")
-        .select("id, name, staff_no, sex, designation, department, profile_pic")
+        .select("id, name, staff_no, sex, designation, department, profile_pic, passport_frame")
         .neq("status", "blocked")
         .order("name");
       if (error) throw error;
@@ -253,7 +336,7 @@ const IdCards = () => {
     try {
       const { data, error } = await supabase
         .from("bluebell_student")
-        .select("id, name, class, sex, passport")
+        .select("id, name, class, sex, passport, passport_frame")
         .order("id")
         .range(p * PAGE_SIZE, p * PAGE_SIZE + PAGE_SIZE - 1);
       if (error) throw error;
@@ -280,6 +363,93 @@ const IdCards = () => {
     return supabase.storage.from("staff_passport").getPublicUrl(file).data.publicUrl;
   };
 
+  // --- per-photo passport framing ---------------------------------------
+  // Student and staff ids can collide, so frames are keyed by kind + id.
+  const frameKey = (kind, id) => `${kind}:${id}`;
+  const srcFieldFor = (kind) => (kind === "staff" ? "profile_pic" : "passport");
+  const urlForKind = (kind, raw) => (kind === "staff" ? staffPicUrl(raw) : passportUrl(raw));
+
+  // The frame a card should render with: the live (just-detected) value wins,
+  // then a fresh stored value, otherwise null so PassportFrame uses DEFAULT_FRAME.
+  const frameFor = (s, kind) => {
+    const live = frameMap[frameKey(kind, s.id)];
+    if (live) return live;
+    const stored = loadFrameJson(s.passport_frame);
+    if (stored && isFrameFresh(stored, s[srcFieldFor(kind)])) return stored;
+    return null;
+  };
+
+  // Analyse rows that have no valid stored frame, three at a time, persisting
+  // each result fire-and-forget. force re-runs the whole set (the retry button).
+  const frameRows = useCallback(async (rows, kind, force = false) => {
+    if (!rows || rows.length === 0) return;
+    const table = kind === "staff" ? "bluebell_staff" : "bluebell_student";
+    const srcField = srcFieldFor(kind);
+    const todo = rows.filter((s) => {
+      const raw = s[srcField];
+      if (!raw) return false; // placeholder photo, nothing to frame
+      const key = frameKey(kind, s.id);
+      if (framingQueued.current.has(key)) return false;
+      if (!force) {
+        const stored = loadFrameJson(s.passport_frame);
+        if (stored && isFrameFresh(stored, raw)) return false; // already framed
+      }
+      return true;
+    });
+    if (todo.length === 0) return;
+    todo.forEach((s) => framingQueued.current.add(frameKey(kind, s.id)));
+
+    let cursor = 0;
+    const worker = async () => {
+      while (cursor < todo.length) {
+        const s = todo[cursor++];
+        const key = frameKey(kind, s.id);
+        try {
+          const { json, frame } = await detectFrame(urlForKind(kind, s[srcField]), s[srcField]);
+          setFrameMap((prev) => ({ ...prev, [key]: frame }));
+          supabase
+            .from(table)
+            .update({ passport_frame: json })
+            .eq("id", s.id)
+            .then(({ error }) => {
+              if (error) console.error("passport_frame persist failed:", error.message);
+            });
+        } catch (e) {
+          console.error("passport framing failed:", e);
+        } finally {
+          framingQueued.current.delete(key);
+        }
+      }
+    };
+    await Promise.all(Array.from({ length: Math.min(3, todo.length) }, worker));
+  }, []);
+
+  // Frame whatever just loaded; a fully framed data set does zero work here.
+  useEffect(() => {
+    if (students.length) frameRows(students, "student");
+  }, [students, frameRows]);
+  useEffect(() => {
+    if (staffList.length) frameRows(staffList, "staff");
+  }, [staffList, frameRows]);
+
+  // Operator escape hatch: drop local frames and re-detect the active tab's set.
+  const reFrameActive = async () => {
+    const kind = tab === "staff" ? "staff" : "student";
+    const list = kind === "staff" ? staffList : students;
+    if (list.length === 0) return;
+    setFrameMap((prev) => {
+      const next = { ...prev };
+      list.forEach((s) => delete next[frameKey(kind, s.id)]);
+      return next;
+    });
+    setReframing(true);
+    try {
+      await frameRows(list, kind, true);
+    } finally {
+      setReframing(false);
+    }
+  };
+
   const toggle = (id) => setSelected((prev) => ({ ...prev, [id]: !prev[id] }));
   // Select-all acts on the cards of the active tab
   const tabList = tab === "staff" ? staffList : students;
@@ -297,14 +467,7 @@ const IdCards = () => {
         <div style={{ fontSize: "2mm", marginTop: "0.4mm" }}>STUDENT ID CARD</div>
       </div>
       <div style={styles.body}>
-        <div
-          style={{ width: "22mm", height: "24mm", backgroundColor: "#fff", overflow: "hidden", borderRadius: "50%", border: "0.4mm solid #011b97" }}
-        >
-          {/* Single zoom knob: background-size % of the frame (100% = no zoom) */}
-          <div
-            style={{ width: "100%", height: "100%", backgroundImage: `url("${passportUrl(s.passport)}")`, backgroundSize: "150%", backgroundPosition: "center 52%", backgroundRepeat: "no-repeat" }}
-          />
-        </div>
+        <PassportFrame url={passportUrl(s.passport)} frame={frameFor(s, "student")} />
         <AutoFitName text={s.name} />
         <div style={{ fontSize: "2.4mm" }}>Gender: {s.sex || "—"}</div>
         <div style={{ marginTop: "auto", display: "flex", alignItems: "center", gap: "1.5mm", width: "100%", justifyContent: "center" }}>
@@ -349,9 +512,7 @@ const IdCards = () => {
         <div style={{ fontSize: "2mm", marginTop: "0.4mm" }}>STAFF ID CARD</div>
       </div>
       <div style={styles.body}>
-        <div
-          style={{ width: "22mm", height: "24mm", backgroundColor: "#fff", backgroundImage: `url("${staffPicUrl(s.profile_pic)}")`, backgroundSize: "cover", backgroundPosition: "center -8mm", backgroundRepeat: "no-repeat", borderRadius: "50%", border: "0.4mm solid #011b97" }}
-        />
+        <PassportFrame url={staffPicUrl(s.profile_pic)} frame={frameFor(s, "staff")} />
         <AutoFitName text={s.name} />
         <div style={{ fontSize: "2.2mm", textAlign: "center" }}>{s.designation || "Staff"}</div>
         <div style={{ marginTop: "auto", display: "flex", alignItems: "center", gap: "1.5mm", width: "100%", justifyContent: "center" }}>
@@ -499,6 +660,9 @@ const IdCards = () => {
           />
           <Button variant="outline-primary" size="sm" onClick={toggleAll}>
             {allChecked ? "Deselect All" : "Select All"}
+          </Button>
+          <Button variant="outline-secondary" size="sm" disabled={reframing || tabList.length === 0} onClick={reFrameActive}>
+            {reframing ? <Spinner size="sm" animation="border" /> : "Re-frame passports"}
           </Button>
           <Button variant="success" size="sm" disabled={busyPdf || selectedList.length === 0} onClick={() => downloadPdf(selectedList, "selected", tab)}>
             {busyPdf ? <Spinner size="sm" animation="border" /> : `Download Selected (${selectedList.length})`}
