@@ -300,10 +300,9 @@ const IdCards = () => {
         <div
           style={{ width: "22mm", height: "24mm", backgroundColor: "#fff", overflow: "hidden", borderRadius: "50%", border: "0.4mm solid #011b97" }}
         >
-          {/* Oversized (140%) layer scaled by the same factor: true zoom so the
-              face fills the round frame instead of the whole torso showing */}
+          {/* Single zoom knob: background-size % of the frame (100% = no zoom) */}
           <div
-            style={{ position: "relative", left: "-20%", top: "-20%", width: "140%", height: "140%", backgroundImage: `url("${passportUrl(s.passport)}")`, backgroundSize: "cover", backgroundPosition: "center 52%", backgroundRepeat: "no-repeat", transform: "scale(1.3)" }}
+            style={{ width: "100%", height: "100%", backgroundImage: `url("${passportUrl(s.passport)}")`, backgroundSize: "150%", backgroundPosition: "center 52%", backgroundRepeat: "no-repeat" }}
           />
         </div>
         <AutoFitName text={s.name} />
