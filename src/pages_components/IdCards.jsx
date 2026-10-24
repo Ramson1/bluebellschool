@@ -462,7 +462,7 @@ const IdCards = () => {
   const CardFront = ({ s, innerRef }) => (
     <div style={styles.card} ref={innerRef}>
       <div style={styles.frontHeader}>
-        <img src="/logo.png" alt="logo" crossOrigin="anonymous" style={{ height: "9mm", width: "auto", background: "#fff", padding: "0.4mm" }} />
+        <img src="/logo.png" alt="logo" crossOrigin="anonymous" style={{ height: "9mm", width: "auto", background: "#fff", padding: "0.4mm", borderRadius: "2mm" }} />
         <div style={{ fontSize: "2.6mm", fontWeight: "bold", marginTop: "0.5mm", lineHeight: 1.2 }}>{SCHOOL_NAME}</div>
         <div style={{ fontSize: "2mm", marginTop: "0.4mm" }}>STUDENT ID CARD</div>
       </div>
@@ -507,7 +507,7 @@ const IdCards = () => {
   const StaffFront = ({ s, innerRef }) => (
     <div style={styles.card} ref={innerRef}>
       <div style={styles.frontHeader}>
-        <img src="/logo.png" alt="logo" crossOrigin="anonymous" style={{ height: "9mm", width: "auto", background: "#fff", padding: "0.4mm" }} />
+        <img src="/logo.png" alt="logo" crossOrigin="anonymous" style={{ height: "9mm", width: "auto", background: "#fff", padding: "0.4mm", borderRadius: "2mm" }} />
         <div style={{ fontSize: "2.6mm", fontWeight: "bold", marginTop: "0.5mm", lineHeight: 1.2 }}>{SCHOOL_NAME}</div>
         <div style={{ fontSize: "2mm", marginTop: "0.4mm" }}>STAFF ID CARD</div>
       </div>
