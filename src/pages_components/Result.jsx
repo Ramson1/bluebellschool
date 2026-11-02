@@ -5,6 +5,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { abbreviateSubject, getStandardRemarks, normalizeSubjectName, schoolSubjects } from '../utils/subjectUtils';
 import { CLASS_OPTIONS } from '../utils/classOptions';
+import AllResultsReview from './AllResultsReview';
 import Button from "react-bootstrap/Button";
 import Form from "react-bootstrap/Form";
 import Modal from "react-bootstrap/Modal";
@@ -170,6 +171,7 @@ export default function Result() {
     overall3rd: {},
   });
   const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [showReviewModal, setShowReviewModal] = useState(false); // All Results Review grid
   const [classStats, setClassStats] = useState([]);
   const [showClassStats, setShowClassStats] = useState(true); // State to toggle class stats visibility
   const [statsClass, setStatsClass] = useState(""); // Class selected in the completion panel
@@ -715,10 +717,15 @@ export default function Result() {
                   parseFloat(subject.project || 0) + 
                   parseFloat(subject.examination || 0);
                 
-                const grade = determineGrade(
-                  totalScore,
-                  getClassLevelGroup(studentClassFilter.toLowerCase())
-                );
+                // In midterm view the graded value is the midterm score (out of 30);
+                // running it through the general 100-mark scale would turn a solid
+                // B+ midterm into an "E" remark, making pupils look like they fail.
+                const grade = purpose === "midterm"
+                  ? calculateMidtermGrade(subject.midtermScore || subject.test || 0)
+                  : determineGrade(
+                      totalScore,
+                      getClassLevelGroup(studentClassFilter.toLowerCase())
+                    );
                 
                 // Get the predefined remarks for this grade
                 const autoRemark = grade && gradeRemarks[grade] ? gradeRemarks[grade] : "";
@@ -861,10 +868,15 @@ export default function Result() {
                   parseFloat(subject.project || 0) + 
                   parseFloat(subject.examination || 0);
                 
-                const grade = determineGrade(
-                  totalScore,
-                  getClassLevelGroup(studentClassFilter.toLowerCase())
-                );
+                // In midterm view the graded value is the midterm score (out of 30);
+                // running it through the general 100-mark scale would turn a solid
+                // B+ midterm into an "E" remark, making pupils look like they fail.
+                const grade = purpose === "midterm"
+                  ? calculateMidtermGrade(subject.midtermScore || subject.test || 0)
+                  : determineGrade(
+                      totalScore,
+                      getClassLevelGroup(studentClassFilter.toLowerCase())
+                    );
                 
                 // Get the predefined remarks for this grade
                 const autoRemark = grade && gradeRemarks[grade] ? gradeRemarks[grade] : "";
@@ -879,7 +891,7 @@ export default function Result() {
                   remark: subject.remark || "",
                   useCustomRemark: isCustomRemark,
                   customRemark: isCustomRemark ? subject.remark : "",
-                  midtermScore: subject.midtermScore || "",
+                  midtermScore: subject.midtermScore || subject.test || "",
                   midtermGrade: subject.midtermGrade || "",
                 };
               } else {
@@ -1099,6 +1111,24 @@ export default function Result() {
     if (score >= 17) return "C";
     if (score >= 14) return "D";
     return "E";
+  };
+
+  // Aggregates used when VIEWING midterm results: the sum of the per-subject
+  // midterm scores (30 marks each) and that average on the midterm scale.
+  // Kept separate from calculateOverallTotal/Grade, which the general-exam
+  // upload relies on, so the stored overall1st/2nd/3rd general aggregates
+  // (and the general view of them) stay untouched.
+  const midtermOverallTotal = () =>
+    subjects.reduce((sum, subject) => {
+      const s = scores[subject] || {};
+      const raw = s.midtermScore !== "" && s.midtermScore != null ? s.midtermScore : s.test;
+      const v = parseFloat(raw);
+      return sum + (isNaN(v) ? 0 : v);
+    }, 0);
+
+  const midtermOverallGrade = () => {
+    const average = subjects.length > 0 ? midtermOverallTotal() / subjects.length : 0;
+    return calculateMidtermGrade(Math.round(average));
   };
 
   const calculateOverallTotal = (studentClass) => {
@@ -1693,6 +1723,12 @@ Number of Subjects: ${termSubjects.length}`;
                 <RiEyeLine /> Preview Result
               </button>
               <button
+                className="res-btn primary"
+                onClick={() => setShowReviewModal(true)} // Open the all-results publish grid
+              >
+                <RiEyeLine /> All Results Review
+              </button>
+              <button
                 className={`res-btn soft${showClassStats ? " on" : ""}`}
                 onClick={() => setShowClassStats(!showClassStats)} // Toggle visibility
               >
@@ -2042,8 +2078,8 @@ Number of Subjects: ${termSubjects.length}`;
         <div className="res-card res-overall mt-4">
           <div className="res-card-head"><RiAwardLine /> Overall Summary</div>
           <div className="res-overall-tops">
-            <div className="res-statbox"><span className="k">Overall Total</span><span className="v">{scores?.overallTotalFromDb || calculateOverallTotal(studentClassFilter)}</span></div>
-            <div className="res-statbox"><span className="k">Overall Grade</span><span className="v">{scores?.overallGradeFromDb || calculateOverallGrade(studentClassFilter)}</span></div>
+            <div className="res-statbox"><span className="k">Overall Total</span><span className="v">{purpose === "midterm" ? midtermOverallTotal() : (scores?.overallTotalFromDb || calculateOverallTotal(studentClassFilter))}</span></div>
+            <div className="res-statbox"><span className="k">Overall Grade</span><span className="v">{purpose === "midterm" ? midtermOverallGrade() : (scores?.overallGradeFromDb || calculateOverallGrade(studentClassFilter))}</span></div>
           </div>
           <div className="res-remark">
             <h5>Teacher&apos;s Remark</h5>
@@ -2079,7 +2115,7 @@ Number of Subjects: ${termSubjects.length}`;
     
     {/* Show auto-generated overall remark when auto is selected */}
     {!scores?.useCustomOverallRemark && (
-      <p className="res-auto-remark">Auto Teacher&apos;s Remark: {scores?.overallRemarkFromDb || overallRemark(studentClassFilter)}</p>
+      <p className="res-auto-remark">Auto Teacher&apos;s Remark: {purpose === "midterm" ? (gradeRemarks[midtermOverallGrade()] || "") : (scores?.overallRemarkFromDb || overallRemark(studentClassFilter))}</p>
     )}
     
     {/* Show custom overall remark input when custom is selected */}
@@ -2315,6 +2351,18 @@ Number of Subjects: ${termSubjects.length}`;
             </button>
           </div>
         </Modal>
+        {/* Table names are props so AllResultsReview.jsx itself mirrors verbatim
+            across builds — only this mount block carries the project prefix. */}
+        <AllResultsReview
+          show={showReviewModal}
+          onHide={() => setShowReviewModal(false)}
+          resultTable="bluebell_result"
+          studentTable="bluebell_student"
+          defaultTerm={termFilter}
+          defaultPurpose={purpose === "midterm" ? "midterm" : "general"}
+          email={getCurrentUserEmail()}
+          actorRole={getAuditRole()}
+        />
       </div>
     </div>
   );
@@ -2390,6 +2438,20 @@ const PreviewResultComponent = ({ studentName, studentClass, term, subjects, sco
     const average = validSubjects.length > 0 ? overallTotal / validSubjects.length : 0;
     return determineGrade(average, classLevelGroup);
   };
+  // Midterm preview aggregates the per-subject midterm scores (out of 30
+  // each) and grades them on the midterm scale — the general
+  // test+project+examination total must never be used for a midterm view.
+  const midtermOverallTotal = () =>
+    validSubjects.reduce((sum, subject) => {
+      const s = scores[subject] || {};
+      const raw = s.midtermScore !== "" && s.midtermScore != null ? s.midtermScore : s.test;
+      const v = parseFloat(raw);
+      return sum + (isNaN(v) ? 0 : v);
+    }, 0);
+  const midtermOverallGrade = () => {
+    const average = validSubjects.length > 0 ? midtermOverallTotal() / validSubjects.length : 0;
+    return calculateMidtermGrade(Math.round(average));
+  };
   return (
     <div className="res-pv">
       <h2>
@@ -2451,15 +2513,20 @@ const PreviewResultComponent = ({ studentName, studentClass, term, subjects, sco
           })}
         </tbody>
       </table>
-      {purpose !== "midterm" && (
-        <div className="res-pv-foot">
-          <p className="line">Overall Total: {calculateOverallTotal()}</p>
-          <p className="line">Overall Grade: {validSubjects.length > 0 ? calculateOverallGrade() : "N/A"}</p>
-          <p className="line" style={{ marginTop: "12px" }}>
-            Principal&apos;s Comment: {useCustomPrincipalRemark ? (customPrincipalRemark || "N/A") : (overallPrincipalRemark ? overallPrincipalRemark(studentClass) : "N/A")}
-          </p>
-        </div>
-      )}
+      <div className="res-pv-foot">
+        <p className="line">
+          {purpose === "midterm" ? "Midterm Total (30 per subject): " : "Overall Total: "}
+          {purpose === "midterm" ? midtermOverallTotal() : calculateOverallTotal()}
+        </p>
+        <p className="line">
+          Overall Grade: {validSubjects.length > 0
+            ? (purpose === "midterm" ? midtermOverallGrade() : calculateOverallGrade())
+            : "N/A"}
+        </p>
+        <p className="line" style={{ marginTop: "12px" }}>
+          Principal&apos;s Comment: {useCustomPrincipalRemark ? (customPrincipalRemark || "N/A") : (overallPrincipalRemark ? overallPrincipalRemark(studentClass) : "N/A")}
+        </p>
+      </div>
     </div>
   );
 };

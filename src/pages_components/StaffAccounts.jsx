@@ -89,6 +89,7 @@ const emptyForm = {
   name: "", sex: "", address: "", class_assigned: "", designation: "",
   department: "Academic", subjects: [], assignments: [], email: "", phone: "", profile_pic: "",
   date_of_appointment: "",
+  can_edit_cbt_scores: false,
 };
 
 export default function StaffAccounts() {
@@ -322,6 +323,7 @@ export default function StaffAccounts() {
       phone: row.phone || "",
       profile_pic: row.profile_pic || "",
       date_of_appointment: row.date_of_appointment || "",
+      can_edit_cbt_scores: row.can_edit_cbt_scores === true,
     });
     setAssignDraft({ classes: [], subjects: [], students: [] });
     setCohortKey(null);
@@ -588,6 +590,29 @@ export default function StaffAccounts() {
     });
   };
 
+  // Quick grant/revoke of the per-staff CBT score edit permission. Uses the
+  // same whitelisted update path as the profile form (can_edit_cbt_scores is in
+  // allowedFields server-side), so a locked staff member cannot self-edit CBT
+  // exam scores until the admin flips this on. Their own CA entries are never
+  // affected — this only governs the CBT-engine-filled score field.
+  const toggleCbtEdit = async (row) => {
+    const next = !(row.can_edit_cbt_scores === true);
+    try {
+      const { staff: updated } = await api(`/api/staff-accounts/${row.id}`, "PATCH", {
+        action: "update",
+        profile: { can_edit_cbt_scores: next },
+      });
+      setStaff((list) => list.map((s) => (s.id === row.id ? updated : s)));
+      logAction(supabase, {
+        email, role: actorRole, action: "staff_cbt_edit_toggle", targetTable: "bluebell_staff",
+        recordId: row.id, details: { name: row.name, can_edit_cbt_scores: next },
+      });
+      toast.success(`${row.name} ${next ? "can now edit" : "can no longer edit"} CBT exam scores`);
+    } catch (e) {
+      toast.error(e.message);
+    }
+  };
+
   const doStatus = async (row, status) => {
     try {
       const { staff: updated } = await api(`/api/staff-accounts/${row.id}`, "PATCH", { action: "set_status", status });
@@ -821,6 +846,7 @@ export default function StaffAccounts() {
                       <th>Class &amp; Subjects</th>
                       <th>Contact</th>
                       {showPasswords && <th style={{ minWidth: 190 }}>Password</th>}
+                      <th style={{ minWidth: 110 }}>CBT Edit</th>
                       <th>Status</th>
                       <th style={{ minWidth: 320 }}>Actions</th>
                     </tr>
@@ -883,6 +909,19 @@ export default function StaffAccounts() {
                             )}
                           </td>
                         )}
+                        <td>
+                          <button
+                            className="ap-btn sm ghost"
+                            title={s.can_edit_cbt_scores === true
+                              ? "Allowed to edit CBT exam scores — click to lock"
+                              : "Locked from editing CBT exam scores — click to allow"}
+                            onClick={() => toggleCbtEdit(s)}
+                          >
+                            <span className={`ap-badge ${s.can_edit_cbt_scores === true ? "ok" : "neutral"}`}>
+                              {s.can_edit_cbt_scores === true ? "Can edit" : "Locked"}
+                            </span>
+                          </button>
+                        </td>
                         <td>{statusBadge(s.status)}</td>
                         <td>
                           {/* Grid keeps every action on one horizontal row (2 cols)
@@ -980,6 +1019,14 @@ export default function StaffAccounts() {
               <label className="ap-label">Date of Appointment</label>
               <input className="ap-input" type="date" value={form.date_of_appointment} onChange={(e) => setForm({ ...form, date_of_appointment: e.target.value })} />
               <span className="ap-hint">When the staff member began service — also shown on their portal Profile page.</span>
+            </div>
+            <div className="ap-field">
+              <label className="ap-label">CBT Exam Scores</label>
+              <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer" }}>
+                <input type="checkbox" checked={form.can_edit_cbt_scores === true} onChange={(e) => setForm({ ...form, can_edit_cbt_scores: e.target.checked })} />
+                <span style={{ fontSize: "0.88rem", fontWeight: 700 }}>Allow editing CBT exam scores</span>
+              </label>
+              <span className="ap-hint">Off (default): this staff member cannot change scores auto-filled by a student CBT exam (Examination / midterm Test). Their own CA entries are always editable. Teachers can still edit everything normally.</span>
             </div>
             <div className="ap-field">
               <label className="ap-label">Class (primary / form-teacher)</label>

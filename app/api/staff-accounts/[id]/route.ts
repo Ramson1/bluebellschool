@@ -33,7 +33,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     }
 
     if (action === 'update') {
-      const allowedFields = ['name', 'sex', 'address', 'class_assigned', 'designation', 'department', 'subjects', 'email', 'phone', 'profile_pic', 'date_of_appointment'];
+      const allowedFields = ['name', 'sex', 'address', 'class_assigned', 'designation', 'department', 'subjects', 'email', 'phone', 'profile_pic', 'date_of_appointment', 'can_edit_cbt_scores'];
       const updates: Record<string, unknown> = {};
       for (const key of allowedFields) {
         if (profile && key in profile) updates[key] = profile[key];

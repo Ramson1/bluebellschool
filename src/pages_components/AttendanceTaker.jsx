@@ -28,19 +28,23 @@ import "../styles/Attendance.css";
 
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
-// QR payloads are JSON {sid,name,class} but stay tolerant of the pipe form "sid|name|class"
+// Every ID card (student AND staff) is printed with the compact payload
+// {sid,name}; older cards may also carry class. Accept a name with an
+// optional class/sid, plus the tolerant pipe form "sid|name[|class]". The
+// class is resolved from the roster by sid at scan time when it is absent.
 const parseQrPayload = (text) => {
   try {
     const obj = JSON.parse(text);
-    if (obj && obj.name && obj.class) {
-      return { sid: obj.sid, name: obj.name, class: obj.class };
+    if (obj && obj.name) {
+      const sid = obj.sid != null ? obj.sid : obj.staffId;
+      return { sid, name: String(obj.name), class: obj.class != null ? String(obj.class) : undefined };
     }
   } catch (e) {
     /* not JSON – try pipe format */
   }
   const parts = (text || "").split("|");
-  if (parts.length >= 3) {
-    return { sid: parts[0], name: parts[1], class: parts.slice(2).join("|") };
+  if (parts.length >= 2) {
+    return { sid: parts[0], name: parts[1], class: parts.slice(2).join("|") || undefined };
   }
   return null;
 };
@@ -304,15 +308,31 @@ const AttendanceTaker = () => {
             toast.error("Unrecognized QR code");
             return;
           }
-          // verify the student exists before recording
-          const { data: match } = await supabase
-            .from("bluebell_student")
-            .select("id, name, class")
-            .eq("name", parsed.name)
-            .eq("class", parsed.class)
-            .maybeSingle();
+          // verify the student exists before recording. The printed card may
+          // carry only {sid,name}, so prefer the numeric id and fall back to
+          // the name (class is only compared when the card supplies it).
+          let match = null;
+          if (parsed.sid != null && parsed.sid !== "") {
+            const { data: byId } = await supabase
+              .from("bluebell_student")
+              .select("id, name, class")
+              .eq("id", parsed.sid)
+              .maybeSingle();
+            match = byId;
+          }
           if (!match) {
-            toast.error(`Student ${parsed.name} (${parsed.class}) not found`);
+            let byNameQ = supabase
+              .from("bluebell_student")
+              .select("id, name, class")
+              .eq("name", parsed.name);
+            if (parsed.class) {
+              byNameQ = byNameQ.ilike("class", String(parsed.class).replace(/[%,]/g, ""));
+            }
+            const { data: byName } = await byNameQ.maybeSingle();
+            match = byName;
+          }
+          if (!match) {
+            toast.error(`Student ${parsed.name} not found`);
             return;
           }
           await markStudentPresent({ id: match.id, name: match.name, className: match.class }, "qr");
