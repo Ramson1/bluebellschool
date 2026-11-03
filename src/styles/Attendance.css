@@ -374,3 +374,138 @@ html[data-theme="dark"] .attnd-badge.active { background: rgba(28, 200, 138, 0.1
   color: #019cf2;
   background: rgba(28, 200, 138, 0.1);
 }
+
+/* Passport thumbnails in the attendance tables — click to open the
+   full-screen viewer so a child can be recognised easily at the gate. */
+.attnd-pic {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--container-bg, #f1f5f9);
+  border: 1px solid var(--card-border, #e3e6ea);
+}
+
+.attnd-pic.zoomable {
+  cursor: zoom-in;
+}
+
+.attnd-pic-empty {
+  display: inline-block;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--container-bg, #f1f5f9);
+  border: 1px dashed var(--card-border, #d7dde7);
+}
+
+/* Full-screen passport viewer overlay */
+.attnd-picviewer {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.attnd-picviewer-close {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-size: 1.4rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+}
+
+.attnd-picviewer-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  max-width: 90vw;
+  max-height: 90vh;
+}
+
+.attnd-picviewer-img {
+  max-width: 88vw;
+  max-height: 78vh;
+  object-fit: contain;
+  border-radius: 14px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+  background: #fff;
+}
+
+.attnd-picviewer-name {
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+/* Attendance-type selector (check in vs check out) + success-sound toggle.
+   Deliberately theme-neutral so the block mirrors unchanged across builds. */
+.attnd-dirbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 14px;
+}
+.attnd-dirbar-label {
+  font-weight: 700;
+  font-size: 13px;
+  opacity: 0.85;
+  margin-right: 2px;
+}
+.attnd-dirbtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border-color, #d7dde7);
+  background: var(--card-bg, #fff);
+  color: var(--text-secondary, #4b5563);
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.attnd-dirbtn.active.in {
+  background: #1e7e34;
+  border-color: #1e7e34;
+  color: #fff;
+}
+.attnd-dirbtn.active.out {
+  background: #a5670a;
+  border-color: #a5670a;
+  color: #fff;
+}
+.attnd-soundbtn {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border-color, #d7dde7);
+  background: var(--card-bg, #fff);
+  color: var(--text-secondary, #4b5563);
+  font-weight: 700;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+.attnd-soundbtn:hover {
+  border-color: #1e7e34;
+}

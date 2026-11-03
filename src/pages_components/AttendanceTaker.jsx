@@ -23,6 +23,9 @@ import {
   RiArrowLeftRightLine,
   RiLogoutBoxRLine,
   RiLoginBoxLine,
+  RiCloseLine,
+  RiVolumeUpLine,
+  RiVolumeMuteLine,
 } from "react-icons/ri";
 import "../styles/Attendance.css";
 
@@ -47,6 +50,29 @@ const parseQrPayload = (text) => {
     return { sid: parts[0], name: parts[1], class: parts.slice(2).join("|") || undefined };
   }
   return null;
+};
+
+// Resolve a stored photo to a viewable URL. Students keep a bare filename (or
+// legacy full URL) in the public "passport" bucket; staff pics live in
+// "staff_passport" with a fallback to "passport" (mirrors StaffAccounts.jsx).
+const bucketFileUrl = (bucket, file) => {
+  try {
+    return supabase.storage.from(bucket).getPublicUrl(file).data.publicUrl || null;
+  } catch {
+    return null;
+  }
+};
+const studentPicUrl = (p) => {
+  const v = String(p ?? "").trim();
+  if (!v) return null;
+  if (/^https?:\/\//i.test(v)) return v;
+  return bucketFileUrl("passport", v);
+};
+const staffPicUrl = (p) => {
+  const v = String(p ?? "").trim();
+  if (!v) return null;
+  if (/^https?:\/\//i.test(v)) return v;
+  return bucketFileUrl("staff_passport", v) || bucketFileUrl("passport", v);
 };
 
 const fmtTime = (t) => (t ? new Date(t).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "—");
@@ -86,6 +112,42 @@ const EmptyRow = ({ cols, children }) => (
   </tr>
 );
 
+// Round passport thumbnail; clicking it opens the full-screen viewer.
+const PicThumb = ({ src, name, onZoom }) => {
+  if (!src) return <span className="attnd-pic-empty" title="No passport on record" />;
+  return (
+    <img
+      src={src}
+      alt={name}
+      title="Click to view passport photo"
+      onClick={() => onZoom(src, name)}
+      className="attnd-pic zoomable"
+    />
+  );
+};
+
+// Short, loud two-tone chirp synthesised with WebAudio (no asset to fetch) so
+// a successful scan is audible even when the operator isn't looking at screen.
+let beepCtx = null;
+const playBeep = () => {
+  try {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    beepCtx = beepCtx || new Ctx();
+    if (beepCtx.state === "suspended") beepCtx.resume();
+    [[880, 0, 0.12], [1318.5, 0.16, 0.16]].forEach(([f, at, dur]) => {
+      const osc = beepCtx.createOscillator();
+      const gain = beepCtx.createGain();
+      osc.type = "square";
+      osc.frequency.value = f;
+      gain.gain.value = 0.3;
+      osc.connect(gain);
+      gain.connect(beepCtx.destination);
+      osc.start(beepCtx.currentTime + at);
+      osc.stop(beepCtx.currentTime + at + dur);
+    });
+  } catch { /* audio unavailable */ }
+};
+
 const AttendanceTaker = () => {
   const [user, setUser] = useState(null);
   const [roles, setRoles] = useState({ adminEmails: [], teacherEmails: [], devEmails: [], secretaryEmails: [] });
@@ -114,6 +176,37 @@ const AttendanceTaker = () => {
   const [staffForm, setStaffForm] = useState({ name: "", role: "Staff", email: "", phone: "" });
   const [addingStaff, setAddingStaff] = useState(false);
 
+  // Full-screen passport viewer: clicking a thumbnail in the attendance
+  // tables enlarges it over the page with a close button at the top right.
+  const [picViewer, setPicViewer] = useState({ open: false, src: "", name: "" });
+
+  // Attendance type chosen by the operator: scans and manual marks only ever
+  // perform the selected action, so a check-in can never sign someone out.
+  const [direction, setDirection] = useState("in");
+  // The live scanner callback is registered once on start, so it reads the
+  // current selection through this ref instead of a stale closure value.
+  const directionRef = useRef("in");
+  directionRef.current = direction;
+
+  // Loud success chirp toggle, remembered in this browser.
+  const [soundOn, setSoundOn] = useState(() => {
+    try {
+      return typeof window === "undefined" ? true : window.localStorage.getItem("attnd_sound") !== "off";
+    } catch {
+      return true;
+    }
+  });
+  const toggleSound = () => {
+    const v = !soundOn;
+    setSoundOn(v);
+    try {
+      window.localStorage.setItem("attnd_sound", v ? "on" : "off");
+    } catch { /* private mode etc. */ }
+    if (v) playBeep(); // audible proof that sound is back on
+  };
+  const chime = () => { if (soundOn) playBeep(); };
+
+
   const email = user?.user_metadata?.email;
   const canWrite = isAdmin(email, roles.adminEmails) || isTeacher(email, roles.teacherEmails) || isDev(email, roles.devEmails);
   // Secretary: read-only attendance view (requirement 7) — no check-in/record buttons
@@ -123,7 +216,7 @@ const AttendanceTaker = () => {
 
   const refreshStaff = useCallback(async () => {
     // Directory shows every staff member; the check-in dropdown filters to active client-side
-    const { data } = await supabase.from("bluebell_staff").select("id, name, role, email, phone, status").order("name");
+    const { data } = await supabase.from("bluebell_staff").select("id, name, role, email, phone, status, profile_pic").order("name");
     setStaffList(data || []);
   }, []);
 
@@ -137,7 +230,7 @@ const AttendanceTaker = () => {
 
         const [{ data: settingsData }, { data: studentsData }] = await Promise.all([
           supabase.from("bluebell_settings").select("session, term").limit(1),
-          supabase.from("bluebell_student").select("id, name, class").order("name"),
+          supabase.from("bluebell_student").select("id, name, class, passport").order("name"),
         ]);
         if (settingsData && settingsData[0]) {
           setSettings({ session: settingsData[0].session || "", term: settingsData[0].term || "" });
@@ -168,10 +261,11 @@ const AttendanceTaker = () => {
     if (allowed) refreshToday();
   }, [allowed, refreshToday]);
 
-  // Sign a student in OR out (shared by QR + manual flows, requirement 11):
-  // no row today → check in; in school → sign out; signed out → re-check in.
+  // Sign a student in OR out depending on the selected attendance type
+  // (never both): in → insert / re-open; out → close an open row only.
   const markStudentPresent = async ({ id, name, className }, method, opts = {}) => {
     const today = todayISO();
+    const dir = opts.direction || "in";
     const { data: existing } = await supabase
       .from("bluebell_attendance")
       .select("id, check_out_time")
@@ -183,12 +277,17 @@ const AttendanceTaker = () => {
       .maybeSingle();
 
     if (existing && !existing.check_out_time) {
+      if (dir === "in") {
+        toast.info(`${name} is already checked in`);
+        return true; // check-in mode never flips an inside student back out
+      }
       const { error } = await supabase
         .from("bluebell_attendance")
         .update({ check_out_time: new Date().toISOString(), sign_out_method: method })
         .eq("id", existing.id);
       if (error) throw error;
       toast.info(`${name} signed out (${method})`);
+      chime();
       if (opts.audit) {
         logAction(supabase, {
           email, role: roleLabel, action: "attendance_signout", targetTable: "bluebell_attendance",
@@ -201,12 +300,17 @@ const AttendanceTaker = () => {
     }
 
     if (existing) {
+      if (dir === "out") {
+        toast.error(`${name} already signed out — nothing to check out`);
+        return false;
+      }
       const { error } = await supabase
         .from("bluebell_attendance")
         .update({ check_in_time: new Date().toISOString(), method, check_out_time: null, sign_out_method: null })
         .eq("id", existing.id);
       if (error) throw error;
       toast.success(`${name} signed in again (${method})`);
+      chime();
       if (opts.audit) {
         logAction(supabase, {
           email, role: roleLabel, action: "attendance_checkin", targetTable: "bluebell_attendance",
@@ -216,6 +320,11 @@ const AttendanceTaker = () => {
       }
       await refreshToday();
       return true;
+    }
+
+    if (dir === "out") {
+      toast.error(`${name} was not checked in today — cannot check out`);
+      return false;
     }
 
     const { data, error } = await supabase
@@ -239,6 +348,7 @@ const AttendanceTaker = () => {
       throw error;
     }
     toast.success(`${name} checked in (${method})`);
+    chime();
     if (opts.audit) {
       logAction(supabase, {
         email,
@@ -335,7 +445,11 @@ const AttendanceTaker = () => {
             toast.error(`Student ${parsed.name} not found`);
             return;
           }
-          await markStudentPresent({ id: match.id, name: match.name, className: match.class }, "qr");
+          await markStudentPresent(
+            { id: match.id, name: match.name, className: match.class },
+            "qr",
+            { direction: directionRef.current }
+          );
         },
         () => { /* per-frame scan failures are normal; ignore */ }
       ).catch(() => {
@@ -370,7 +484,7 @@ const AttendanceTaker = () => {
       await markStudentPresent(
         { id: match?.id, name: manualName, className: manualClass },
         "manual",
-        { audit: true }
+        { audit: true, direction }
       );
       setManualName("");
       setManualClass("");
@@ -401,28 +515,42 @@ const AttendanceTaker = () => {
         .maybeSingle();
 
       if (existing && !existing.check_out_time) {
+        if (direction === "in") {
+          toast.info(`${staff.name} is already checked in`);
+          return; // check-in mode never signs an inside staff member out
+        }
         const { error } = await supabase
           .from("bluebell_staff_attendance")
           .update({ check_out_time: new Date().toISOString(), sign_out_method: "manual" })
           .eq("id", existing.id);
         if (error) throw error;
         toast.info(`${staff.name} signed out`);
+        chime();
         logAction(supabase, {
           email, role: roleLabel, action: "staff_attendance_signout", targetTable: "bluebell_staff_attendance",
           recordId: existing.id, details: { staffName: staff.name, date: today },
         });
       } else if (existing) {
+        if (direction === "out") {
+          toast.error(`${staff.name} already signed out — nothing to check out`);
+          return;
+        }
         const { error } = await supabase
           .from("bluebell_staff_attendance")
           .update({ check_in_time: new Date().toISOString(), check_out_time: null, sign_out_method: null })
           .eq("id", existing.id);
         if (error) throw error;
         toast.success(`${staff.name} signed in again`);
+        chime();
         logAction(supabase, {
           email, role: roleLabel, action: "staff_attendance_checkin", targetTable: "bluebell_staff_attendance",
           recordId: existing.id, details: { staffName: staff.name, date: today, recheckIn: true },
         });
       } else {
+        if (direction === "out") {
+          toast.error(`${staff.name} was not checked in today — cannot check out`);
+          return;
+        }
         const { data, error } = await supabase
           .from("bluebell_staff_attendance")
           .insert([{ staff_id: staff.id, staff_name: staff.name, role: staff.role || "Staff", date: today }])
@@ -432,6 +560,7 @@ const AttendanceTaker = () => {
           toast.info(`${staff.name} is already marked present today`);
         } else {
           toast.success(`${staff.name} checked in`);
+          chime();
           logAction(supabase, {
             email,
             role: roleLabel,
@@ -580,8 +709,22 @@ const AttendanceTaker = () => {
   todayList.forEach((r) => { studentState[`${r.student_name}|${canonClass(r.class)}`] = r.check_out_time ? "out" : "in"; });
   const staffState = {};
   todayStaff.forEach((r) => { staffState[r.staff_name] = r.check_out_time ? "out" : "in"; });
-  const manualSelectedState = manualName && manualClass ? studentState[`${manualName}|${canonClass(manualClass)}`] : undefined;
-  const staffSelectedState = selectedStaff ? staffState[staffList.find((s) => s.id === selectedStaff)?.name] : undefined;
+
+  // Passport lookups so attendance rows can show the child's photo. Attendance
+  // rows only carry the name/class strings that were recorded, so match back to
+  // the roster on the canonicalised pair (exact class first, then by name).
+  const studentPicMap = {};
+  studentNames.forEach((s) => {
+    if (!s.passport) return;
+    studentPicMap[`${s.name}|${canonClass(s.class)}`] = studentPicUrl(s.passport);
+    if (!studentPicMap[s.name]) studentPicMap[s.name] = studentPicUrl(s.passport);
+  });
+  const studentRowPic = (r) => studentPicMap[`${r.student_name}|${canonClass(r.class)}`] || studentPicMap[r.student_name] || null;
+  const staffPicMap = {};
+  staffList.forEach((s) => {
+    const url = staffPicUrl(s.profile_pic);
+    if (url && !staffPicMap[s.name]) staffPicMap[s.name] = url;
+  });
 
   return (
     <div className="attnd-page">
@@ -591,7 +734,7 @@ const AttendanceTaker = () => {
       <div className="attnd-head">
         <div>
           <h1 className="attnd-title">Attendance</h1>
-          <p className="attnd-sub">Daily sign-in / sign-out for students and staff — QR or manual. Scanning a student who is already inside signs them out.</p>
+          <p className="attnd-sub">Daily sign-in / sign-out for students and staff — QR or manual. Pick the attendance type below; a scan only performs the selected action.</p>
         </div>
         <div className="attnd-pills">
           <span className="attnd-pill"><span className="k">Session</span>{settings.session || "—"}</span>
@@ -612,6 +755,27 @@ const AttendanceTaker = () => {
         )}
       </div>
 
+      {/* Attendance type + sound toggle (writers only) */}
+      {canWrite && (
+        <div className="attnd-dirbar">
+          <span className="attnd-dirbar-label">Attendance type</span>
+          <button type="button" className={"attnd-dirbtn" + (direction === "in" ? " active in" : "")} onClick={() => setDirection("in")}>
+            <RiLoginBoxLine /> Check In to School
+          </button>
+          <button type="button" className={"attnd-dirbtn" + (direction === "out" ? " active out" : "")} onClick={() => setDirection("out")}>
+            <RiLogoutBoxRLine /> Check Out from School
+          </button>
+          <button
+            type="button"
+            className="attnd-soundbtn"
+            onClick={toggleSound}
+            title={soundOn ? "Mute the success sound" : "Unmute the success sound"}
+          >
+            {soundOn ? <RiVolumeUpLine /> : <RiVolumeMuteLine />} Sound {soundOn ? "on" : "off"}
+          </button>
+        </div>
+      )}
+
       {tab === "student" && (
         <>
           <div className="attnd-stats">
@@ -627,7 +791,7 @@ const AttendanceTaker = () => {
 
           {canWrite && (
           <div className="attnd-grid2">
-            <Card icon={<RiScan2Line />} tone="blue" title="QR Check-In">
+            <Card icon={<RiScan2Line />} tone="blue" title={direction === "out" ? "QR Check-Out" : "QR Check-In"}>
               <div id="qr-reader" style={{ width: "100%", minHeight: qrActive ? 260 : 0 }} />
               {!qrActive ? (
                 <Button variant="primary" onClick={startScanner} disabled={qrStarting}>
@@ -637,11 +801,11 @@ const AttendanceTaker = () => {
                 <Button variant="outline-danger" onClick={stopScanner}>Stop Camera</Button>
               )}
               <p className="attnd-hint">
-                Scan a student ID card QR code. Re-scanning a student who is inside signs them out. The camera requires HTTPS on mobile devices.
+                Scan a student ID card QR code. The scan performs the attendance type selected above and can never flip the other way. The camera requires HTTPS on mobile devices.
               </p>
             </Card>
 
-            <Card icon={<RiUserSearchLine />} tone="purple" title="Manual Check-In">
+            <Card icon={<RiUserSearchLine />} tone="purple" title={direction === "out" ? "Manual Check-Out" : "Manual Check-In"}>
               <Form onSubmit={handleManualCheckIn}>
                 <Form.Group className="mb-2" controlId="manualClass">
                   <Form.Label>Class</Form.Label>
@@ -669,14 +833,14 @@ const AttendanceTaker = () => {
                       const st = studentState[`${s.name}|${s.class}`];
                       return (
                         <option key={s.id} value={s.name}>
-                          {s.name}{st === "in" ? " — in school (will sign out)" : st === "out" ? " (signed out earlier)" : ""}
+                          {s.name}{st === "in" ? " — in school" : st === "out" ? " (signed out earlier)" : ""}
                         </option>
                       );
                     })}
                   </Form.Select>
                 </Form.Group>
-                <Button type="submit" variant={manualSelectedState === "in" ? "warning" : "success"} disabled={submitting}>
-                  {submitting ? <Spinner size="sm" animation="border" /> : manualSelectedState === "in"
+                <Button type="submit" variant={direction === "out" ? "warning" : "success"} disabled={submitting}>
+                  {submitting ? <Spinner size="sm" animation="border" /> : direction === "out"
                     ? <><RiLogoutBoxRLine className="me-1" /> Check Out</>
                     : <><RiUserReceivedLine className="me-1" /> Check In</>}
                 </Button>
@@ -693,12 +857,13 @@ const AttendanceTaker = () => {
             <div className="attnd-tablewrap">
               <table className="attnd-table">
                 <thead>
-                  <tr><th>#</th><th>Name</th><th>Class</th><th>Time In</th><th>Method</th><th>Check-out</th>{canWrite && <th></th>}</tr>
+                  <tr><th>#</th><th>Photo</th><th>Name</th><th>Class</th><th>Time In</th><th>Method</th><th>Check-out</th>{canWrite && <th></th>}</tr>
                 </thead>
                 <tbody>
                   {todayList.map((r, i) => (
                     <tr key={r.id}>
                       <td>{i + 1}</td>
+                      <td><PicThumb src={studentRowPic(r)} name={r.student_name} onZoom={(src, name) => setPicViewer({ open: true, src, name })} /></td>
                       <td className="attnd-strong">{r.student_name}</td>
                       <td>{r.class}</td>
                       <td>{fmtTime(r.check_in_time)}</td>
@@ -720,7 +885,7 @@ const AttendanceTaker = () => {
                     </tr>
                   ))}
                   {todayList.length === 0 && (
-                    <EmptyRow cols={canWrite ? 7 : 6}>No check-ins yet today.</EmptyRow>
+                    <EmptyRow cols={canWrite ? 8 : 7}>No check-ins yet today.</EmptyRow>
                   )}
                 </tbody>
               </table>
@@ -743,7 +908,7 @@ const AttendanceTaker = () => {
           </div>
 
           <div className="attnd-grid2">
-            <Card icon={<RiUserReceivedLine />} tone="teal" title="Staff Check-In">
+            <Card icon={<RiUserReceivedLine />} tone="teal" title={direction === "out" ? "Staff Check-Out" : "Staff Check-In"}>
               {activeStaff.length === 0 ? (
                 <div className="attnd-empty" style={{ padding: "12px 0" }}>
                   <span className="attnd-empty-ic"><RiUserSettingsLine /></span>
@@ -759,14 +924,14 @@ const AttendanceTaker = () => {
                         const st = staffState[s.name];
                         return (
                           <option key={s.id} value={s.id}>
-                            {s.name} {s.role ? `(${s.role})` : ""}{st === "in" ? " — in school (will sign out)" : st === "out" ? " (signed out earlier)" : ""}
+                            {s.name} {s.role ? `(${s.role})` : ""}{st === "in" ? " — in school" : st === "out" ? " (signed out earlier)" : ""}
                           </option>
                         );
                       })}
                     </Form.Select>
                   </Form.Group>
-                  <Button type="submit" variant={staffSelectedState === "in" ? "warning" : "success"} disabled={submitting}>
-                    {submitting ? <Spinner size="sm" animation="border" /> : staffSelectedState === "in" ? "Check Out" : "Check In"}
+                  <Button type="submit" variant={direction === "out" ? "warning" : "success"} disabled={submitting}>
+                    {submitting ? <Spinner size="sm" animation="border" /> : direction === "out" ? "Check Out" : "Check In"}
                   </Button>
                 </Form>
               )}
@@ -779,11 +944,12 @@ const AttendanceTaker = () => {
                 <div style={{ maxHeight: 210, overflowY: "auto" }}>
                   <table className="attnd-table">
                     <thead>
-                      <tr><th>Name</th><th>Role</th><th>In</th><th>Check-out</th><th></th></tr>
+                      <tr><th>Photo</th><th>Name</th><th>Role</th><th>In</th><th>Check-out</th><th></th></tr>
                     </thead>
                     <tbody>
                       {todayStaff.map((r) => (
                         <tr key={r.id}>
+                          <td><PicThumb src={staffPicMap[r.staff_name]} name={r.staff_name} onZoom={(src, name) => setPicViewer({ open: true, src, name })} /></td>
                           <td className="attnd-strong">{r.staff_name}</td>
                           <td>{r.role || "Staff"}</td>
                           <td style={{ whiteSpace: "nowrap" }}>{fmtTime(r.check_in_time)}</td>
@@ -861,12 +1027,13 @@ const AttendanceTaker = () => {
             <div className="attnd-tablewrap">
               <table className="attnd-table">
                 <thead>
-                  <tr><th>#</th><th>Name</th><th>Role</th><th>Contact</th><th>Status</th><th style={{ textAlign: "right" }}>Actions</th></tr>
+                  <tr><th>#</th><th>Photo</th><th>Name</th><th>Role</th><th>Contact</th><th>Status</th><th style={{ textAlign: "right" }}>Actions</th></tr>
                 </thead>
                 <tbody>
                   {staffList.map((s, i) => (
                     <tr key={s.id}>
                       <td>{i + 1}</td>
+                      <td><PicThumb src={staffPicUrl(s.profile_pic)} name={s.name} onZoom={(src, name) => setPicViewer({ open: true, src, name })} /></td>
                       <td className="attnd-strong">{s.name}</td>
                       <td>{s.role || "Staff"}</td>
                       <td style={{ fontSize: 12.5, color: "var(--text-secondary, #888)" }}>
@@ -889,7 +1056,7 @@ const AttendanceTaker = () => {
                     </tr>
                   ))}
                   {staffList.length === 0 && (
-                    <EmptyRow cols={6}>
+                    <EmptyRow cols={7}>
                       No staff yet. Use the form above to add your first team member.
                     </EmptyRow>
                   )}
@@ -899,6 +1066,24 @@ const AttendanceTaker = () => {
           </Card>
         </>
       )}
+      {/* Full-screen passport viewer */}
+      {picViewer.open && (
+        <div className="attnd-picviewer" onClick={() => setPicViewer({ open: false, src: "", name: "" })}>
+          <button
+            type="button"
+            title="Close"
+            className="attnd-picviewer-close"
+            onClick={(e) => { e.stopPropagation(); setPicViewer({ open: false, src: "", name: "" }); }}
+          >
+            <RiCloseLine />
+          </button>
+          <div className="attnd-picviewer-body" onClick={(e) => e.stopPropagation()}>
+            <img src={picViewer.src} alt={picViewer.name} className="attnd-picviewer-img" />
+            {picViewer.name && <span className="attnd-picviewer-name">{picViewer.name}</span>}
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
