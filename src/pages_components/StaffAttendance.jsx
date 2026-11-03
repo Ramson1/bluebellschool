@@ -18,6 +18,9 @@ import {
   RiUser3Line,
   RiFilterLine,
   RiSearchLine,
+  RiFilePdfLine,
+  RiFileExcelLine,
+  RiFileTextLine,
 } from 'react-icons/ri';
 import '../styles/AdminPages.css';
 import { fetchAuthRoles, isAdmin, isDev } from "../utils/authUtils";
@@ -35,6 +38,8 @@ const AttendanceRecords = () => {
   const [roles, setRoles] = useState({ adminEmails: [], teacherEmails: [], devEmails: [] });
   const [ready, setReady] = useState(false);
   const [loading, setLoading] = useState(false);
+  // which format is currently exporting ("pdf" | "csv" | "docx" | "")
+  const [exporting, setExporting] = useState("");
 
   // which population is being viewed: students (bluebell_attendance) or staff (bluebell_staff_attendance)
   const [who, setWho] = useState("student");
@@ -145,6 +150,151 @@ const AttendanceRecords = () => {
     }));
   }, [records, nameCol, isStudent]);
 
+  // ---- export ----------------------------------------------------------
+  // Exports run against every row matching the current filters, not just the
+  // visible page, so re-run the query without the page window.
+  const fetchAllMatching = async () => {
+    let q = supabase
+      .from(table)
+      .select("*")
+      .order("date", { ascending: false })
+      .order("check_in_time", { ascending: false })
+      .range(0, 4999);
+    if (day) {
+      q = q.eq("date", day);
+    } else if (month) {
+      q = q.gte("date", `${month}-01`).lte("date", endOfMonth(month));
+    }
+    if (isStudent && classFilter) {
+      const variants = classes.filter((c) => canonClass(c) === classFilter);
+      q = q.in("class", variants.length ? variants : [classFilter]);
+    }
+    if (nameSearch) q = q.ilike(nameCol, `%${nameSearch.replace(/[%,]/g, "")}%`);
+    const { data, error } = await q;
+    if (error) throw error;
+    return data || [];
+  };
+
+  const toExportData = (all) => {
+    const headers = isStudent
+      ? ["Date", "Name", "Class", "Check In", "Check Out", "Method"]
+      : ["Date", "Name", "Role", "Check In", "Check Out"];
+    const rows = all.map((r) => [
+      r.date,
+      r[nameCol],
+      (isStudent ? r.class : r.role) || "—",
+      fmtTime(r.check_in_time),
+      r.check_out_time ? fmtTime(r.check_out_time) : "Still in",
+      ...(isStudent ? [r.method || "—"] : []),
+    ]);
+    return { headers, rows };
+  };
+
+  const downloadBlob = (blob, filename) => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const runExport = async (fmt) => {
+    setExporting(fmt);
+    try {
+      const all = await fetchAllMatching();
+      if (all.length === 0) {
+        toast.warn("No records to export for this filter");
+        return;
+      }
+      const { headers, rows } = toExportData(all);
+      const period = day ? `Day ${day}` : month ? `Month ${month}` : "All time";
+      const title = `Attendance Records — ${isStudent ? "Students" : "Staff"}`;
+      const base = `attendance-${who}-${day || month || "all"}`;
+
+      if (fmt === "csv") {
+        const esc = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+        const text = "\uFEFF" + [headers, ...rows].map((line) => line.map(esc).join(",")).join("\r\n");
+        downloadBlob(new Blob([text], { type: "text/csv;charset=utf-8" }), `${base}.csv`);
+      } else if (fmt === "pdf") {
+        const { jsPDF } = await import("jspdf");
+        const doc = new jsPDF({ unit: "mm", orientation: "landscape" });
+        const widths = isStudent ? [22, 80, 42, 36, 36, 44] : [22, 100, 60, 46, 46];
+        const tableW = widths.reduce((a, b) => a + b, 0);
+        const startX = 14;
+        let y = 16;
+        doc.setFontSize(8);
+        const clip = (s, w) => {
+          const max = Math.floor(w / 1.7);
+          const str = String(s ?? "—");
+          return str.length > max ? str.slice(0, max - 1) + "…" : str;
+        };
+        const drawHeader = () => {
+          let x = startX;
+          doc.setFont("helvetica", "bold");
+          headers.forEach((h, i) => { doc.text(String(h), x + 2, y); x += widths[i]; });
+          doc.setFont("helvetica", "normal");
+          y += 2;
+          doc.setDrawColor(150);
+          doc.line(startX, y, startX + tableW, y);
+          y += 4.5;
+        };
+        doc.setFont("helvetica", "bold"); doc.setFontSize(13);
+        doc.text(title, startX, y);
+        doc.setFont("helvetica", "normal"); doc.setFontSize(9);
+        y += 5.5;
+        doc.setTextColor(90);
+        doc.text(`${period} · Generated ${new Date().toLocaleString()} · ${rows.length} record(s)`, startX, y);
+        doc.setTextColor(0);
+        y += 7;
+        drawHeader();
+        rows.forEach((line, ri) => {
+          if (y > 196) { doc.addPage("landscape"); y = 16; drawHeader(); }
+          if (ri % 2 === 0) { doc.setFillColor(244); doc.rect(startX, y - 3.4, tableW, 5.4, "F"); }
+          let x = startX;
+          line.forEach((cell, i) => { doc.text(clip(cell, widths[i]), x + 2, y); x += widths[i]; });
+          y += 5.4;
+        });
+        doc.save(`${base}.pdf`);
+      } else {
+        const {
+          Document, Table, TableRow, TableCell, Paragraph, TextRun, WidthType, AlignmentType, ShadingType, Packer,
+        } = await import("docx");
+        const headerCell = (text) => new TableCell({
+          shading: { type: ShadingType.CLEAR, fill: "333333" },
+          children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text, bold: true, color: "FFFFFF" })] })],
+        });
+        const bodyCell = (text, center) => new TableCell({
+          children: [new Paragraph({ alignment: center ? AlignmentType.CENTER : AlignmentType.LEFT, children: [new TextRun({ text: String(text ?? "—") })] })],
+        });
+        const docRows = [
+          new TableRow({ tableHeader: true, children: headers.map((h) => headerCell(h)) }),
+          ...rows.map((line) => new TableRow({ children: line.map((c, i) => bodyCell(c, i !== 1)) })),
+        ];
+        const wordDoc = new Document({
+          sections: [{
+            children: [
+              new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: title, bold: true, size: 28 })] }),
+              new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: period, size: 22 })] }),
+              new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: `Generated ${new Date().toLocaleString()} · ${rows.length} record(s)`, italics: true, size: 18, color: "666666" })] }),
+              new Paragraph({ spacing: { after: 120 }, children: [] }),
+              new Table({ width: { size: 100, type: WidthType.PERCENTAGE }, rows: docRows }),
+            ],
+          }],
+        });
+        downloadBlob(await Packer.toBlob(wordDoc), `${base}.docx`);
+      }
+      toast.success(`Exported ${rows.length} record(s) to ${fmt.toUpperCase()}`);
+    } catch (e) {
+      console.error(`${fmt} export failed:`, e);
+      toast.error(`${fmt.toUpperCase()} export failed: ` + e.message);
+    } finally {
+      setExporting("");
+    }
+  };
+
   if (!ready) {
     return (
       <>
@@ -179,7 +329,7 @@ const AttendanceRecords = () => {
               <span className="ap-title-ic blue"><RiCalendar2Line /></span>
               Attendance Records
             </h1>
-            <p className="ap-sub">Check-in / check-out history and days present — switch between students and staff.</p>
+            <p className="ap-sub">Check-in / check-out history and days present — switch between students and staff, or export the filtered records to PDF, CSV or Word.</p>
           </div>
           <div className="ap-pills">
             <span className="ap-pill"><RiInboxLine /> {records.length} record(s)</span>
@@ -189,8 +339,8 @@ const AttendanceRecords = () => {
           </div>
         </div>
 
-        {/* students / staff segmented control */}
-        <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+        {/* students / staff segmented control + export buttons */}
+        <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap", alignItems: "center" }}>
           <button
             className={isStudent ? "ap-btn green" : "ap-btn ghost"}
             onClick={() => { setWho("student"); setPage(0); }}
@@ -203,6 +353,17 @@ const AttendanceRecords = () => {
           >
             <RiUser3Line /> Staff
           </button>
+          <span style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
+            <button className="ap-btn ghost" disabled={!!exporting || loading} onClick={() => runExport("pdf")} title="Export the filtered records to PDF">
+              {exporting === "pdf" ? "Exporting…" : <><RiFilePdfLine /> PDF</>}
+            </button>
+            <button className="ap-btn ghost" disabled={!!exporting || loading} onClick={() => runExport("csv")} title="Export the filtered records to CSV">
+              {exporting === "csv" ? "Exporting…" : <><RiFileExcelLine /> CSV</>}
+            </button>
+            <button className="ap-btn ghost" disabled={!!exporting || loading} onClick={() => runExport("docx")} title="Export the filtered records to Word">
+              {exporting === "docx" ? "Exporting…" : <><RiFileTextLine /> DOCX</>}
+            </button>
+          </span>
         </div>
 
         <div className="ap-toolbar">
