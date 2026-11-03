@@ -187,6 +187,10 @@ const AttendanceTaker = () => {
   // current selection through this ref instead of a stale closure value.
   const directionRef = useRef("in");
   directionRef.current = direction;
+  // The scanner callback is registered once on start too, so it reads the
+  // active tab (student vs staff) through a ref instead of a stale value.
+  const tabRef = useRef("student");
+  tabRef.current = tab;
 
   // Loud success chirp toggle, remembered in this browser.
   const [soundOn, setSoundOn] = useState(() => {
@@ -205,7 +209,6 @@ const AttendanceTaker = () => {
     if (v) playBeep(); // audible proof that sound is back on
   };
   const chime = () => { if (soundOn) playBeep(); };
-
 
   const email = user?.user_metadata?.email;
   const canWrite = isAdmin(email, roles.adminEmails) || isTeacher(email, roles.teacherEmails) || isDev(email, roles.devEmails);
@@ -418,6 +421,42 @@ const AttendanceTaker = () => {
             toast.error("Unrecognized QR code");
             return;
           }
+          // On the staff tab the same scanner signs staff in/out: resolve the
+          // card against the staff directory instead of the student roster.
+          if (tabRef.current === "staff") {
+            let sMatch = null;
+            if (parsed.sid != null && parsed.sid !== "") {
+              const { data: byId } = await supabase
+                .from("bluebell_staff")
+                .select("id, name, role, status")
+                .eq("id", parsed.sid)
+                .maybeSingle();
+              sMatch = byId;
+            }
+            if (!sMatch) {
+              const { data: byName } = await supabase
+                .from("bluebell_staff")
+                .select("id, name, role, status")
+                .eq("name", parsed.name)
+                .maybeSingle();
+              sMatch = byName;
+            }
+            if (!sMatch) {
+              toast.error(`Staff ${parsed.name} not found`);
+              return;
+            }
+            if ((sMatch.status || "active") !== "active") {
+              toast.error(`${sMatch.name} is marked inactive — cannot take attendance`);
+              return;
+            }
+            try {
+              await markStaffPresent(sMatch, "qr", { direction: directionRef.current });
+            } catch (err) {
+              console.error(err);
+              toast.error("Staff check-in failed: " + err.message);
+            }
+            return;
+          }
           // verify the student exists before recording. The printed card may
           // carry only {sid,name}, so prefer the numeric id and fall back to
           // the name (class is only compared when the card supplies it).
@@ -466,7 +505,7 @@ const AttendanceTaker = () => {
 
   // stop camera when leaving the tab / unmounting
   useEffect(() => {
-    if (tab !== "student" && qrActive) stopScanner();
+    if (tab !== "student" && tab !== "staff" && qrActive) stopScanner();
     return () => { stopScanner(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab]);
@@ -496,83 +535,97 @@ const AttendanceTaker = () => {
     }
   };
 
-  // Staff check-in mirrors the student sign-in/sign-out toggle (requirement 11)
+  // Staff sign-in / sign-out driven by the selected attendance type (mirrors
+  // markStudentPresent): shared by the staff-tab QR scanner and the manual
+  // dropdown form so both obey the same direction guards, sound and audit.
+  const markStaffPresent = async (staff, method = "manual", opts = {}) => {
+    const dir = opts.direction || "in";
+    const today = todayISO();
+    const { data: existing } = await supabase
+      .from("bluebell_staff_attendance")
+      .select("id, check_out_time")
+      .eq("staff_id", staff.id)
+      .eq("date", today)
+      .maybeSingle();
+
+    if (existing && !existing.check_out_time) {
+      if (dir === "in") {
+        toast.info(`${staff.name} is already checked in`);
+        return false; // check-in mode never signs an inside staff member out
+      }
+      const { error } = await supabase
+        .from("bluebell_staff_attendance")
+        .update({ check_out_time: new Date().toISOString(), sign_out_method: method })
+        .eq("id", existing.id);
+      if (error) throw error;
+      toast.info(`${staff.name} signed out`);
+      chime();
+      logAction(supabase, {
+        email, role: roleLabel, action: "staff_attendance_signout", targetTable: "bluebell_staff_attendance",
+        recordId: existing.id, details: { staffName: staff.name, date: today, method },
+      });
+    } else if (existing) {
+      if (dir === "out") {
+        toast.error(`${staff.name} already signed out — nothing to check out`);
+        return false;
+      }
+      const { error } = await supabase
+        .from("bluebell_staff_attendance")
+        .update({ check_in_time: new Date().toISOString(), check_out_time: null, sign_out_method: null })
+        .eq("id", existing.id);
+      if (error) throw error;
+      toast.success(`${staff.name} signed in again`);
+      chime();
+      logAction(supabase, {
+        email, role: roleLabel, action: "staff_attendance_checkin", targetTable: "bluebell_staff_attendance",
+        recordId: existing.id, details: { staffName: staff.name, date: today, method, recheckIn: true },
+      });
+    } else {
+      if (dir === "out") {
+        toast.error(`${staff.name} was not checked in today — cannot check out`);
+        return false;
+      }
+      const { data, error } = await supabase
+        .from("bluebell_staff_attendance")
+        .insert([{ staff_id: staff.id, staff_name: staff.name, role: staff.role || "Staff", date: today }])
+        .select();
+      if (error && !(error.code === "23505" || /duplicate/i.test(error.message || ""))) throw error;
+      if (error) {
+        toast.info(`${staff.name} is already marked present today`);
+      } else {
+        toast.success(`${staff.name} checked in`);
+        chime();
+        logAction(supabase, {
+          email,
+          role: roleLabel,
+          action: "staff_attendance_checkin",
+          targetTable: "bluebell_staff_attendance",
+          recordId: data?.[0]?.id,
+          details: { staffName: staff.name, date: today, method },
+        });
+      }
+    }
+    await refreshToday();
+    return true;
+  };
+
+  // Manual staff check-in (dropdown); the scanner path calls markStaffPresent
+  // directly with the staff row resolved from the scanned card.
   const handleStaffCheckIn = async (e) => {
     e.preventDefault();
     if (!selectedStaff) {
       toast.error("Select a staff member first");
       return;
     }
+    const staff = staffList.find((s) => s.id === selectedStaff);
+    if (!staff) {
+      toast.error("Staff member not found");
+      return;
+    }
     setSubmitting(true);
     try {
-      const staff = staffList.find((s) => s.id === selectedStaff);
-      const today = todayISO();
-      const { data: existing } = await supabase
-        .from("bluebell_staff_attendance")
-        .select("id, check_out_time")
-        .eq("staff_id", staff.id)
-        .eq("date", today)
-        .maybeSingle();
-
-      if (existing && !existing.check_out_time) {
-        if (direction === "in") {
-          toast.info(`${staff.name} is already checked in`);
-          return; // check-in mode never signs an inside staff member out
-        }
-        const { error } = await supabase
-          .from("bluebell_staff_attendance")
-          .update({ check_out_time: new Date().toISOString(), sign_out_method: "manual" })
-          .eq("id", existing.id);
-        if (error) throw error;
-        toast.info(`${staff.name} signed out`);
-        chime();
-        logAction(supabase, {
-          email, role: roleLabel, action: "staff_attendance_signout", targetTable: "bluebell_staff_attendance",
-          recordId: existing.id, details: { staffName: staff.name, date: today },
-        });
-      } else if (existing) {
-        if (direction === "out") {
-          toast.error(`${staff.name} already signed out — nothing to check out`);
-          return;
-        }
-        const { error } = await supabase
-          .from("bluebell_staff_attendance")
-          .update({ check_in_time: new Date().toISOString(), check_out_time: null, sign_out_method: null })
-          .eq("id", existing.id);
-        if (error) throw error;
-        toast.success(`${staff.name} signed in again`);
-        chime();
-        logAction(supabase, {
-          email, role: roleLabel, action: "staff_attendance_checkin", targetTable: "bluebell_staff_attendance",
-          recordId: existing.id, details: { staffName: staff.name, date: today, recheckIn: true },
-        });
-      } else {
-        if (direction === "out") {
-          toast.error(`${staff.name} was not checked in today — cannot check out`);
-          return;
-        }
-        const { data, error } = await supabase
-          .from("bluebell_staff_attendance")
-          .insert([{ staff_id: staff.id, staff_name: staff.name, role: staff.role || "Staff", date: today }])
-          .select();
-        if (error && !(error.code === "23505" || /duplicate/i.test(error.message || ""))) throw error;
-        if (error) {
-          toast.info(`${staff.name} is already marked present today`);
-        } else {
-          toast.success(`${staff.name} checked in`);
-          chime();
-          logAction(supabase, {
-            email,
-            role: roleLabel,
-            action: "staff_attendance_checkin",
-            targetTable: "bluebell_staff_attendance",
-            recordId: data?.[0]?.id,
-            details: { staffName: staff.name, date: today },
-          });
-        }
-      }
-      setSelectedStaff("");
-      await refreshToday();
+      const done = await markStaffPresent(staff, "manual", { direction });
+      if (done) setSelectedStaff("");
     } catch (err) {
       console.error(err);
       toast.error("Staff check-in failed: " + err.message);
@@ -908,6 +961,20 @@ const AttendanceTaker = () => {
           </div>
 
           <div className="attnd-grid2">
+            <Card icon={<RiScan2Line />} tone="blue" title={direction === "out" ? "Staff QR Check-Out" : "Staff QR Check-In"}>
+              <div id="qr-reader" style={{ width: "100%", minHeight: qrActive ? 260 : 0 }} />
+              {!qrActive ? (
+                <Button variant="primary" onClick={startScanner} disabled={qrStarting}>
+                  {qrStarting ? <Spinner size="sm" animation="border" /> : <><RiScan2Line className="me-1" /> Start Camera Scanner</>}
+                </Button>
+              ) : (
+                <Button variant="outline-danger" onClick={stopScanner}>Stop Camera</Button>
+              )}
+              <p className="attnd-hint">
+                Scan a staff ID card QR code — the same {direction === "out" ? "check-out" : "check-in"} flow as students, using the attendance type selected above.
+              </p>
+            </Card>
+
             <Card icon={<RiUserReceivedLine />} tone="teal" title={direction === "out" ? "Staff Check-Out" : "Staff Check-In"}>
               {activeStaff.length === 0 ? (
                 <div className="attnd-empty" style={{ padding: "12px 0" }}>
@@ -1066,6 +1133,7 @@ const AttendanceTaker = () => {
           </Card>
         </>
       )}
+
       {/* Full-screen passport viewer */}
       {picViewer.open && (
         <div className="attnd-picviewer" onClick={() => setPicViewer({ open: false, src: "", name: "" })}>
@@ -1083,7 +1151,6 @@ const AttendanceTaker = () => {
           </div>
         </div>
       )}
-
     </div>
   );
 };
