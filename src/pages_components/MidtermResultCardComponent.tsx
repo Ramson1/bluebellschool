@@ -388,9 +388,9 @@ const MidtermResultCardComponent: React.FC<{ studentData?: ExtendedStudentData; 
     const upperClass = className.toUpperCase();
     const yearMatch = upperClass.match(/YEAR\s*(\d+)/);
     if (yearMatch && parseInt(yearMatch[1], 10) >= 7) {
-      return "Bluebell High School";
+      return "Black-Box Institution";
     }
-    return "Bluebell International School";
+    return "Black-Box Institution";
   };
 
   // Get image URL for passport
@@ -660,7 +660,7 @@ const MidtermResultCardComponent: React.FC<{ studentData?: ExtendedStudentData; 
         <footer className="text-center mt-4" style={{ fontSize: '9px' }}>
           <p className="mb-1"><strong>THIS RESULT WAS ISSUED WITHOUT ERASURE AND ALTERATION</strong></p>
           <p className="mb-1">Generated on: {new Date().toLocaleDateString()}</p>
-          <p className="mb-0">© {new Date().getFullYear()} Bluebell International School. All rights reserved.</p>
+          <p className="mb-0">© {new Date().getFullYear()} Black-Box Institution. All rights reserved.</p>
         </footer>
       </div>
     // ) : (

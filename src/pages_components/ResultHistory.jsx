@@ -173,6 +173,10 @@ export default function ResultHistory() {
     [rows]
   );
 
+  // Total-items breakdown for the header/summary readout.
+  const archivedTotal = useMemo(() => rows.filter((r) => r.source === "Archived").length, [rows]);
+  const currentTotal = useMemo(() => rows.filter((r) => r.source === "Current").length, [rows]);
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return rows.filter((r) => {
@@ -231,6 +235,19 @@ export default function ResultHistory() {
           <div className="text-muted" style={{ fontSize: 14 }}>
             Every archived result, across all terms and sessions — including students who have left the school.
           </div>
+          <div style={{ marginTop: 8, display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <Badge bg="primary" style={{ fontSize: 13, padding: "6px 10px" }}>
+              Total: {rows.length} item(s)
+            </Badge>
+            <Badge bg="secondary" style={{ fontSize: 13, padding: "6px 10px" }}>
+              {archivedTotal} archived
+            </Badge>
+            {includeCurrent && (
+              <Badge bg="success" style={{ fontSize: 13, padding: "6px 10px" }}>
+                {currentTotal} current
+              </Badge>
+            )}
+          </div>
         </Col>
         <Col xs="auto">
           <Button variant="outline-secondary" onClick={loadArchive} disabled={loading}>
@@ -284,7 +301,7 @@ export default function ResultHistory() {
       <Card className="shadow-sm">
         <Card.Body>
           <div className="text-muted mb-2" style={{ fontSize: 13 }}>
-            Showing <b>{filtered.length}</b> of <b>{rows.length}</b> archived result record(s).
+            Total: <b>{rows.length}</b> item(s) — showing <b>{filtered.length}</b> after filters.
           </div>
           {filtered.length === 0 ? (
             <div className="text-center text-muted py-4">

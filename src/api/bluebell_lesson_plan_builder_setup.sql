@@ -1,5 +1,5 @@
 -- =============================================================================
--- BluebellSchool · Lesson Plan builder — structured template columns
+-- Black-Box Institution · Lesson Plan builder — structured template columns
 -- -----------------------------------------------------------------------------
 -- The school's paper LESSON PLAN has far more fields than the original
 -- bluebell_lesson_plans outline (class/subject/week/objectives/content/

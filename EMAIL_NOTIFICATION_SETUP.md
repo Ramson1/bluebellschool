@@ -220,7 +220,7 @@ Time: 10:30:45 AM
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 This is an automated notification from 
-Bluebell International School
+Black-Box Institution
 CBT Examination System
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```

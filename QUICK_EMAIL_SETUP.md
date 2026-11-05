@@ -16,8 +16,8 @@ Then configure your recipients:
 ```sql
 UPDATE bluebell_settings 
 SET 
-  adminEmail = 'principal@bluebellschool.com',
-  additionalEmails = 'registrar@bluebellschool.com,ict@bluebellschool.com';
+  adminEmail = 'principal@blackboxtech.online',
+  additionalEmails = 'registrar@blackboxtech.online,ict@blackboxtech.online';
 ```
 
 ✅ **Done!** Emails will now send to ALL addresses.

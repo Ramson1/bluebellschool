@@ -215,7 +215,7 @@ const NewPaymentWithPaystack = () => {
         { type: 'input', label: 'EMAIL', placeholder: 'Enter email', value: email, setValue: setEmail },
     ];
 
-    // Bluebell's own Flutterwave public key, from the environment. The fallback is
+    // Black-Box's own Flutterwave public key, from the environment. The fallback is
     // a placeholder on purpose: an unconfigured clone must never be able to collect
     // school fees through another school's merchant account.
     const FLUTTERWAVE_PUBLIC_KEY =

@@ -25,19 +25,19 @@ GMAIL_APP_PASSWORD=kraxhveycapmptvv  ← COMPROMISED
 
 1. Go to: https://myaccount.google.com/apppasswords
 2. Sign in to `onyevid@gmail.com`
-3. Find the app password named "BluebellSchool" or similar
+3. Find the app password named "Black-Box Institution" or similar
 4. **Delete/Revoke it immediately**
 5. Generate a NEW app password
    - Click "App passwords"
    - Select app: "Mail"
    - Select device: "Other"
-   - Name: "BluebellSchool Production 2026"
+   - Name: "Black-Box Institution Production 2026"
    - Copy the new 16-character password
 
 #### 2. **Update Vercel Environment Variable**
 
 1. Go to: https://vercel.com/dashboard
-2. Select your BluebellSchool project
+2. Select your Black-Box Institution project
 3. Settings → Environment Variables
 4. Find `GMAIL_APP_PASSWORD`
 5. Click "Edit"

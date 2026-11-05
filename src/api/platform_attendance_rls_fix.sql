@@ -1,5 +1,5 @@
 -- =============================================================================
--- BluebellSchool · Attendance row-level-security fix (mobile gate app)
+-- Black-Box Institution · Attendance row-level-security fix (mobile gate app)
 -- -----------------------------------------------------------------------------
 -- Symptom: the Expo attendance app signs the operator in with Supabase Auth
 -- (role = "authenticated") and inserting a scan fails with:

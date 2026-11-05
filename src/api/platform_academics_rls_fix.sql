@@ -1,5 +1,5 @@
 -- =============================================================================
--- Bluebell academics RLS fix — make item creation work in the staff portal
+-- Black-Box academics RLS fix — make item creation work in the staff portal
 -- -----------------------------------------------------------------------------
 -- SYMPTOM: on every academic page of the staff portal (E-Notes, Assignments,
 -- Lesson Plans, Announcements, and the CBT completion/essay builders) the file

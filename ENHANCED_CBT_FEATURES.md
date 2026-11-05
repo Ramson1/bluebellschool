@@ -1,4 +1,4 @@
-# Enhanced CBT Exam System - BluebellSchool
+# Enhanced CBT Exam System - Black-Box Institution
 
 ## 🎯 What Was Enhanced
 
@@ -225,5 +225,5 @@ For issues or questions:
 
 **Enhanced**: 2026-01-27  
 **Version**: 2.0 (Network-Resilient)  
-**Project**: BluebellSchool CBT Enhancement  
+**Project**: Black-Box Institution CBT Enhancement  
 **Status**: Production Ready ✅

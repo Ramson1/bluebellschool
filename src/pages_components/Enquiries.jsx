@@ -196,7 +196,7 @@ export default function Enquiries() {
           Authorization: `Bearer ${sess.data.session?.access_token || ""}`,
         },
         body: JSON.stringify({
-          subject: reply.subject || `Re: your enquiry to Bluebell School`,
+          subject: reply.subject || `Re: your enquiry to Black-Box Institution`,
           message: reply.message,
           recipients: [selected.email],
         }),
@@ -465,8 +465,8 @@ export default function Enquiries() {
                 className="ap-btn primary"
                 onClick={() => {
                   setReply({
-                    subject: `Re: ${TYPE_LABELS[selected.enquiry_type] || "your enquiry"} — Bluebell School`,
-                    message: `Dear ${selected.name},\n\nThank you for reaching out to Bluebell International School.\n\n\n\nKind regards,\nAdmissions Office\n`,
+                    subject: `Re: ${TYPE_LABELS[selected.enquiry_type] || "your enquiry"} — Black-Box Institution`,
+                    message: `Dear ${selected.name},\n\nThank you for reaching out to Black-Box Institution.\n\n\n\nKind regards,\nAdmissions Office\n`,
                   });
                   setReplyOpen(true);
                 }}

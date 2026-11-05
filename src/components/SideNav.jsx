@@ -302,7 +302,7 @@ const SideNav = ({ collapsed, setCollapsed }) => {
                   lineHeight: 1.25,
                 }}
               >
-                Bluebell
+                Black-Box
               </div>
               <div
                 style={{

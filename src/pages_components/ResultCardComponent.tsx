@@ -696,9 +696,9 @@ const ResultCardComponent: React.FC<{ studentData?: ExtendedStudentData; passpor
     const upperClass = className.toUpperCase();
     const yearMatch = upperClass.match(/YEAR\s*(\d+)/);
     if (yearMatch && parseInt(yearMatch[1], 10) >= 7) {
-      return "Bluebell High School";
+      return "Black-Box Institution";
     }
-    return "Bluebell International School";
+    return "Black-Box Institution";
   };
 
   return (

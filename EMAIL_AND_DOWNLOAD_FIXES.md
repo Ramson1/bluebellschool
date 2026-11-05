@@ -57,7 +57,7 @@ Detailed Breakdown:
 ${detailedScores}
 
 ---
-Automated notification from Bluebell CBT System`;
+Automated notification from Black-Box CBT System`;
 
   // Send to specific recipients like in Result.jsx
   const recipients = ['rhemaexpertsolutions@gmail.com', 'onyevid@gmail.com'];
@@ -205,7 +205,7 @@ D. Oil
 
 ═══════════════════════════════════════════
 Generated: 27/01/2026, 10:30:45 AM
-Bluebell CBT Examination System
+Black-Box CBT Examination System
 ═══════════════════════════════════════════
 ```
 
@@ -349,7 +349,7 @@ Q4: ⏭ Unattempted
 ...
 
 ---
-Automated notification from Bluebell CBT System
+Automated notification from Black-Box CBT System
 ```
 
 **Improvements**:
@@ -431,7 +431,7 @@ D. 3×10^12 m/s
 
 ═══════════════════════════════════════════
 Generated: 27/01/2026, 2:45:30 PM
-Bluebell CBT Examination System
+Black-Box CBT Examination System
 ═══════════════════════════════════════════
 ```
 

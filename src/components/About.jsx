@@ -28,7 +28,7 @@ export const About = () => {
     <section className="about-section">
       {/* Hero Image and Title */}
       <div className="about-hero" >
-        <h2 className="about-title">About Bluebell International School</h2>
+        <h2 className="about-title">About Black-Box Institution</h2>
       </div>
 
       {/* About Content Section */}

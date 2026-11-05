@@ -1,5 +1,5 @@
 -- =============================================================================
--- Bluebell chat RLS fix — restore messaging after RLS was enabled on the chat tables
+-- Black-Box chat RLS fix — restore messaging after RLS was enabled on the chat tables
 -- -----------------------------------------------------------------------------
 -- SYMPTOM: creating a new thread in the Messages page fails with
 --   "new row violates row-level security policy for table bluebell_chat_conversations"

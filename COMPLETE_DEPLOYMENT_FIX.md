@@ -294,7 +294,7 @@ While deployment is now fixed, don't forget the **exposed credentials**:
 
 2. **Generate New Password**
    - Create new Gmail app password
-   - Name it: "BluebellSchool Production 2026"
+   - Name it: "Black-Box Institution Production 2026"
 
 3. **Update Vercel**
    - Settings → Environment Variables

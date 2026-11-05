@@ -36,7 +36,7 @@ export const Facilities = () => {
     <section className="facilities">
       {/* Header section for title */}
       <div className="facilities-header">
-        <h2>Facilities at Bluebell International School</h2>
+        <h2>Facilities at Black-Box Institution</h2>
         <p>Empowering our students with the best resources for a holistic experience.</p>
       </div>
       

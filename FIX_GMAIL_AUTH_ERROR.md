@@ -38,7 +38,7 @@ c:\Users\Black-Box\Documents\build\bluebellschool\.env.local
    - Go to: https://myaccount.google.com/apppasswords
    - Select app: **Mail**
    - Select device: **Other (Custom name)**
-   - Enter name: `BluebellSchool CBT System`
+   - Enter name: `Black-Box Institution CBT System`
    - Click **Generate**
 
 4. **Copy the App Password**

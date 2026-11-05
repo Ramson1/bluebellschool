@@ -10,7 +10,7 @@ import { requireAdminCaller, serviceClient } from '@/src/utils/serverAdminAuth';
 // passwordless primitive: the service-role Admin API mints a magiclink
 // (generateLink) for the staff email, returning a single-use hashed token that
 // the staff portal exchanges for a real session. No password is touched and no
-// email is sent, so the provisional @bluebellschool.com mailboxes are irrelevant.
+// email is sent, so the provisional @blackboxtech.online mailboxes are irrelevant.
 //
 // Enforced server-side via requireAdminCaller (UI gating is not a boundary).
 // Ephemeral by design: nothing is written to bluebell_auditlogs, and the token is

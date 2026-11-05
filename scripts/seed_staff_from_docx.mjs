@@ -26,7 +26,7 @@ import {
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DRY = process.argv.includes('--dry');
-const PORTAL_URL = 'https://staff.bluebellschool.com';
+const PORTAL_URL = 'https://staff.blackboxtech.online';
 
 // ---------------------------------------------------------------------------
 // Staff roster transcribed from STAFF PROFILE.docx (2026). Titles (MS./MRS./
@@ -100,14 +100,14 @@ const clean = (t) => t.toLowerCase().replace(/[^a-z]/g, '');
 function makeEmail(name, used) {
   const tokens = name.split(/\s+/).filter(Boolean);
   let base = `${clean(tokens[0])}.${clean(tokens[tokens.length - 1])}`;
-  let email = `${base}@bluebellschool.com`;
+  let email = `${base}@blackboxtech.online`;
   let n = 2;
   while (used.has(email)) {
     // widen with the middle name token first, then a numeric suffix
     const mid = tokens.length > 2 ? clean(tokens[1]) : '';
     email = mid && n === 2
-      ? `${clean(tokens[0])}.${mid}.${clean(tokens[tokens.length - 1])}@bluebellschool.com`
-      : `${base}${n}@bluebellschool.com`;
+      ? `${clean(tokens[0])}.${mid}.${clean(tokens[tokens.length - 1])}@blackboxtech.online`
+      : `${base}${n}@blackboxtech.online`;
     n++;
   }
   used.add(email);
@@ -141,7 +141,7 @@ function buildDocx(rows) {
   return new Document({
     sections: [{
       children: [
-        new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: 'Bluebell International School', bold: true, size: 30 })] }),
+        new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: 'Black-Box Institution', bold: true, size: 30 })] }),
         new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: 'Staff Portal — Login Credentials', size: 24 })] }),
         DRY && new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: '*** DRAFT — not yet created in the system ***', bold: true, color: 'C0392B', size: 22 })] }),
         new Paragraph({ alignment: AlignmentType.CENTER, spacing: { after: 200 }, children: [new TextRun({ text: `Portal: ${PORTAL_URL} · Generated ${new Date().toLocaleDateString()} · ${rows.length} staff`, italics: true, size: 18, color: '666666' })] }),

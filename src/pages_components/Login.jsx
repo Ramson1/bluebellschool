@@ -100,9 +100,9 @@ export default function Login() {
       <main className="adm-login-main">
         <form className="adm-login-card" onSubmit={onSubmit} noValidate>
           <div className="adm-login-head">
-            <img src={logo} alt="Bluebell logo" className="adm-login-logo" />
+            <img src={logo} alt="Black-Box logo" className="adm-login-logo" />
             <h1>Admin Dashboard</h1>
-            <p>Sign in to continue to <b>Bluebell International School</b></p>
+            <p>Sign in to continue to <b>Black-Box Institution</b></p>
           </div>
 
           <label className="adm-login-field">

@@ -15,9 +15,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Bluebell International School",
+  title: "Black-Box Institution",
   icons: { apple: "/apple-touch-icon.png" },
-  description: "Bluebell International School Management System",
+  description: "Black-Box Institution Management System",
 };
 
 // Mobile viewport hardening so the fixed bottom tab bar is ALWAYS visible:

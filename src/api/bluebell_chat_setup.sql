@@ -1,5 +1,5 @@
 -- =============================================================================
--- Bluebell Parent <-> School chat (messaging)
+-- Black-Box Parent <-> School chat (messaging)
 -- -----------------------------------------------------------------------------
 -- A shared chat surface used by three apps against this SAME Supabase project:
 --   * Student portal  -> a parent/learner (identity = bluebell_student.id)

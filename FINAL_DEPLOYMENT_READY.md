@@ -271,7 +271,7 @@ Don't forget to address the exposed Gmail credentials:
 
 2. **Generate New App Password**
    - Create new 16-character password
-   - Name it: "BluebellSchool Production 2026"
+   - Name it: "Black-Box Institution Production 2026"
 
 3. **Update Vercel Environment Variables**
    ```
@@ -335,7 +335,7 @@ git push origin main
 
 ### Monitor Deployment
 1. Go to: https://vercel.com/dashboard
-2. Click on your BluebellSchool project
+2. Click on your Black-Box Institution project
 3. Watch latest deployment progress
 4. Should complete successfully ✅
 

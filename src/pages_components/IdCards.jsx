@@ -17,7 +17,7 @@ import {
   PLACEHOLDER_URL,
 } from "../utils/passportFraming";
 
-const SCHOOL_NAME = "Bluebell International School";
+const SCHOOL_NAME = "Black-Box Institution";
 const PAGE_SIZE = 100; // students fetched per backend chunk
 const GRID_SIZE = 12;  // cards displayed per pager page
 const DEV_SUPPORT_EMAIL = "rhemaexpertsolutions@gmail.com";
