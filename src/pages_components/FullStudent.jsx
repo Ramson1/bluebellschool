@@ -27,7 +27,7 @@ import "../styles/FullStudent.css";
 // EMAIL FUNCTIONALITY COMMENTED OUT FOR VERCEL DEPLOYMENT
 
 const PASSPORT_PLACEHOLDER = "placeholder.png";
-const passportUrl = "https://btnatydmfunhwgoeguus.supabase.co/storage/v1/object/public/passport/";
+const passportUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL || ""}/storage/v1/object/public/passport/`;
 
 const genderBadge = (sex) => {
   const s = (sex || "").toLowerCase();
@@ -542,7 +542,7 @@ Student Class: ${studentData.class}`;
       const doc = new Document({
         sections: [{
           children: [
-            new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Jeshurun Montessori International School", bold: true, size: 28 })] }),
+            new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Black-Box Institution", bold: true, size: 28 })] }),
             new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Student Access Tokens — Name, Class & Token", size: 22 })] }),
             new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: `Generated ${new Date().toLocaleDateString()} · ${students.length} students`, italics: true, size: 18, color: "666666" })] }),
             new Paragraph({ spacing: { after: 120 }, children: [] }),

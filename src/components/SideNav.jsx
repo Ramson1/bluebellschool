@@ -38,6 +38,7 @@ import {
   RiDraftLine,
   RiBookOpenLine,
   RiFileTextLine,
+  RiDownloadLine,
 } from "react-icons/ri";
 import { getEffectiveTheme, toggleTheme } from "../utils/theme";
 
@@ -314,7 +315,7 @@ const SideNav = ({ collapsed, setCollapsed }) => {
                   lineHeight: 1.2,
                 }}
               >
-                International School
+                  Institution
               </div>
             </div>
           )}
@@ -425,6 +426,29 @@ const SideNav = ({ collapsed, setCollapsed }) => {
                       <a href={process.env.NEXT_PUBLIC_STUDENT_PORTAL_URL} target="_blank" rel="noopener noreferrer" title={collapsed ? "Student Portal" : undefined} className={"sidenav-link" + (collapsed ? " sidenav-link--collapsed" : "")}>
                         <span className="sidenav-icon"><RiExternalLinkLine /></span>
                         {!collapsed && <span className="sidenav-label">Student Portal</span>}
+                      </a>
+                    </li>
+                  )}
+                </>
+              )}
+
+              {/* Downloadable installers — hosted on Cloudinary; URLs come from env */}
+              {(process.env.NEXT_PUBLIC_OFFLINE_CBT_URL || process.env.NEXT_PUBLIC_ATTENDANCE_APP_URL) && (
+                <>
+                  <SectionTitle title="Downloads" collapsed={collapsed} />
+                  {process.env.NEXT_PUBLIC_OFFLINE_CBT_URL && (
+                    <li>
+                      <a href={process.env.NEXT_PUBLIC_OFFLINE_CBT_URL} target="_blank" rel="noopener noreferrer" download title={collapsed ? "Offline CBT App (Windows)" : undefined} className={"sidenav-link" + (collapsed ? " sidenav-link--collapsed" : "")}>
+                        <span className="sidenav-icon"><RiDownloadLine /></span>
+                        {!collapsed && <span className="sidenav-label">Offline CBT App (Windows)</span>}
+                      </a>
+                    </li>
+                  )}
+                  {process.env.NEXT_PUBLIC_ATTENDANCE_APP_URL && (
+                    <li>
+                      <a href={process.env.NEXT_PUBLIC_ATTENDANCE_APP_URL} target="_blank" rel="noopener noreferrer" download title={collapsed ? "Attendance App (Android)" : undefined} className={"sidenav-link" + (collapsed ? " sidenav-link--collapsed" : "")}>
+                        <span className="sidenav-icon"><RiDownloadLine /></span>
+                        {!collapsed && <span className="sidenav-label">Attendance App (Android)</span>}
                       </a>
                     </li>
                   )}
