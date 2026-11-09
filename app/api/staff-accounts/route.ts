@@ -62,6 +62,15 @@ export async function POST(request: Request) {
       }
     }
     if (createErr || !created?.user) {
+      // Log the full Supabase Auth error (status code + body) so a persistent
+      // "Database error creating new user" can be diagnosed server-side rather
+      // than only from the generic client message.
+      console.error('staff-accounts createUser failed after retries:', {
+        email,
+        status: createErr?.status,
+        message: createErr?.message,
+        error: createErr,
+      });
       return NextResponse.json({ error: 'Failed to create portal login: ' + (createErr?.message || 'unknown error') }, { status: 500 });
     }
 
