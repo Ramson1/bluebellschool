@@ -39,16 +39,21 @@ export async function POST(request: Request) {
     // Supabase Auth can intermittently fail to persist the auth user
     // ("Database error creating new user"). Retry a few times with backoff so a
     // transient auth glitch does not block staff creation. Never retry a client
-    // error such as "email already registered".
+    // error such as "email already registered". createUser may either return an
+    // error object or throw, so each attempt is wrapped in try/catch.
     let created, createErr;
     for (let attempt = 0; attempt < 3; attempt++) {
-      const res = await admin.auth.admin.createUser({
-        email,
-        password: tempPassword,
-        email_confirm: true,
-        user_metadata: { full_name: name, role: 'staff' },
-      });
-      created = res.data; createErr = res.error;
+      try {
+        const res = await admin.auth.admin.createUser({
+          email,
+          password: tempPassword,
+          email_confirm: true,
+          user_metadata: { full_name: name, role: 'staff' },
+        });
+        created = res.data; createErr = res.error;
+      } catch (thrown) {
+        createErr = thrown; created = undefined;
+      }
       if (!createErr && created?.user) break;
       const isClientError = createErr && createErr.status && createErr.status >= 400 && createErr.status < 500;
       if (isClientError) break;
