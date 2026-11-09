@@ -56,7 +56,7 @@ export async function POST(request: Request) {
         created = res.data; createErr = res.error;
       } catch (thrown) {
         createErr = thrown as { status?: number; message?: string };
-        created = null;
+        created = { user: null };
       }
       if (!createErr && created?.user) break;
       const status = createErr && (createErr as { status?: number }).status;
