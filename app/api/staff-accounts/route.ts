@@ -42,7 +42,8 @@ export async function POST(request: Request) {
     // auth glitch does not block staff creation. createUser may either return an
     // error object or throw, so each attempt is wrapped in try/catch. Client
     // errors such as "email already registered" are not retried.
-    let created, createErr;
+    let created: { user: { id: string } } | null;
+    let createErr: { status?: number; message?: string } | null;
     for (let attempt = 0; attempt < 5; attempt++) {
       try {
         const res = await admin.auth.admin.createUser({
@@ -53,10 +54,12 @@ export async function POST(request: Request) {
         });
         created = res.data; createErr = res.error;
       } catch (thrown) {
-        createErr = thrown; created = undefined;
+        createErr = thrown as { status?: number; message?: string };
+        created = null;
       }
       if (!createErr && created?.user) break;
-      const isClientError = createErr && createErr.status && createErr.status >= 400 && createErr.status < 500;
+      const status = createErr && (createErr as { status?: number }).status;
+      const isClientError = status != null && status >= 400 && status < 500;
       if (isClientError) break;
       if (attempt < 4) {
         await new Promise((r) => setTimeout(r, 600 * (attempt + 1)));
