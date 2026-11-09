@@ -36,12 +36,26 @@ export async function POST(request: Request) {
     }
 
     const tempPassword = generateTempPassword();
-    const { data: created, error: createErr } = await admin.auth.admin.createUser({
-      email,
-      password: tempPassword,
-      email_confirm: true,
-      user_metadata: { full_name: name, role: 'staff' },
-    });
+    // Supabase Auth can intermittently fail to persist the auth user
+    // ("Database error creating new user"). Retry a few times with backoff so a
+    // transient auth glitch does not block staff creation. Never retry a client
+    // error such as "email already registered".
+    let created, createErr;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      const res = await admin.auth.admin.createUser({
+        email,
+        password: tempPassword,
+        email_confirm: true,
+        user_metadata: { full_name: name, role: 'staff' },
+      });
+      created = res.data; createErr = res.error;
+      if (!createErr && created?.user) break;
+      const isClientError = createErr && createErr.status && createErr.status >= 400 && createErr.status < 500;
+      if (isClientError) break;
+      if (attempt < 2) {
+        await new Promise((r) => setTimeout(r, 400 * (attempt + 1)));
+      }
+    }
     if (createErr || !created?.user) {
       return NextResponse.json({ error: 'Failed to create portal login: ' + (createErr?.message || 'unknown error') }, { status: 500 });
     }
