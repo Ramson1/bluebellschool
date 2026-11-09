@@ -36,13 +36,14 @@ export async function POST(request: Request) {
     }
 
     const tempPassword = generateTempPassword();
+
     // Supabase Auth can intermittently fail to persist the auth user
-    // ("Database error creating new user"). Retry a few times with backoff so a
-    // transient auth glitch does not block staff creation. Never retry a client
-    // error such as "email already registered". createUser may either return an
-    // error object or throw, so each attempt is wrapped in try/catch.
+    // ("Database error creating new user"). Retry with backoff so a transient
+    // auth glitch does not block staff creation. createUser may either return an
+    // error object or throw, so each attempt is wrapped in try/catch. Client
+    // errors such as "email already registered" are not retried.
     let created, createErr;
-    for (let attempt = 0; attempt < 3; attempt++) {
+    for (let attempt = 0; attempt < 5; attempt++) {
       try {
         const res = await admin.auth.admin.createUser({
           email,
@@ -57,61 +58,95 @@ export async function POST(request: Request) {
       if (!createErr && created?.user) break;
       const isClientError = createErr && createErr.status && createErr.status >= 400 && createErr.status < 500;
       if (isClientError) break;
-      if (attempt < 2) {
-        await new Promise((r) => setTimeout(r, 400 * (attempt + 1)));
+      if (attempt < 4) {
+        await new Promise((r) => setTimeout(r, 600 * (attempt + 1)));
       }
     }
-    if (createErr || !created?.user) {
-      // Log the full Supabase Auth error (status code + body) so a persistent
-      // "Database error creating new user" can be diagnosed server-side rather
-      // than only from the generic client message.
+
+    let staffRow;
+    let insertErr;
+    let portalLoginCreated = false;
+
+    if (!createErr && created?.user) {
+      portalLoginCreated = true;
+      const insertRes = await admin
+        .from('bluebell_staff')
+        .insert({
+          name,
+          sex: sex || null,
+          address: address || null,
+          class_assigned: class_assigned || null,
+          designation: designation || null,
+          department: department || 'Academic',
+          subjects: Array.isArray(subjects) ? subjects : subjects ? [subjects] : [],
+          email,
+          phone: phone || null,
+          profile_pic: profile_pic || null,
+          // DATE column: only a real YYYY-MM-DD value is written, anything the
+          // admin left blank stays null.
+          date_of_appointment: /^\d{4}-\d{2}-\d{2}$/.test(String(date_of_appointment || '')) ? date_of_appointment : null,
+          auth_user_id: created.user.id,
+          status: 'active',
+        })
+        .select('*')
+        .single();
+      staffRow = insertRes.data; insertErr = insertRes.error;
+      if (insertErr) {
+        // roll back the orphaned auth user so retries are clean
+        try { await admin.auth.admin.deleteUser(created.user.id); } catch { /* best effort */ }
+        return NextResponse.json({ error: 'Failed to save staff record: ' + insertErr.message }, { status: 500 });
+      }
+    } else {
+      // Supabase Auth is persistently unavailable. Still create the staff record
+      // so the staff member exists; the portal login can be added later via the
+      // reset-password/create-login flow once auth recovers.
       console.error('staff-accounts createUser failed after retries:', {
         email,
         status: createErr?.status,
         message: createErr?.message,
         error: createErr,
       });
-      return NextResponse.json({ error: 'Failed to create portal login: ' + (createErr?.message || 'unknown error') }, { status: 500 });
-    }
-
-    const { data: staffRow, error: insertErr } = await admin
-      .from('bluebell_staff')
-      .insert({
-        name,
-        sex: sex || null,
-        address: address || null,
-        class_assigned: class_assigned || null,
-        designation: designation || null,
-        department: department || 'Academic',
-        subjects: Array.isArray(subjects) ? subjects : subjects ? [subjects] : [],
-        email,
-        phone: phone || null,
-        profile_pic: profile_pic || null,
-        // DATE column: only a real YYYY-MM-DD value is written, anything the
-        // admin left blank stays null.
-        date_of_appointment: /^\d{4}-\d{2}-\d{2}$/.test(String(date_of_appointment || '')) ? date_of_appointment : null,
-        auth_user_id: created.user.id,
-        status: 'active',
-      })
-      .select('*')
-      .single();
-    if (insertErr) {
-      // roll back the orphaned auth user so retries are clean
-      try { await admin.auth.admin.deleteUser(created.user.id); } catch { /* best effort */ }
-      return NextResponse.json({ error: 'Failed to save staff record: ' + insertErr.message }, { status: 500 });
+      const insertRes = await admin
+        .from('bluebell_staff')
+        .insert({
+          name,
+          sex: sex || null,
+          address: address || null,
+          class_assigned: class_assigned || null,
+          designation: designation || null,
+          department: department || 'Academic',
+          subjects: Array.isArray(subjects) ? subjects : subjects ? [subjects] : [],
+          email,
+          phone: phone || null,
+          profile_pic: profile_pic || null,
+          date_of_appointment: /^\d{4}-\d{2}-\d{2}$/.test(String(date_of_appointment || '')) ? date_of_appointment : null,
+          auth_user_id: null,
+          status: 'active',
+        })
+        .select('*')
+        .single();
+      staffRow = insertRes.data; insertErr = insertRes.error;
+      if (insertErr) {
+        return NextResponse.json({ error: 'Failed to save staff record: ' + insertErr.message }, { status: 500 });
+      }
     }
 
     // Record the issued password for the developer-only column. Best effort:
     // the login already works, so a credential-store hiccup must not fail the
     // create (the password is still shown in the response).
-    await saveStaffCredential(admin, {
-      staffId: staffRow.id,
-      email,
-      password: tempPassword,
-      setBy: caller.email,
-    });
+    if (portalLoginCreated) {
+      await saveStaffCredential(admin, {
+        staffId: staffRow.id,
+        email,
+        password: tempPassword,
+        setBy: caller.email,
+      });
+    }
 
-    return NextResponse.json({ staff: staffRow, tempPassword });
+    return NextResponse.json({
+      staff: staffRow,
+      ...(portalLoginCreated ? { tempPassword } : { warning: 'Supabase Auth was unavailable — portal login not created yet. Use "Create portal login" on this staff member once auth recovers.' }),
+    });
   } catch (error: any) {
     console.error('staff-accounts POST error:', error);
     return NextResponse.json({ error: error.message || 'Request failed' }, { status: 500 });
