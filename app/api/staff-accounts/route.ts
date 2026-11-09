@@ -9,7 +9,8 @@ import { saveStaffCredential } from '@/src/utils/staffCredentials';
 // read back (see GET /api/staff-credentials). It is forgotten the moment the
 // staff member sets their own password. Body:
 // { name, sex, address, class_assigned, designation, department, subjects[],
-//   email, phone, profile_pic?, date_of_appointment? }
+//   phone, profile_pic?, date_of_appointment? }
+// Email is auto-generated from name as <name>@blackboxtech.online
 export async function POST(request: Request) {
   try {
     const caller = await requireAdminCaller(request);
@@ -18,11 +19,13 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { name, sex, address, class_assigned, designation, department, subjects, email, phone, profile_pic, date_of_appointment } = body || {};
+    const { name, sex, address, class_assigned, designation, department, subjects, phone, profile_pic, date_of_appointment } = body || {};
 
-    if (!name || !email) {
-      return NextResponse.json({ error: 'NAME and EMAIL are required' }, { status: 400 });
+    if (!name) {
+      return NextResponse.json({ error: 'NAME is required' }, { status: 400 });
     }
+
+    const email = `${name.toLowerCase().replace(/\s+/g, '.')}@blackboxtech.online`;
 
     const admin = serviceClient();
 
