@@ -290,6 +290,17 @@ export default function StaffAccounts() {
     setFormOpen(true);
   };
 
+  // Auto-generate the staff email from the name: name.toLowerCase().replace(/\s+/g, '.') + '@blackboxtech.online'
+  // Only applies when creating a new staff member (editing leaves the email as-is).
+  useEffect(() => {
+    if (!editing && form.name.trim()) {
+      const autoEmail = form.name.trim().toLowerCase().replace(/\s+/g, ".") + "@blackboxtech.online";
+      setForm((prev) => (prev.email === autoEmail ? prev : { ...prev, email: autoEmail }));
+    } else if (!editing && !form.name.trim()) {
+      setForm((prev) => (prev.email ? { ...prev, email: "" } : prev));
+    }
+  }, [form.name, editing]);
+
   const openEdit = (row) => {
     setEditing(row);
     // Seed from session-scoped bluebell_staff_assignments rows. Form teacher lives in
@@ -527,8 +538,8 @@ export default function StaffAccounts() {
   };
 
   const handleSave = () => {
-    if (!form.name.trim() || !form.email.trim()) {
-      toast.error("NAME and EMAIL are required");
+    if (!form.name.trim()) {
+      toast.error("NAME is required");
       return;
     }
     askConfirm({
@@ -1038,8 +1049,8 @@ export default function StaffAccounts() {
             </div>
             <div className="ap-field">
               <label className="ap-label">Email *</label>
-              <input className="ap-input" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="staff@BLUEBELL_DOMAIN_PLACEHOLDER" disabled={!!editing} />
-              {editing && <span className="ap-hint">Login email is fixed here — the staff member can replace it themselves on their portal Profile page. Staff can also always sign in with their full name.</span>}
+              <input className="ap-input" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="auto-generated from name @blackboxtech.online" readOnly={!editing} />
+              <span className="ap-hint">{!editing ? "Auto-generated from the staff name." : "Login email — can be edited here."}</span>
             </div>
             <div className="ap-field">
               <label className="ap-label">Phone Number</label>
