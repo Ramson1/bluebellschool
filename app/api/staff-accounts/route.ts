@@ -42,7 +42,8 @@ export async function POST(request: Request) {
     // auth glitch does not block staff creation. createUser may either return an
     // error object or throw, so each attempt is wrapped in try/catch. Client
     // errors such as "email already registered" are not retried.
-    let created: { user: { id: string } } | null;
+    type CreateUserData = Awaited<ReturnType<typeof admin.auth.admin.createUser>>['data'];
+    let created: CreateUserData;
     let createErr: { status?: number; message?: string } | null;
     for (let attempt = 0; attempt < 5; attempt++) {
       try {
