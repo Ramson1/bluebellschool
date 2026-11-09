@@ -107,6 +107,7 @@ export default function StaffAccounts() {
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [selected, setSelected] = useState({});
 
   // create/edit modal
   const [formOpen, setFormOpen] = useState(false);
