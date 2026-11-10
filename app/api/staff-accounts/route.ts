@@ -43,8 +43,8 @@ export async function POST(request: Request) {
     // error object or throw, so each attempt is wrapped in try/catch. Client
     // errors such as "email already registered" are not retried.
     type CreateUserData = Awaited<ReturnType<typeof admin.auth.admin.createUser>>['data'];
-    let created: CreateUserData;
-    let createErr: { status?: number; message?: string } | null;
+    let created: CreateUserData = { user: null };
+    let createErr: { status?: number; message?: string } | null = null;
     for (let attempt = 0; attempt < 5; attempt++) {
       try {
         const res = await admin.auth.admin.createUser({
