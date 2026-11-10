@@ -77,8 +77,8 @@ const [newDetailContent, setNewDetailContent] = useState('');
   }  const [devAuth, setDevAuth] = useState([]);  const [lockResult, setLockResult] = useState(false); // Default to false
 
   // Developer check: DEV_EMAILS list or devauth table (same logic as FullStudent)
-  const isDevUser = DEV_EMAILS.includes((user?.user_metadata?.email || '').toLowerCase()) ||
-    (devAuth || []).some((auth) => (auth.email || '').toLowerCase() === (user?.user_metadata?.email || '').toLowerCase());
+  const isDevUser = DEV_EMAILS.includes((user?.user_metadata?.email || user?.email || '').toLowerCase()) ||
+    (devAuth || []).some((auth) => (auth.email || '').toLowerCase() === (user?.user_metadata?.email || user?.email || '').toLowerCase());
 
   // Fetch user data from Supabase
   useEffect(() => {
@@ -186,7 +186,7 @@ const [newDetailContent, setNewDetailContent] = useState('');
 
   // If user is a teacher, redirect to home
   useEffect(() => {
-    const isTeacher = user && teacherAuth && teacherAuth.some && teacherAuth.some(auth => auth.email === user?.user_metadata?.email);
+    const isTeacher = user && teacherAuth && teacherAuth.some && teacherAuth.some(auth => auth.email === user?.user_metadata?.email || user?.email);
     if (isTeacher) {
       if (isRouterAvailable) {
         router.push('/home');
@@ -298,7 +298,7 @@ const processImages = async (contentArray) => {
     
     // Audit: settings saved
     logAction(supabase, {
-      email: user?.user_metadata?.email,
+      email: user?.user_metadata?.email || user?.email,
       role: 'admin',
       action: 'settings_save',
       targetTable: 'bluebell_settings',
@@ -404,8 +404,8 @@ const handleRemoveDetail = (index) => {
   // Reflect the current auth user's metadata into the profile form once known.
   useEffect(() => {
     if (user) {
-      setProfileName(user.user_metadata?.full_name || '');
-      setProfilePic(user.user_metadata?.avatar_url || '');
+      setProfileName(user.user_metadata?.full_name || user.email || '');
+      setProfilePic(user.user_metadata?.avatar_url || user.email || '');
     }
   }, [user]);
 
@@ -427,7 +427,7 @@ const handleRemoveDetail = (index) => {
       setProfilePic(url);
       const { data: fresh } = await supabase.auth.getUser();
       if (fresh.user) setUser(fresh.user);
-      logAction(supabase, { email: user?.user_metadata?.email, role: 'admin', action: 'profile_pic_update', targetTable: 'auth', details: {} });
+      logAction(supabase, { email: user?.user_metadata?.email || user?.email, role: 'admin', action: 'profile_pic_update', targetTable: 'auth', details: {} });
       toast.success('Profile photo updated');
     } catch (e) {
       console.error('Profile photo update failed:', e);
@@ -446,7 +446,7 @@ const handleRemoveDetail = (index) => {
       if (error) throw error;
       const { data: fresh } = await supabase.auth.getUser();
       if (fresh.user) setUser(fresh.user);
-      logAction(supabase, { email: user?.user_metadata?.email, role: 'admin', action: 'profile_name_update', targetTable: 'auth', details: { full_name: name } });
+      logAction(supabase, { email: user?.user_metadata?.email || user?.email, role: 'admin', action: 'profile_name_update', targetTable: 'auth', details: { full_name: name } });
       toast.success('Name updated');
     } catch (e) {
       console.error('Name update failed:', e);
@@ -463,7 +463,7 @@ const handleRemoveDetail = (index) => {
     try {
       const { error } = await supabase.auth.updateUser({ password: pw.next });
       if (error) throw error;
-      logAction(supabase, { email: user?.user_metadata?.email, role: 'admin', action: 'profile_password_change', targetTable: 'auth', details: {} });
+      logAction(supabase, { email: user?.user_metadata?.email || user?.email, role: 'admin', action: 'profile_password_change', targetTable: 'auth', details: {} });
       setPw({ next: '', confirm: '' });
       toast.success('Password updated. Use it the next time you sign in.');
     } catch (e) {
@@ -485,7 +485,7 @@ const handleRemoveDetail = (index) => {
   return (
     <div className="settings-container">
       <div className="settings-card">
-        {(userauth && userauth.some && userauth.some(auth => auth.email === user?.user_metadata?.email)) ? (
+        {(userauth && userauth.some && userauth.some(auth => auth.email === user?.user_metadata?.email || user?.email)) ? (
           <div>
             {/* <NavbarComponent /> */}
                   <ToastContainer />
@@ -520,7 +520,7 @@ const handleRemoveDetail = (index) => {
                         : (profileName.trim() ? profileName.trim().charAt(0).toUpperCase() : <RiUserLine />)}
                     </div>
                     <div className="profile-name">{profileName || 'Administrator'}</div>
-                    <div className="profile-email">{user?.user_metadata?.email}</div>
+                    <div className="profile-email">{user?.user_metadata?.email || user?.email}</div>
                     <div className="profile-actions">
                       <label className="profile-btn" style={{ cursor: picBusy ? 'progress' : 'pointer' }}>
                         <RiCameraLine /> {picBusy ? 'Uploading…' : 'Change photo'}
@@ -656,7 +656,7 @@ const handleRemoveDetail = (index) => {
                 </div>
               </div>
 
-              {devAuth && devAuth.some && devAuth.some((auth) => auth.email === user?.user_metadata?.email) && (
+              {devAuth && devAuth.some && devAuth.some((auth) => auth.email === user?.user_metadata?.email || user?.email) && (
                 <div className="lock-result-group">
                   <div className="lock-result-text">
                     <span className="lock-result-title"><RiLockLine /> Lock Result</span>
@@ -700,7 +700,7 @@ const handleRemoveDetail = (index) => {
                 </div>
               )}
 
-              {userauth && userauth.some && userauth.some(auth => auth.email === user?.user_metadata?.email) ? (
+              {userauth && userauth.some && userauth.some(auth => auth.email === user?.user_metadata?.email || user?.email) ? (
               <button onClick={handleSave} className="btn-save" disabled={loading}>
         {loading ? 'Loading...' : 'Save Changes'}
                   </button>
@@ -800,7 +800,7 @@ const handleRemoveDetail = (index) => {
               ))}
               <div style={{display: 'flex', justifyContent: 'left', gap: '10px', flexDirection: 'column'}}>
               <button onClick={addHeroItem} className='btn btn-primary'>Add Hero Item</button>
-            {userauth && userauth.some && userauth.some(auth => auth.email === user?.user_metadata?.email) ? (
+            {userauth && userauth.some && userauth.some(auth => auth.email === user?.user_metadata?.email || user?.email) ? (
               <button onClick={handleSave} className="btn-save" disabled={loading}>
         {loading ? 'Loading...' : 'Save Changes'}
                   </button>
@@ -864,7 +864,7 @@ const handleRemoveDetail = (index) => {
               <div style={{display: 'flex', justifyContent: 'left', gap: '10px', flexDirection: 'column'}}>
               <button onClick={handleAddDetail} className='btn btn-primary'>Add Detail Item</button></div>
 
-              {userauth && userauth.some && userauth.some(auth => auth.email === user?.user_metadata?.email) ? (
+              {userauth && userauth.some && userauth.some(auth => auth.email === user?.user_metadata?.email || user?.email) ? (
               <button onClick={handleSave} className="btn-save" disabled={loading}>
         {loading ? 'Loading...' : 'Save Changes'}
                   </button>
@@ -943,7 +943,7 @@ const handleRemoveDetail = (index) => {
                 Add Facility Item
               </button>
 
-              {userauth && userauth.some && userauth.some(auth => auth.email === user?.user_metadata?.email) ? (
+              {userauth && userauth.some && userauth.some(auth => auth.email === user?.user_metadata?.email || user?.email) ? (
               <button onClick={handleSave} className="btn-save" disabled={loading}>
         {loading ? 'Loading...' : 'Save Changes'}
                   </button>
@@ -1004,7 +1004,7 @@ const handleRemoveDetail = (index) => {
                 Add Gallery Item
               </button>
 
-              {userauth && userauth.some && userauth.some(auth => auth.email === user?.user_metadata?.email) ? (
+              {userauth && userauth.some && userauth.some(auth => auth.email === user?.user_metadata?.email || user?.email) ? (
               <button onClick={handleSave} className="btn-save" disabled={loading}>
         {loading ? 'Loading...' : 'Save Changes'}
                   </button>
@@ -1070,7 +1070,7 @@ const handleRemoveDetail = (index) => {
                 Add Testimonial Item
               </button>
 
-{userauth && userauth.some && userauth.some(auth => auth.email === user?.user_metadata?.email) ? (
+{userauth && userauth.some && userauth.some(auth => auth.email === user?.user_metadata?.email || user?.email) ? (
               <button onClick={handleSave} className="btn-save" disabled={loading}>
         {loading ? 'Loading...' : 'Save Changes'}
                   </button>
@@ -1109,7 +1109,7 @@ const handleRemoveDetail = (index) => {
               />
             </div>
             {/* Save Button */}
-            {userauth && userauth.some && userauth.some(auth => auth.email === user?.user_metadata?.email) ? (
+            {userauth && userauth.some && userauth.some(auth => auth.email === user?.user_metadata?.email || user?.email) ? (
               <button onClick={handleSave} className="btn-save" disabled={loading}>
                 {loading ? 'Loading...' : 'Save Changes'}
               </button>

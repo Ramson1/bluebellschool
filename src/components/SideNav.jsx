@@ -164,7 +164,7 @@ const SideNav = ({ collapsed, setCollapsed }) => {
   }, []);
 
   // Role helpers for the new feature pages
-  const userEmail = user?.user_metadata?.email;
+  const userEmail = user?.user_metadata?.email || user?.email;
   const isAdminUser = !!(userauth && userauth.some && userauth.some(auth => auth.email === userEmail));
   const isDevUser = !!(
     DEV_EMAILS.includes((userEmail || "").toLowerCase()) ||

@@ -90,8 +90,8 @@ export default function OtherPayment() {
   }, []);
 
   // Check if the current user is authorized (either admin or teacher)
-  const isAuthorized = (user && userAuth && userAuth.some && userAuth.some(auth => auth.email === user?.user_metadata?.email)) || 
-                      (user && teacherAuth && teacherAuth.some && teacherAuth.some(auth => auth.email === user?.user_metadata?.email));
+  const isAuthorized = (user && userAuth && userAuth.some && userAuth.some(auth => auth.email === user?.user_metadata?.email || user?.email)) || 
+                      (user && teacherAuth && teacherAuth.some && teacherAuth.some(auth => auth.email === user?.user_metadata?.email || user?.email));
 
   const filteredPayments = payments.filter(payment =>
     payment.class.toLowerCase().includes(classFilter.toLowerCase()) &&

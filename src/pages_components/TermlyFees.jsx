@@ -146,7 +146,7 @@ export default function TermlyFees() {
                 setEditedFees(classFeesData.data || []);
                 
                 // Check if user is a teacher and redirect if needed
-                const isTeacher = teacherData.data && teacherData.data.some(auth => auth.email === currentUser?.user_metadata?.email);
+                const isTeacher = teacherData.data && teacherData.data.some(auth => auth.email === currentUser?.user_metadata?.email || currentUser?.email);
                 if (isTeacher) {
                     if (isRouterAvailable) {
                         router.push('/home');
@@ -169,7 +169,7 @@ export default function TermlyFees() {
     }, [router]);
 
     // Check if the current user is a teacher
-    // const isTeacher = user && teacherAuth && teacherAuth.some && teacherAuth.some(auth => auth.email === user?.user_metadata?.email); // Unused variable removed
+    // const isTeacher = user && teacherAuth && teacherAuth.some && teacherAuth.some(auth => auth.email === user?.user_metadata?.email || user?.email); // Unused variable removed
     
     const handleChange = (index, field) => (e) => {
         const newFees = [...editedFees];
@@ -219,7 +219,7 @@ export default function TermlyFees() {
     //     router.push("/login");
     // };
 
-    const isAdmin = userauth && userauth.some && userauth.some(auth => auth.email === user?.user_metadata?.email);
+    const isAdmin = userauth && userauth.some && userauth.some(auth => auth.email === user?.user_metadata?.email || user?.email);
 
     // Shared field renderer for both the update and create forms
     const renderFeeForm = (source, onFieldChange) =>

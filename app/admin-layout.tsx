@@ -72,7 +72,7 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
         // may enter. Teachers are no longer admitted — the Staff Portal
         // (separate project) is their home. fetchAuthRoles tolerates the
         // secretary table missing until the SQL migration has been run.
-        const email = currentUser?.user_metadata?.email;
+        const email = currentUser?.user_metadata?.email || currentUser?.email;
         const roles = await fetchAuthRoles(supabase);
         setUserAuth(roles.adminEmails.map((e: string) => ({ email: e })));
         setTeacherAuth(roles.teacherEmails.map((e: string) => ({ email: e })));

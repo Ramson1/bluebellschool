@@ -64,7 +64,7 @@ export default function FullPayment() {
         setTeacherAuth(teacherData.data || []);
         
         // Check if user is a teacher and redirect if needed
-        const isTeacher = teacherData.data && teacherData.data.some(auth => auth.email === currentUser?.user_metadata?.email);
+        const isTeacher = teacherData.data && teacherData.data.some(auth => auth.email === currentUser?.user_metadata?.email || currentUser?.email);
         if (isTeacher) {
           if (isRouterAvailable) {
             router.push('/home');
@@ -107,7 +107,7 @@ export default function FullPayment() {
 
   // Get current user's email for audit trail
   const getCurrentUserEmail = () => {
-    return user?.user_metadata?.email || 'Unknown User';
+    return user?.user_metadata?.email || user?.email || 'Unknown User';
   };
 
   const handleDelete = async (id) => {
@@ -284,7 +284,7 @@ Date: ${paymentData.date}`;
           <div className="ap-spinner" />
           <div>Verifying credentials...</div>
         </div>
-      ) : (userauth && userauth.some && userauth.some(auth => auth.email === user?.user_metadata?.email)) ? (
+      ) : (userauth && userauth.some && userauth.some(auth => auth.email === user?.user_metadata?.email || user?.email)) ? (
         <div className="ap-page">
           <div className="ap-head">
             <div>
@@ -323,7 +323,7 @@ Date: ${paymentData.date}`;
                 className="ap-input"
               />
             </div>
-            {userauth && userauth.some && userauth.some(auth => auth.email === user?.user_metadata?.email) ? (
+            {userauth && userauth.some && userauth.some(auth => auth.email === user?.user_metadata?.email || user?.email) ? (
               <button onClick={handleExportToExcel} className="ap-btn green">
                 <RiFileExcelLine /> Export to Excel
               </button>
@@ -451,7 +451,7 @@ Date: ${paymentData.date}`;
                             <td className="ap-num">{payment.invoiceno}</td>
                             <td>{payment.paymentdescription}</td>
                             <td style={{ whiteSpace: 'nowrap' }}>
-                              {userauth && userauth.some && userauth.some(auth => auth.email === user?.user_metadata?.email) ? (
+                              {userauth && userauth.some && userauth.some(auth => auth.email === user?.user_metadata?.email || user?.email) ? (
                                 <>
                                   <button onClick={() => handleEdit(payment)} className="ap-btn blue sm">
                                     Edit

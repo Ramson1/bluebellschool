@@ -254,7 +254,7 @@ const IdCards = () => {
 
   const exportRefs = useRef({}); // student id -> { front, back } DOM nodes
 
-  const email = user?.user_metadata?.email;
+  const email = user?.user_metadata?.email || user?.email;
   // Requirement 6: admins see everything — ID cards open to admin OR dev
   const allowed = isAdmin(email, roles.adminEmails) || isDev(email, roles.devEmails);
 

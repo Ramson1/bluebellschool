@@ -49,7 +49,7 @@ export default function ResultHistory() {
           setLoading(false);
           return;
         }
-        const email = cu?.user_metadata?.email || "";
+        const email = cu?.user_metadata?.email || cu?.email || "";
 
         // Admin / dev gate (mirrors the Full Student Record guard).
         const [ua, da] = await Promise.all([

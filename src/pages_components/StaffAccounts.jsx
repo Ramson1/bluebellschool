@@ -90,7 +90,19 @@ const emptyForm = {
   department: "Academic", subjects: [], assignments: [], email: "", phone: "", profile_pic: "",
   date_of_appointment: "",
   can_edit_cbt_scores: false,
+  staff_no: "",
 };
+
+// Staff numbers follow the STF### sequence (STF001, STF002, …). The number is
+// minted server-side at save time (nextStaffNo in /api/staff-accounts) so it can
+// never collide with a legacy value, but the field is shown in the create modal
+// so the admin sees the number that will be assigned before confirming.
+function nextStaffNoPreview(list) {
+  const nums = (list || [])
+    .map((s) => parseInt(String(s?.staff_no || '').replace(/^STF/, ''), 10))
+    .filter((n) => Number.isFinite(n) && n > 0);
+  return `STF${String((nums.length ? Math.max(...nums) + 1 : 1)).padStart(3, '0')}`;
+}
 
 export default function StaffAccounts() {
   const [user, setUser] = useState(null);
@@ -156,7 +168,7 @@ export default function StaffAccounts() {
     await action();
   };
 
-  const email = user?.user_metadata?.email;
+  const email = user?.user_metadata?.email || user?.email;
   const allowed = isAdmin(email, roles.adminEmails) || isDev(email, roles.devEmails);
   // Passwords are narrower than page access: only developers see them, and
   // requireDevCaller on the server re-checks it independently of this flag.
@@ -281,7 +293,7 @@ export default function StaffAccounts() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ ...emptyForm, assignments: [] });
+    setForm({ ...emptyForm, assignments: [], staff_no: nextStaffNoPreview(staff) });
     setAssignDraft({ classes: [], subjects: [], students: [] });
     setCohortKey(null);
     setCohortSearch("");
@@ -1000,8 +1012,8 @@ export default function StaffAccounts() {
             </div>
             <div className="ap-field">
               <label className="ap-label">Staff No</label>
-              <input className="ap-input" value={editing?.staff_no || ""} readOnly disabled placeholder="Auto-generated (JMI-0001)" />
-              <span className="ap-hint">Assigned automatically when the record is saved.</span>
+              <input className="ap-input" value={editing ? (editing.staff_no || "") : (form.staff_no || "")} readOnly disabled placeholder="Auto-generated (STF001)" />
+              <span className="ap-hint">{editing ? "Assigned when this staff member was created." : "Preview of the next STF### number — assigned automatically when the record is saved."}</span>
             </div>
             <div className="ap-field">
               <label className="ap-label">Designation</label>

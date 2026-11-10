@@ -101,7 +101,7 @@ const CbtQuestions = () => {
 
   // Get current user's email for audit trail
   const getCurrentUserEmail = () => {
-    return user?.user_metadata?.email || 'Unknown User';
+    return user?.user_metadata?.email || user?.email || 'Unknown User';
   };
 
   // Resolve the acting user's role for audit logging
@@ -189,9 +189,9 @@ const CbtQuestions = () => {
         setDevAuth(devData.data || []);
         
         // If user is authorized (teacher, admin, or dev), fetch CBT questions
-        const isTeacher = teacherData.data && teacherData.data.some(auth => auth.email === currentUser?.user_metadata?.email);
-        const isAdmin = userData.data && userData.data.some(auth => auth.email === currentUser?.user_metadata?.email);
-        const isDev = devData.data && devData.data.some(auth => auth.email === currentUser?.user_metadata?.email);
+        const isTeacher = teacherData.data && teacherData.data.some(auth => auth.email === currentUser?.user_metadata?.email || currentUser?.email);
+        const isAdmin = userData.data && userData.data.some(auth => auth.email === currentUser?.user_metadata?.email || currentUser?.email);
+        const isDev = devData.data && devData.data.some(auth => auth.email === currentUser?.user_metadata?.email || currentUser?.email);
         
         if (isTeacher || isAdmin || isDev) {
           await fetchCbtQuestions();
@@ -216,7 +216,7 @@ const CbtQuestions = () => {
   }, [cbtQuestions]);
 
   // Check if the current user is a teacher
-  // const isTeacher = user && teacherAuth && teacherAuth.some && teacherAuth.some(auth => auth.email === user?.user_metadata?.email); // Unused
+  // const isTeacher = user && teacherAuth && teacherAuth.some && teacherAuth.some(auth => auth.email === user?.user_metadata?.email || user?.email); // Unused
 
   const uploadImage = async (file) => {
     try {
@@ -1016,7 +1016,7 @@ ${questionsList}`;
   // }; // Unused
 
   // ---- derived access + visible list (computed once for the whole render) ----
-  const userEmail = user?.user_metadata?.email;
+  const userEmail = user?.user_metadata?.email || user?.email;
   const isAuthed = [teacherAuth, userAuth, devAuth].some(
     (list) => list && list.some && list.some((auth) => auth.email === userEmail)
   );

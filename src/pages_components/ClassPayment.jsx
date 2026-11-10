@@ -89,8 +89,8 @@ export default function ClassPayment() {
   }, []);
 
   // Check if the current user is authorized (either admin or teacher)
-  const isAuthorized = (user && userAuth && userAuth.some && userAuth.some(auth => auth.email === user?.user_metadata?.email)) || 
-                      (user && teacherAuth && teacherAuth.some && teacherAuth.some(auth => auth.email === user?.user_metadata?.email));
+  const isAuthorized = (user && userAuth && userAuth.some && userAuth.some(auth => auth.email === user?.user_metadata?.email || user?.email)) || 
+                      (user && teacherAuth && teacherAuth.some && teacherAuth.some(auth => auth.email === user?.user_metadata?.email || user?.email));
 
   // Filtered payment list based on class and current term
   const filteredPayments = payments.filter(payment =>

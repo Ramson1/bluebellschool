@@ -260,8 +260,8 @@
 //         setStudentIdMap(idMap);
         
 //         // Check if user is teacher or admin
-//         const userIsTeacher = teacherData.data && teacherData.data.some(auth => auth.email === currentUser?.user_metadata?.email);
-//         const userIsAdmin = userData.data && userData.data.some(auth => auth.email === currentUser?.user_metadata?.email);
+//         const userIsTeacher = teacherData.data && teacherData.data.some(auth => auth.email === currentUser?.user_metadata?.email || currentUser?.email);
+//         const userIsAdmin = userData.data && userData.data.some(auth => auth.email === currentUser?.user_metadata?.email || currentUser?.email);
         
 //         setIsTeacher(userIsTeacher);
 //         setIsAdmin(userIsAdmin);
@@ -670,9 +670,9 @@
 //           <ToastContainer />
 //           <h2 className="mb-4">Midterm Results Management</h2>
           
-//           {(teacherAuth && teacherAuth.some && teacherAuth.some(auth => auth.email === user?.user_metadata?.email)) ||
-//            (userAuth && userAuth.some && userAuth.some(auth => auth.email === user?.user_metadata?.email)) ||
-//            (devAuth && devAuth.some && devAuth.some(auth => auth.email === user?.user_metadata?.email)) ? (
+//           {(teacherAuth && teacherAuth.some && teacherAuth.some(auth => auth.email === user?.user_metadata?.email || user?.email)) ||
+//            (userAuth && userAuth.some && userAuth.some(auth => auth.email === user?.user_metadata?.email || user?.email)) ||
+//            (devAuth && devAuth.some && devAuth.some(auth => auth.email === user?.user_metadata?.email || user?.email)) ? (
 //             <>
 //               <div className="row mb-4">
 //                 <div className="col-md-4">

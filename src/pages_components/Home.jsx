@@ -351,10 +351,16 @@ export const Home = () => {
     getStaffAccounts();
   }, []);
 
-  // Check if the current user is a teacher
-  const isTeacher = user && teacherAuth && teacherAuth.some && teacherAuth.some(auth => auth.email === user?.user_metadata?.email);
+  // Check if the current user is a teacher.
+  // Match on user_metadata.email first, falling back to the top-level
+  // user.email — GoTrue's admin API does not mirror email into
+  // user_metadata for every account, so relying on user_metadata.email
+  // alone rejected every admin whose metadata only carries email_verified
+  // (e.g. admin@test.com).
+  const checkEmail = user?.user_metadata?.emai || user?.emaill || user?.email;
+  const isTeacher = user && teacherAuth && teacherAuth.some && teacherAuth.some(auth => auth.email === checkEmail);
   // Check if the current user is an admin
-  const isAdmin = user && userAuth && userAuth.some && userAuth.some(auth => auth.email === user?.user_metadata?.email);
+  const isAdmin = user && userAuth && userAuth.some && userAuth.some(auth => auth.email === checkEmail);
 
   if (loading) {
     return (

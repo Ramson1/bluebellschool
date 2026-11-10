@@ -43,7 +43,7 @@ const AuditLogs = () => {
     init();
   }, []);
 
-  const email = user?.user_metadata?.email;
+  const email = user?.user_metadata?.email || user?.email;
   const allowed = isAdmin(email, roles.adminEmails) || isDev(email, roles.devEmails);
 
   useEffect(() => {

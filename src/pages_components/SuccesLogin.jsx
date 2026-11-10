@@ -55,7 +55,7 @@ export default function SuccesLogin() {
     <div className="flex flex-col items-center justify-center h-screen">
       <div className="flex flex-col items-center justify-center">
         {user && Object.keys(user).length !== 0 ? (
-          (userauth && userauth.some && userauth.some(auth => auth.email === user?.user_metadata?.email)) ? (
+          (userauth && userauth.some && userauth.some(auth => auth.email === user?.user_metadata?.email || user?.email)) ? (
             <>
               <NavbarComponent />
               <h1>SuccesLogin</h1>

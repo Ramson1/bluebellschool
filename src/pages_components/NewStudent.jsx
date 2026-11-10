@@ -84,7 +84,7 @@ export default function NewStudent() {
         setDevAuth(devData.data || []);
         
         // Check if user is a teacher and redirect if needed
-        const isTeacher = teacherData.data && teacherData.data.some(auth => auth.email === currentUser?.user_metadata?.email);
+        const isTeacher = teacherData.data && teacherData.data.some(auth => auth.email === currentUser?.user_metadata?.email || currentUser?.email);
         if (isTeacher) {
           if (isRouterAvailable) {
             router.push('/home');
@@ -137,7 +137,7 @@ export default function NewStudent() {
 
   // Get current user's email for audit trail
   const getCurrentUserEmail = () => {
-    return user?.user_metadata?.email || 'Unknown User';
+    return user?.user_metadata?.email || user?.email || 'Unknown User';
   };
 
   // Resolve the acting user's role for audit logging
@@ -409,8 +409,8 @@ Token: ${student.token}`;
   const [devAuth, setDevAuth] = useState([]);
 
   // Developer check: DEV_EMAILS list or devauth table (same logic as FullStudent)
-  const isDevUser = DEV_EMAILS.includes((user?.user_metadata?.email || "").toLowerCase()) ||
-    (devAuth || []).some((auth) => (auth.email || "").toLowerCase() === (user?.user_metadata?.email || "").toLowerCase());
+  const isDevUser = DEV_EMAILS.includes((user?.user_metadata?.email || user?.email || "").toLowerCase()) ||
+    (devAuth || []).some((auth) => (auth.email || "").toLowerCase() === (user?.user_metadata?.email || user?.email || "").toLowerCase());
 
   // Add the exportToExcel function here
   const exportToExcel = () => {
@@ -466,7 +466,7 @@ Token: ${student.token}`;
               <p className="ap-sub">Enrol a student with their details and passport photo.</p>
             </div>
           </div>
-          {userAuth && userAuth.some && userAuth.some((auth) => auth.email === user?.user_metadata?.email) ? (
+          {userAuth && userAuth.some && userAuth.some((auth) => auth.email === user?.user_metadata?.email || user?.email) ? (
             <>
               <form>
                 <div className="ap-card">
@@ -579,7 +579,7 @@ Token: ${student.token}`;
               </form>
 
               {/* Show Bulk Upload Section only for devauth users */}
-              {devAuth && devAuth.some && devAuth.some((auth) => auth.email === user?.user_metadata?.email) && (
+              {devAuth && devAuth.some && devAuth.some((auth) => auth.email === user?.user_metadata?.email || user?.email) && (
                 <div className="ap-card">
                   <div className="ap-card-head">
                     <span className="ic blue"><RiTableLine /></span>

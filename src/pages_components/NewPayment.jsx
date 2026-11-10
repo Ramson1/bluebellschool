@@ -80,7 +80,7 @@ const NewPayment = () => {
                 setTeacherAuth(teacherData.data || []);
                 
                 // Check if user is a teacher and redirect if needed
-                const isTeacher = teacherData.data && teacherData.data.some(auth => auth.email === currentUser?.user_metadata?.email);
+                const isTeacher = teacherData.data && teacherData.data.some(auth => auth.email === currentUser?.user_metadata?.email || currentUser?.email);
                 if (isTeacher) {
                     if (isRouterAvailable) {
                         router.push('/home');
@@ -113,7 +113,7 @@ const NewPayment = () => {
     }, []);
 
     // Check if the current user is a teacher
-    const isTeacher = user && teacherAuth && teacherAuth.some && teacherAuth.some(auth => auth.email === user?.user_metadata?.email);
+    const isTeacher = user && teacherAuth && teacherAuth.some && teacherAuth.some(auth => auth.email === user?.user_metadata?.email || user?.email);
     
     // If user is a teacher, redirect to home - this useEffect is no longer needed since we handle it in initializeData
     
@@ -145,7 +145,7 @@ const NewPayment = () => {
 
     // Get current user's email for audit trail
     const getCurrentUserEmail = () => {
-        return user?.user_metadata?.email || 'Unknown User';
+        return user?.user_metadata?.email || user?.email || 'Unknown User';
     };
 
     // Resolve the acting user's role for audit logging
@@ -467,7 +467,7 @@ Date: ${paymentData.date}`;
                     <div className="ap-spinner" />
                     <div>Verifying credentials...</div>
                 </div>
-            ) : user && Object.keys(user).length !== 0 && userAuth && userAuth.some && userAuth.some(auth => auth.email === user?.user_metadata?.email) ? (
+            ) : user && Object.keys(user).length !== 0 && userAuth && userAuth.some && userAuth.some(auth => auth.email === user?.user_metadata?.email || user?.email) ? (
                 <div className="ap-page">
                     <div className="ap-head">
                         <div>

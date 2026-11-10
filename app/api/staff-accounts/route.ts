@@ -1,6 +1,24 @@
 import { NextResponse } from 'next/server';
 import { requireAdminCaller, serviceClient, generateTempPassword } from '@/src/utils/serverAdminAuth';
 import { saveStaffCredential } from '@/src/utils/staffCredentials';
+import type { SupabaseClient } from '@supabase/supabase-js';
+
+// Generate the next sequential staff number (STF001, STF002, …). Existing rows
+// use the STF### format; the number is derived from the highest existing one so
+// the sequence never repeats and never collides with a legacy value.
+async function nextStaffNo(admin: SupabaseClient): Promise<string> {
+  const { data } = await admin
+    .from('bluebell_staff')
+    .select('staff_no')
+    .like('staff_no', 'STF%')
+    .order('staff_no', { ascending: false })
+    .limit(1);
+  const highest = (data || []).map((r: { staff_no?: string }) => String(r.staff_no || ''))
+    .map((s) => parseInt(s.replace(/^STF/, ''), 10))
+    .filter((n) => Number.isFinite(n) && n > 0);
+  const n = highest.length ? Math.max(...highest) + 1 : 1;
+  return `STF${String(n).padStart(3, '0')}`;
+}
 
 // POST /api/staff-accounts — admin creates a staff member + portal login.
 // The Supabase auth user is created with the service-role key (never exposed
@@ -73,9 +91,11 @@ export async function POST(request: Request) {
 
     if (!createErr && created?.user) {
       portalLoginCreated = true;
+      const staffNo = await nextStaffNo(admin);
       const insertRes = await admin
         .from('bluebell_staff')
         .insert({
+          staff_no: staffNo,
           name,
           sex: sex || null,
           address: address || null,
@@ -110,9 +130,11 @@ export async function POST(request: Request) {
         message: createErr?.message,
         error: createErr,
       });
+      const staffNo = await nextStaffNo(admin);
       const insertRes = await admin
         .from('bluebell_staff')
         .insert({
+          staff_no: staffNo,
           name,
           sex: sex || null,
           address: address || null,

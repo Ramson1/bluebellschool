@@ -95,7 +95,7 @@ export const NavbarComponent = () => {
               <Offcanvas.Body>
                 <Nav className="justify-content-end flex-grow-1 pe-3">
                   <Nav.Link href="/home">Home</Nav.Link>
-                  {(userauth && userauth.some && userauth.some(auth => auth.email === user?.user_metadata?.email)) && (
+                  {(userauth && userauth.some && userauth.some(auth => auth.email === user?.user_metadata?.email || user?.email)) && (
                     <>
                   <Nav.Link href="/payments">New Payment</Nav.Link>
                   <Nav.Link href="/student">New Student</Nav.Link>
@@ -112,7 +112,7 @@ export const NavbarComponent = () => {
                       Other Payments Record
                     </NavDropdown.Item>
                     <NavDropdown.Divider />
-                    {(userauth && userauth.some && userauth.some(auth => auth.email === user?.user_metadata?.email)) && (
+                    {(userauth && userauth.some && userauth.some(auth => auth.email === user?.user_metadata?.email || user?.email)) && (
                     <>
                     <NavDropdown.Item href="/full_payment">
                       Full Payment Record
@@ -126,7 +126,7 @@ export const NavbarComponent = () => {
                   </NavDropdown>
                   <Nav.Link href="/CBTQuestions">CBT Questions</Nav.Link>
                   <Nav.Link href="/result">Results</Nav.Link>
-                  {(userauth && userauth.some && userauth.some(auth => auth.email === user?.user_metadata?.email)) && (
+                  {(userauth && userauth.some && userauth.some(auth => auth.email === user?.user_metadata?.email || user?.email)) && (
                     <>
                   <Nav.Link href="/setting">Settings</Nav.Link>
                       </>

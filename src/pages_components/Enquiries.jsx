@@ -61,7 +61,7 @@ export default function Enquiries() {
   const [replyOpen, setReplyOpen] = useState(false);
   const [reply, setReply] = useState({ subject: "", message: "" });
 
-  const email = user?.user_metadata?.email;
+  const email = user?.user_metadata?.email || user?.email;
   const allowed = isAdmin(email, roles.adminEmails) || isDev(email, roles.devEmails);
   const actorRole = "admin"; // audit convention in this codebase (devs are not logged)
 

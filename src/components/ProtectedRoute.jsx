@@ -53,8 +53,8 @@ const ProtectedRoute = ({ children, allowedRoles = ['admin'] }) => {
         setTeacherAuth(teacherData || []);
         
         // Check user roles
-        const isTeacher = teacherData && teacherData.some(auth => auth.email === currentUser?.user_metadata?.email);
-        const isAdmin = userData && userData.some(auth => auth.email === currentUser?.user_metadata?.email);
+        const isTeacher = teacherData && teacherData.some(auth => auth.email === currentUser?.user_metadata?.email || currentUser?.email);
+        const isAdmin = userData && userData.some(auth => auth.email === currentUser?.user_metadata?.email || currentUser?.email);
         
         // Check if user has required role
         const hasRequiredRole = allowedRoles.some(role => {

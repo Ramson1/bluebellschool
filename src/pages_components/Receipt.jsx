@@ -112,11 +112,11 @@ export default function Receipt() {
                 setTeacherAuth(teacherData.data || []);
                 
                 // Check if current user is admin (based on email match now)
-                const isAdminUser = userData.data.some(auth => auth.email === currentUser?.user_metadata?.email);
+                const isAdminUser = userData.data.some(auth => auth.email === currentUser?.user_metadata?.email || currentUser?.email);
                 setIsAdmin(isAdminUser);
                 
                 // Check if user is a teacher and redirect if needed
-                const isTeacher = teacherData.data && teacherData.data.some(auth => auth.email === currentUser?.user_metadata?.email);
+                const isTeacher = teacherData.data && teacherData.data.some(auth => auth.email === currentUser?.user_metadata?.email || currentUser?.email);
                 if (isTeacher) {
                     if (isRouterAvailable) {
                         router.push('/home');
@@ -244,7 +244,7 @@ export default function Receipt() {
                     <div className="ap-spinner" />
                     <div>Verifying credentials...</div>
                 </div>
-            ) : userauth.some(auth => auth.email === user?.user_metadata?.email) ? (
+            ) : userauth.some(auth => auth.email === user?.user_metadata?.email || user?.email) ? (
                 <div className="ap-page">
                     <div className="ap-head">
                         <div>

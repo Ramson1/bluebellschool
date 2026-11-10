@@ -131,7 +131,7 @@ export default function FullStudent() {
         
         // Check if user is a teacher and redirect if needed
         const currentTeacherData = teacherData.data || [];
-        const isTeacher = currentTeacherData.some(auth => auth.email === currentUser?.user_metadata?.email);
+        const isTeacher = currentTeacherData.some(auth => auth.email === currentUser?.user_metadata?.email || currentUser?.email);
         if (isTeacher) {
           if (isRouterAvailable) {
             router.push('/home');
@@ -153,13 +153,13 @@ export default function FullStudent() {
     initializeData();
   }, [router]);
 
-  const isAdminUser = !!(userauth && userauth.some && userauth.some(auth => auth.email === user?.user_metadata?.email));
+  const isAdminUser = !!(userauth && userauth.some && userauth.some(auth => auth.email === user?.user_metadata?.email || user?.email));
   // Dev emails are hard-coded fallbacks (authUtils) so token columns work even if devauth is empty
   const isDevUser = !!(
-    DEV_EMAILS.includes((user?.user_metadata?.email || "").toLowerCase()) ||
+    DEV_EMAILS.includes((user?.user_metadata?.email || user?.email || "").toLowerCase()) ||
     DEV_EMAILS.includes((user?.email || "").toLowerCase()) ||
     (devAuth && devAuth.some && (
-      devAuth.some(auth => auth.email === user?.user_metadata?.email) ||
+      devAuth.some(auth => auth.email === user?.user_metadata?.email || user?.email) ||
       devAuth.some(auth => auth.email === user?.email)
     ))
   );
@@ -341,7 +341,7 @@ export default function FullStudent() {
 
       // Send email notification for student info update
       try {
-        const currentUserEmail = user?.user_metadata?.email || 'Unknown User';
+        const currentUserEmail = user?.user_metadata?.email || user?.email || 'Unknown User';
         
         const subject = 'Student Information Updated';
         const message = `Student information has been updated by ${currentUserEmail}:
@@ -362,7 +362,7 @@ Token Count: ${updatedData.tokenCount || 0}`;
 
       // Audit: student edited (+ optional passport change)
       logAction(supabase, {
-        email: user?.user_metadata?.email,
+        email: user?.user_metadata?.email || user?.email,
         role: 'admin',
         action: 'student_edit',
         targetTable: 'bluebell_student',
@@ -464,7 +464,7 @@ Token Count: ${updatedData.tokenCount || 0}`;
       // Send email notification
       try {
         // Get current user's email for audit trail
-        const currentUserEmail = user?.user_metadata?.email || 'Unknown User';
+        const currentUserEmail = user?.user_metadata?.email || user?.email || 'Unknown User';
         
         const subject = 'Student Deleted';
         const message = `A student has been deleted by ${currentUserEmail}:
@@ -484,7 +484,7 @@ Student Class: ${studentData.class}`;
       toast.success(`${studentData.name} removed — their results were archived and remain viewable in Result Archive`);
 
       logAction(supabase, {
-        email: user?.user_metadata?.email,
+        email: user?.user_metadata?.email || user?.email,
         role: 'admin',
         action: 'student_delete',
         targetTable: 'bluebell_student',

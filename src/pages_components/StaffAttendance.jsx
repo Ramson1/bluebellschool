@@ -63,7 +63,7 @@ const AttendanceRecords = () => {
     return () => clearTimeout(t);
   }, [nameQ]);
 
-  const email = user?.user_metadata?.email;
+  const email = user?.user_metadata?.email || user?.email;
   // admin/dev only (teachers must not access the attendance records view)
   const allowed = isAdmin(email, roles.adminEmails) || isDev(email, roles.devEmails);
 

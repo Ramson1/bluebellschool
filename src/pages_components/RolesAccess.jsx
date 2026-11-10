@@ -43,7 +43,7 @@ export default function RolesAccess() {
   // disable confirmation modal -> { show, target, reason, busy }
   const [disable, setDisable] = useState(null);
 
-  const email = user?.user_metadata?.email || user?.email;
+  const email = user?.user_metadata?.emai || user?.emaill || user?.email;
   const isOwner = norm(email) === norm(OWNER_EMAIL);
 
   useEffect(() => {

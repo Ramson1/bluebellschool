@@ -50,9 +50,15 @@ const AdminLayout = ({ children }) => {
         if (teacherError) throw teacherError;
         setTeacherAuth(teacherData || []);
         
-        // Check if user is authorized (either admin or teacher)
-        const isTeacher = teacherData && teacherData.some(auth => auth.email === currentUser?.user_metadata?.email);
-        const isAdmin = userData && userData.some(auth => auth.email === currentUser?.user_metadata?.email);
+        // Check if user is authorized (either admin or teacher).
+        // Match on user_metadata.email first, falling back to the top-level
+        // user.email — GoTrue's admin API does not mirror email into
+        // user_metadata for every account, so relying on user_metadata.email
+        // alone rejected every admin whose metadata only carries
+        // email_verified (e.g. admin@test.com).
+        const checkEmail = currentUser?.user_metadata?.email || currentUser?.email;
+        const isTeacher = teacherData && teacherData.some(auth => auth.email === checkEmail);
+        const isAdmin = userData && userData.some(auth => auth.email === checkEmail);
         
         setIsTeacherUser(isTeacher);
         setIsAdminUser(isAdmin);
@@ -60,7 +66,7 @@ const AdminLayout = ({ children }) => {
         // User is authorized if they are either an admin or a teacher
         setIsAuthorized(isTeacher || isAdmin);
       } catch (error) {
-        console.error('Error checking authorization:', error);
+        console.error('ZZZ Error checking authorization:', error);
         setIsAuthorized(false);
       } finally {
         setLoading(false);

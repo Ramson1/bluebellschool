@@ -210,7 +210,7 @@ const AttendanceTaker = () => {
   };
   const chime = () => { if (soundOn) playBeep(); };
 
-  const email = user?.user_metadata?.email;
+  const email = user?.user_metadata?.email || user?.email;
   const canWrite = isAdmin(email, roles.adminEmails) || isTeacher(email, roles.teacherEmails) || isDev(email, roles.devEmails);
   // Secretary: read-only attendance view (requirement 7) — no check-in/record buttons
   const allowed = canWrite || isSecretary(email, roles.secretaryEmails);

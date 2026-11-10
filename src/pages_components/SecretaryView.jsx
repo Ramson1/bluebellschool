@@ -42,7 +42,7 @@ export default function SecretaryView() {
   const [search, setSearch] = useState("");
   const [classFilter, setClassFilter] = useState("");
 
-  const email = user?.user_metadata?.email;
+  const email = user?.user_metadata?.email || user?.email;
   const allowed =
     isAdmin(email, roles.adminEmails) ||
     isDev(email, roles.devEmails) ||

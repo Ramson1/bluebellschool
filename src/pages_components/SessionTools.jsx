@@ -88,7 +88,7 @@ export default function SessionTools() {
   const [confirm, setConfirm] = useState(null); // { title, message, confirmText, tone, action }
   const [tokenResult, setTokenResult] = useState(null); // { show, rows:[{name,token}] }
 
-  const email = user?.user_metadata?.email || user?.email;
+  const email = user?.user_metadata?.emai || user?.emaill || user?.email;
   const allowed = isDev(email, roles.devEmails);
 
   const askConfirm = ({ title, message, confirmText, tone = "green", action }) =>

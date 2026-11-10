@@ -240,12 +240,12 @@ export default function Result() {
   }, []);
 
   // Check if the current user is a teacher
-  const isTeacher = user && teacherAuth && teacherAuth.some && teacherAuth.some(auth => auth.email === user?.user_metadata?.email);
-  const isDev = user && devAuth && devAuth.some && devAuth.some(auth => auth.email === user?.user_metadata?.email);
+  const isTeacher = user && teacherAuth && teacherAuth.some && teacherAuth.some(auth => auth.email === user?.user_metadata?.email || user?.email);
+  const isDev = user && devAuth && devAuth.some && devAuth.some(auth => auth.email === user?.user_metadata?.email || user?.email);
 
   // Get current user's email for audit trail
   const getCurrentUserEmail = () => {
-    return user?.user_metadata?.email || 'Unknown User';
+    return user?.user_metadata?.email || user?.email || 'Unknown User';
   };
 
   // Resolve the acting user's role for audit logging
@@ -1693,7 +1693,7 @@ Number of Subjects: ${termSubjects.length}`;
 
         {/* Role-aware action bar */}
         <div className="res-actions">
-          {(userAuth && userAuth.some && userAuth.some(auth => auth.email === user?.user_metadata?.email)) && (
+          {(userAuth && userAuth.some && userAuth.some(auth => auth.email === user?.user_metadata?.email || user?.email)) && (
             <button className="res-btn green" onClick={finalizeAndPublishResult}>
               <RiCheckLine /> Finish & Publish Result
             </button>
@@ -1713,7 +1713,7 @@ Number of Subjects: ${termSubjects.length}`;
               </>
             )}
           </button>
-          {(isTeacher || isDev || (userAuth && userAuth.some && userAuth.some(auth => auth.email === user?.user_metadata?.email))) && (
+          {(isTeacher || isDev || (userAuth && userAuth.some && userAuth.some(auth => auth.email === user?.user_metadata?.email || user?.email))) && (
             <>
               <button
                 className="res-btn amber"
@@ -2300,7 +2300,7 @@ Number of Subjects: ${termSubjects.length}`;
     </div>
     
     {/* Debit Amount Section - Only visible to bluebell_userauth users */}
-    {(userAuth && userAuth.some && userAuth.some(auth => auth.email === user?.user_metadata?.email)) && (
+    {(userAuth && userAuth.some && userAuth.some(auth => auth.email === user?.user_metadata?.email || user?.email)) && (
       <div className="res-eval">
         <h5><span className="ic red"><RiBankLine /></span> Debit Amount</h5>
         <div className="res-grid2">

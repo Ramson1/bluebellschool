@@ -108,7 +108,7 @@ const DataTools = () => {
     init();
   }, []);
 
-  const email = user?.user_metadata?.email;
+  const email = user?.user_metadata?.email || user?.email;
   // Developer-only surface — matches the sidebar/bottom-nav gating (isDev
   // covers both the built-in DEV_EMAILS list and the devauth table).
   const allowed = isDev(email, roles.devEmails);
