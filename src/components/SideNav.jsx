@@ -384,6 +384,7 @@ const SideNav = ({ collapsed, setCollapsed }) => {
               <NavItem href="/lesson_plans" icon={RiDraftLine} label="Lesson Plans" active={isActive("/lesson_plans")} collapsed={collapsed} />
               <NavItem href="/notes" icon={RiBookOpenLine} label="E-Notes" active={isActive("/notes")} collapsed={collapsed} />
               <NavItem href="/assignments" icon={RiFileTextLine} label="Assignments" active={isActive("/assignments")} collapsed={collapsed} />
+              <NavItem href="/submissions" icon={RiFileTextLine} label="Assignment Submissions" active={isActive("/submissions")} collapsed={collapsed} />
 
               {/* Administration – Attendance Records + Settings are visible to
                   every admin; the sensitive tools (Data Tools, Audit Logs, ID

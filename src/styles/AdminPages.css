@@ -1425,3 +1425,38 @@ html[data-theme="dark"] .sa-ac-adder { background: #1b1f2a; border-color: #3a415
 html[data-theme="dark"] .sa-ac-chips { background: #1b1f2a; border-color: #3a4150; }
 html[data-theme="dark"] .sa-ac-chip { background: rgba(78, 159, 56, 0.22); border-color: #4e9f38; color: #86efac; }
 html[data-theme="dark"] .sa-ac-chip.form { background: rgba(224, 168, 0, 0.18); border-color: #e0a800; color: #fbbf24; }
+
+/* ---------- Answer Show more/Show less (AdminSubmissions) ---------- */
+.ap-answer-preview {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  white-space: pre-wrap;
+  font-size: 0.88rem;
+  color: var(--text-secondary, #6b7280);
+}
+.ap-answer-full {
+  white-space: pre-wrap;
+  font-size: 0.88rem;
+  color: var(--text-secondary, #6b7280);
+}
+.ap-toggle {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #011b97;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  padding: 0;
+  text-decoration: underline;
+}
+.ap-toggle:hover { color: #4e9f38; }
+.ap-file-link { color: #011b97; font-weight: 600; text-decoration: none; }
+.ap-file-link:hover { text-decoration: underline; }
+
+html[data-theme="dark"] .ap-answer-preview,
+html[data-theme="dark"] .ap-answer-full { color: #9ca3af !important; }
+html[data-theme="dark"] .ap-toggle { color: #86efac !important; }
+html[data-theme="dark"] .ap-toggle:hover { color: #93c5fd !important; }
+html[data-theme="dark"] .ap-file-link { color: #93c5fd !important; }
