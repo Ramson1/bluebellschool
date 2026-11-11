@@ -23,6 +23,8 @@ import {
   RiDraftLine,
   RiBookOpenLine,
   RiFileTextLine,
+  RiInboxLine,
+  RiBriefcaseLine,
   RiSettings4Line,
   RiIdCardLine,
   RiDatabase2Line,
@@ -57,6 +59,8 @@ const MAIN_NAV = [
   { path: "/lesson_plans", icon: RiDraftLine, label: "Lessons" },
   { path: "/notes", icon: RiBookOpenLine, label: "E-Notes" },
   { path: "/assignments", icon: RiFileTextLine, label: "Assignments" },
+  { path: "/submissions", icon: RiInboxLine, label: "Submissions" },
+  { path: "/staff_attendance", icon: RiBriefcaseLine, label: "Staff Att." },
 ];
 
 // Sensitive tools – visible only to super_admins (developers).
